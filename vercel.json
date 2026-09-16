@@ -1,0 +1,38 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    { "source": "/about", "destination": "/about.html" },
+    { "source": "/services", "destination": "/services.html" },
+    { "source": "/ai-solutions", "destination": "/ai-solutions.html" },
+    { "source": "/ml-data", "destination": "/ml-data.html" },
+    { "source": "/software-development", "destination": "/software-development.html" },
+    { "source": "/it-solutions", "destination": "/it-solutions.html" },
+    { "source": "/industries", "destination": "/industries.html" },
+    { "source": "/contact", "destination": "/contact.html" }
+  ]
+}
