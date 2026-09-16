@@ -1,5 +1,4 @@
 [build]
-  base = "kapate-os-frontend"
   command = "pnpm build"
   publish = ".next"
 
