@@ -1,6 +1,6 @@
 [build]
   base = "."
-  command = "npm run build"
+  command = "pnpm build"
   publish = ".next"
 
 [[plugins]]
@@ -8,3 +8,4 @@
 
 [build.environment]
   NODE_VERSION = "20"
+  PNPM_FLAGS = "--no-frozen-lockfile"
