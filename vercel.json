@@ -1,7 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "cleanUrls": true,
-  "trailingSlash": false,
+  "framework": "nextjs",
+  "buildCommand": "pnpm build",
+  "installCommand": "pnpm install",
   "headers": [
     {
       "source": "/(.*)",
@@ -21,18 +22,12 @@
         {
           "key": "Referrer-Policy",
           "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
         }
       ]
     }
-  ],
-  "rewrites": [
-    { "source": "/about", "destination": "/about.html" },
-    { "source": "/services", "destination": "/services.html" },
-    { "source": "/ai-solutions", "destination": "/ai-solutions.html" },
-    { "source": "/ml-data", "destination": "/ml-data.html" },
-    { "source": "/software-development", "destination": "/software-development.html" },
-    { "source": "/it-solutions", "destination": "/it-solutions.html" },
-    { "source": "/industries", "destination": "/industries.html" },
-    { "source": "/contact", "destination": "/contact.html" }
   ]
 }
