@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: #333;
+            line-height: 1.6;
+        }
+        .header {
+            text-align: right;
+            border-bottom: 2px solid #0056b3;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+        .title {
+            color: #0056b3;
+            font-size: 24pt;
+        }
+        .section-title {
+            color: #0056b3;
+            font-size: 16pt;
+            border-bottom: 1px solid #ccc;
+            margin-top: 30px;
+        }
+        .content {
+            margin-top: 10px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Kapate Consultancy</h1>
+        <p>Innovation Delivered.</p>
+    </div>
+
+    <h2 class="title">{{ title | default('Business Proposal') }}</h2>
+
+    {% if sections.get('executive_summary') %}
+    <h3 class="section-title">Executive Summary</h3>
+    <div class="content">{{ sections.executive_summary }}</div>
+    {% endif %}
+
+    {% if sections.get('scope') %}
+    <h3 class="section-title">Project Scope</h3>
+    <div class="content">{{ sections.scope }}</div>
+    {% endif %}
+
+    {% if sections.get('deliverables') %}
+    <h3 class="section-title">Deliverables</h3>
+    <div class="content">{{ sections.deliverables }}</div>
+    {% endif %}
+
+    {% if sections.get('pricing') %}
+    <h3 class="section-title">Pricing & Payment Terms</h3>
+    <div class="content">{{ sections.pricing }}</div>
+    {% endif %}
+
+    <div style="margin-top: 50px; font-size: 10pt; color: #777; text-align: center;">
+        <p>This document contains confidential information intended only for the specified recipient.</p>
+    </div>
+</body>
+</html>

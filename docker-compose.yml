@@ -1,0 +1,26 @@
+services:
+  # FastAPI Enterprise Backend Engine
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: kapate-os-backend
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+      - DEBUG=false
+      - SECRET_KEY=kapate-os-production-super-secret-key-2026
+      - DATABASE_URL=sqlite:///./kapate_os.db
+      - BACKEND_CORS_ORIGINS=["https://os.kapateconsultancy.com","https://kapate-os.vercel.app","http://localhost:3000"]
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - SMTP_TLS=true
+      - EMAILS_FROM_EMAIL=${EMAILS_FROM_EMAIL:-security@kapateconsultancy.com}
+      - EMAILS_FROM_NAME=Kapate OS Security
+    volumes:
+      - ./backend/kapate_os.db:/app/kapate_os.db
+

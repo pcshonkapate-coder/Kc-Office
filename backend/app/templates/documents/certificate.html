@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Certificate of Completion</title>
+    <style>
+        body { font-family: 'Helvetica', 'Arial', sans-serif; text-align: center; color: #333; margin: 0; padding: 0; }
+        .certificate-container { border: 20px solid #1e40af; padding: 50px; margin: 20px; height: 750px; position: relative; }
+        .header { font-size: 50px; font-weight: bold; color: #1e40af; margin-bottom: 20px; }
+        .subheader { font-size: 24px; margin-bottom: 50px; color: #555; }
+        .name { font-size: 40px; font-weight: bold; color: #000; margin-bottom: 30px; text-decoration: underline; }
+        .body-text { font-size: 20px; line-height: 1.5; margin-bottom: 50px; padding: 0 100px; }
+        .footer { position: absolute; bottom: 80px; left: 50px; right: 50px; display: flex; justify-content: space-between; }
+        .signature-line { border-top: 2px solid #333; width: 250px; margin-top: 80px; padding-top: 10px; font-size: 18px; text-align: center; }
+        .logo { width: 150px; position: absolute; top: 40px; left: 40px; }
+        .badge { width: 120px; position: absolute; bottom: 40px; right: 40px; }
+    </style>
+</head>
+<body>
+    <div class="certificate-container">
+        <div class="header">CERTIFICATE OF COMPLETION</div>
+        <div class="subheader">This is to certify that</div>
+        <div class="name">{{ intern_name }}</div>
+        <div class="body-text">
+            Has successfully completed their internship program at <strong>Kapate Consultancy</strong>.<br>
+            They demonstrated excellent skills, dedication, and teamwork during their tenure from <strong>{{ start_date }}</strong> to <strong>{{ end_date }}</strong>.
+        </div>
+        <div class="footer">
+            <div class="signature-line">
+                <strong>Authorized Signatory</strong><br>
+                Kapate Consultancy
+            </div>
+            <div class="signature-line">
+                <strong>{{ mentor_name }}</strong><br>
+                Mentor
+            </div>
+        </div>
+    </div>
+</body>
+</html>
