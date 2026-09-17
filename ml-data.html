@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Machine Learning & Data Solutions | Kapate Consultancy</title>
+  <meta name="description" content="Predictive analytics, custom machine learning models, MLOps, and scalable enterprise data pipelines engineered to turn raw data into strategic business leverage.">
+  
+  <meta property="og:title" content="Machine Learning & Data Solutions | Kapate Consultancy">
+  <meta property="og:description" content="End-to-end data science, predictive modeling, forecasting, and automated MLOps pipelines.">
+  <meta property="og:type" content="website">
+
+  <link rel="stylesheet" href="css/style.css?v=2.3">
+</head>
+<body>
+
+  <!-- ==================== HEADER / NAVBAR ==================== -->
+  <header class="site-header" id="site-header">
+    <div class="container nav-container">
+      <a href="index.html" class="brand-logo-link" aria-label="Kapate Consultancy Home">
+        <img src="assets/images/KapateConsultancy-Logo-Cropped.png" alt="Kapate Consultancy" class="brand-logo-img">
+      </a>
+
+      <nav class="desktop-nav" aria-label="Main Navigation">
+        <ul class="nav-links">
+          <li><a href="index.html" class="nav-link">Home</a></li>
+          <li><a href="about.html" class="nav-link">About</a></li>
+          <li class="nav-item-dropdown">
+            <a href="services.html" class="nav-link active">Services ▾</a>
+            <ul class="dropdown-menu">
+              <li><a href="services.html">All Services Overview</a></li>
+              <li><a href="ai-solutions.html">AI Solutions</a></li>
+              <li><a href="ml-data.html">ML & Data Analytics</a></li>
+              <li><a href="software-development.html">Custom Software</a></li>
+              <li><a href="it-solutions.html">IT Solutions & Cloud</a></li>
+            </ul>
+          </li>
+          <li><a href="industries.html" class="nav-link">Industries</a></li>
+          <li><a href="contact.html" class="nav-link">Contact</a></li>
+          <li><a href="http://localhost:3001" class="nav-link">Kapate OS</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <button class="menu-toggle" aria-label="Open Mobile Menu" aria-expanded="false" id="mobile-menu-toggle">
+          <div class="hamburger-box">
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+          </div>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile Drawer -->
+  <div class="mobile-nav-overlay" id="mobile-nav-overlay"></div>
+  <aside class="mobile-nav-drawer" id="mobile-nav-drawer" aria-label="Mobile Navigation Drawer">
+    <ul class="mobile-nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="about.html">About Us</a></li>
+      <li>
+        <a href="services.html">Services</a>
+        <ul class="mobile-nav-sublinks">
+          <li><a href="ai-solutions.html">AI Solutions</a></li>
+          <li><a href="ml-data.html" class="active">ML & Data Analytics</a></li>
+          <li><a href="software-development.html">Custom Software</a></li>
+          <li><a href="it-solutions.html">IT Solutions & Cloud</a></li>
+        </ul>
+      </li>
+      <li><a href="industries.html">Industries</a></li>
+      <li><a href="contact.html">Contact Us</a></li>
+      <li><a href="http://localhost:3001">Kapate OS</a></li>
+    </ul>
+    <div style="margin-top: auto;">
+      <a href="http://localhost:3001" class="btn btn-primary" style="width: 100%;">Kapate OS</a>
+    </div>
+  </aside>
+
+  <main style="padding-top: calc(var(--nav-height) + 2rem);">
+    <!-- ==================== HERO ==================== -->
+    <section class="section-py" style="padding-top: 2rem;">
+      <div class="container">
+        <div class="section-header text-left" style="max-width: 900px;">
+          <div class="badge">Machine Learning & Data Intelligence</div>
+          <h1 style="margin-top: 1rem;">Predictive Science and <span class="text-gradient">High-Throughput Data Engines.</span></h1>
+          <p style="font-size: 1.2rem; margin-top: 1.25rem;">
+            From raw transaction logs to automated continuous predictions: we engineer scalable data pipelines, feature stores, and specialized machine learning algorithms that forecast demand, optimize pricing, and reduce operational friction.
+          </p>
+          <div style="margin-top: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a href="contact.html?service=Machine%20Learning" class="btn btn-primary">Schedule Data Consultation</a>
+            <a href="#pipeline-lifecycle" class="btn btn-secondary">View Pipeline Architecture</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== CORE ML CAPABILITIES ==================== -->
+    <section class="section-py" style="background: var(--bg-surface);">
+      <div class="container">
+        <div class="section-header">
+          <div class="badge">Disciplines</div>
+          <h2>Specialized Machine Learning Capabilities</h2>
+          <p>Mathematical rigor applied to complex enterprise datasets.</p>
+        </div>
+
+        <div class="services-grid">
+          <!-- 1 -->
+          <div class="service-card has-image">
+            <div class="service-img-wrapper">
+              <img src="assets/images/service-ml.jpg" alt="Predictive Analytics & Forecasting" class="service-img" loading="lazy">
+            </div>
+            <div class="service-card-body">
+              <span class="service-number">01</span>
+              <h3 class="service-title">Predictive Analytics & Forecasting</h3>
+              <p class="service-desc">
+                Time-series forecasting, multi-variable regression, demand surge prediction, customer attrition probability, and predictive maintenance models.
+              </p>
+            </div>
+          </div>
+
+          <!-- 2 -->
+          <div class="service-card has-image">
+            <div class="service-img-wrapper">
+              <img src="assets/images/service-ai.jpg" alt="Classification & Scoring Systems" class="service-img" loading="lazy">
+            </div>
+            <div class="service-card-body">
+              <span class="service-number">02</span>
+              <h3 class="service-title">Classification & Scoring Systems</h3>
+              <p class="service-desc">
+                High-accuracy classification frameworks for real-time fraud scoring, credit qualification, automated ticket triaging, and risk stratification.
+              </p>
+            </div>
+          </div>
+
+          <!-- 3 -->
+          <div class="service-card has-image">
+            <div class="service-img-wrapper">
+              <img src="assets/images/service-ai-business.jpg" alt="Recommendation Engines" class="service-img" loading="lazy">
+            </div>
+            <div class="service-card-body">
+              <span class="service-number">03</span>
+              <h3 class="service-title">Recommendation Engines</h3>
+              <p class="service-desc">
+                Collaborative and content-based recommendation systems driving personalized product suggestions, upsells, content rankings, and basket size growth.
+              </p>
+            </div>
+          </div>
+
+          <!-- 4 -->
+          <div class="service-card has-image">
+            <div class="service-img-wrapper">
+              <img src="assets/images/service-data.jpg" alt="Data Lakehouse & Pipelines" class="service-img" loading="lazy">
+            </div>
+            <div class="service-card-body">
+              <span class="service-number">04</span>
+              <h3 class="service-title">Data Lakehouse & Pipelines</h3>
+              <p class="service-desc">
+                Scalable ETL/ELT architectures utilizing Spark, Snowflake, BigQuery, or PostgreSQL to ingest, transform, and sanitize terabyte-scale data in near-real-time.
+              </p>
+            </div>
+          </div>
+
+          <!-- 5 -->
+          <div class="service-card has-image">
+            <div class="service-img-wrapper">
+              <img src="assets/images/industry-fintech.jpg" alt="Executive BI Dashboards" class="service-img" loading="lazy">
+            </div>
+            <div class="service-card-body">
+              <span class="service-number">05</span>
+              <h3 class="service-title">Executive BI Dashboards</h3>
+              <p class="service-desc">
+                Custom responsive telemetry dashboards delivering real-time metric visualization, anomaly alerts, interactive drill-downs, and executive reporting.
+              </p>
+            </div>
+          </div>
+
+          <!-- 6 -->
+          <div class="service-card has-image">
+            <div class="service-img-wrapper">
+              <img src="assets/images/industry-startups.jpg" alt="MLOps & Model Lifecycle Management" class="service-img" loading="lazy">
+            </div>
+            <div class="service-card-body">
+              <span class="service-number">06</span>
+              <h3 class="service-title">MLOps & Model Lifecycle Management</h3>
+              <p class="service-desc">
+                Automated retraining triggers, data and concept drift detection, model versioning, shadow deployments, and sub-10ms inference endpoint packaging.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== DATA PIPELINE & MODEL LIFECYCLE ==================== -->
+    <section class="section-py" id="pipeline-lifecycle">
+      <div class="container">
+        <div class="section-header">
+          <div class="badge badge-cyan">ML Lifecycle</div>
+          <h2>From Raw Ingestion to Production Inference</h2>
+          <p>A closed-loop engineering architecture ensuring accuracy and reliability.</p>
+        </div>
+
+        <div class="timeline-track" style="margin-top: 2rem;">
+          <div class="timeline-step">
+            <div class="step-marker">01</div>
+            <div class="step-card">
+              <h3 class="step-title">Ingest & Sanitize</h3>
+              <p class="step-desc">Continuous ingestion from transaction databases, telemetry sensors, and event queues with automated schema validation.</p>
+            </div>
+          </div>
+          <div class="timeline-step">
+            <div class="step-marker">02</div>
+            <div class="step-card">
+              <h3 class="step-title">Feature Engineering</h3>
+              <p class="step-desc">Transforming raw variables into high-signal numerical vectors stored within centralized, versioned feature stores.</p>
+            </div>
+          </div>
+          <div class="timeline-step">
+            <div class="step-marker">03</div>
+            <div class="step-card">
+              <h3 class="step-title">Model Training</h3>
+              <p class="step-desc">Distributed gradient boosting, deep neural networks, or ensemble architectures with cross-validated hyperparameter tuning.</p>
+            </div>
+          </div>
+          <div class="timeline-step">
+            <div class="step-marker">04</div>
+            <div class="step-card">
+              <h3 class="step-title">Validation & Guardrails</h3>
+              <p class="step-desc">Comprehensive test suites checking against distribution shifts, bias, boundary conditions, and latency targets.</p>
+            </div>
+          </div>
+          <div class="timeline-step">
+            <div class="step-marker">05</div>
+            <div class="step-card">
+              <h3 class="step-title">Serving & Drift Alerting</h3>
+              <p class="step-desc">Containerized low-latency REST endpoints with live KS-test telemetry monitoring for concept drift and performance decay.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== CALL TO ACTION ==================== -->
+    <section class="section-py cta-banner-section">
+      <div class="container">
+        <div class="cta-box">
+          <h2>Unlock the Latent Value in Your Data</h2>
+          <p>Book a technical discovery session with our data scientists and machine learning engineers.</p>
+          <div class="cta-buttons">
+            <a href="contact.html?service=Machine%20Learning" class="btn btn-primary">Book Consultation</a>
+            <a href="services.html" class="btn btn-secondary">Explore Our Services</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-col-brand">
+          <a href="index.html" class="brand-logo-link" aria-label="Kapate Consultancy Home">
+            <img src="assets/images/KapateConsultancy-Logo-Cropped.png" alt="Kapate Consultancy" class="brand-logo-footer">
+          </a>
+          <p>
+            AI, software, data, and IT technology consulting solutions built around real business needs.
+          </p>
+        </div>
+
+        <div>
+          <h4 class="footer-col-title">Company</h4>
+          <ul class="footer-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="about.html">About Us</a></li>
+            <li><a href="industries.html">Industries</a></li>
+            <li><a href="contact.html">Contact & Consultation</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="footer-col-title">Services</h4>
+          <ul class="footer-links">
+            <li><a href="ai-solutions.html">AI Solutions</a></li>
+            <li><a href="ml-data.html">Machine Learning & Data</a></li>
+            <li><a href="software-development.html">Custom Software</a></li>
+            <li><a href="it-solutions.html">IT Solutions & Cloud</a></li>
+            <li><a href="services.html#automation">Process Automation</a></li>
+            <li><a href="services.html#web-apps">Web Application Dev</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="footer-col-title">Inquiries</h4>
+          <div class="footer-contact-item">
+            <div>
+              <span>office.kapateconsultancy@gmail.com</span>
+            </div>
+          </div>
+          <div class="footer-contact-item">
+            <div>
+              <span>+91 84211 74957</span>
+            </div>
+          </div>
+          <div class="footer-contact-item">
+            <div>
+              <span>Pune, Maharashtra</span>
+              <br><small style="color: var(--text-muted);">Remote & On-Site Deployments</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>
+          © 2026 Kapate Consultancy. All rights reserved.
+        </div>
+        <div style="display: flex; gap: 1.5rem;">
+          <a href="about.html" style="color: var(--text-muted);">Privacy Standards</a>
+          <a href="contact.html" style="color: var(--text-muted);">Book Consultation</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <button class="back-to-top" aria-label="Back to top" id="back-to-top">↑</button>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
