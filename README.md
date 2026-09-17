@@ -144,3 +144,4 @@ Detailed operational and technical specifications are available in the [`docs/`]
 - [Database ERD & Schemas](file:///docs/database_schema_erd.md)
 - [RBAC Matrix](file:///docs/rbac_matrix.md)
 - [Production Deployment Guide](file:///docs/production_deployment.md)
+"# kcc-main" 
