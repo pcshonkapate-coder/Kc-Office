@@ -1,9 +1,0 @@
-{
-  "name": "kapate-marketing",
-  "version": "1.0.0",
-  "private": true,
-  "scripts": {
-    "build": "echo \"Static marketing website build completed.\"",
-    "vercel-build": "echo \"Static marketing website build completed.\""
-  }
-}
