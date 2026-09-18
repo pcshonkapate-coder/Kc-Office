@@ -42,7 +42,7 @@ export const TopBar: React.FC = () => {
     showToast(`Switched view to ${roleKey} persona`, 'info');
   };
 
-  const websiteUrl = process.env.NEXT_PUBLIC_WEBSITE_URL || 'http://localhost:3001';
+  const websiteUrl = process.env.NEXT_PUBLIC_WEBSITE_URL || '/';
 
   return (
     <header className="h-16 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 lg:px-6 flex items-center justify-between sticky top-0 z-20 shadow-xs">
@@ -65,8 +65,6 @@ export const TopBar: React.FC = () => {
         {/* PUBLIC WEBSITE LINK */}
         <a
           href={websiteUrl}
-          target="_blank"
-          rel="noopener noreferrer"
           className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs border border-slate-200 transition-all shadow-2xs"
         >
           <Globe className="w-3.5 h-3.5 text-blue-600" />
