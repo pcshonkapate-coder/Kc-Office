@@ -16,10 +16,15 @@ document.addEventListener('DOMContentLoaded', () => {
    PORTAL (KAPATE OS) DYNAMIC LINK RESOLVER
    ========================================================================== */
 function initPortalLinks() {
+  const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const portalUrl = isLocal ? 'http://localhost:3000' : 'https://os.kapateconsultancy.in';
+
   document.querySelectorAll('a').forEach(link => {
     const text = link.textContent.trim();
     if (text === 'Kapate OS' || text.includes('Launch OS') || text.includes('Client Portal')) {
-      link.href = '/os';
+      link.href = portalUrl;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
     }
   });
 }
