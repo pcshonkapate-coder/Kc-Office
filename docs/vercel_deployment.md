@@ -101,7 +101,7 @@ The project includes a root [vercel.json](file:///c:/Users/shonk/Desktop/Kapate_
 To link your official corporate domain (e.g. `os.kapateconsultancy.com`):
 
 1. Go to your project dashboard on Vercel: **Settings** → **Domains**.
-2. Add your domain: `os.kapateconsultancy.com`.
+2. Add your domain: `os.kapateconsultancy.in`.
 3. Configure your DNS provider with the records shown by Vercel:
    - **CNAME Record**:
      - **Name**: `os`
@@ -115,5 +115,5 @@ To link your official corporate domain (e.g. `os.kapateconsultancy.com`):
 Ensure your FastAPI backend allows requests from your Vercel domains. In your backend `.env` or `docker-compose.yml`:
 
 ```env
-BACKEND_CORS_ORIGINS=["https://os.kapateconsultancy.com","https://kapate-os.vercel.app","http://localhost:3000"]
+BACKEND_CORS_ORIGINS=["https://os.kapateconsultancy.in","https://kapateconsultancy.in","https://kapate-os.vercel.app","http://localhost:3000"]
 ```

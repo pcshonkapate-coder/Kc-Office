@@ -33,6 +33,10 @@ class Settings(BaseSettings):
         "http://localhost:3001",
         "http://127.0.0.1:3000",
         "http://127.0.0.1:3001",
+        "https://os.kapateconsultancy.in",
+        "https://kapateconsultancy.in",
+        "https://api.kapateconsultancy.in",
+        "https://os.kapateconsultancy.com",
     ]
 
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
