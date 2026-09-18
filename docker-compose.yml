@@ -13,6 +13,8 @@ services:
       - DEBUG=false
       - SECRET_KEY=kapate-os-production-super-secret-key-2026
       - DATABASE_URL=sqlite:///./kapate_os.db
+      - MONGODB_URL=mongodb://mongodb:27017
+      - MONGODB_DB_NAME=kapate_os
       - BACKEND_CORS_ORIGINS=["https://os.kapateconsultancy.in","https://kapateconsultancy.in","https://os.kapateconsultancy.com","https://kapate-os.vercel.app","http://localhost:3000"]
       - SMTP_HOST=${SMTP_HOST}
       - SMTP_PORT=${SMTP_PORT:-587}
@@ -23,4 +25,21 @@ services:
       - EMAILS_FROM_NAME=Kapate OS Security
     volumes:
       - ./backend/kapate_os.db:/app/kapate_os.db
+    depends_on:
+      - mongodb
+
+  # MongoDB Document Database
+  mongodb:
+    image: mongo:7.0
+    container_name: kapate-os-mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=kapate_os
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:
 

@@ -1,5 +1,6 @@
 import time
 import uuid
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -12,10 +13,21 @@ from app.db.base import Base
 from app.db.session import engine
 import app.models
 from app.db.events import configure_audit_logging
+from app.db.mongodb import connect_to_mongo, close_mongo_connection
 
 # Configure SQLAlchemy event listeners and auto-create metadata tables
 configure_audit_logging()
 Base.metadata.create_all(bind=engine)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: Initialize MongoDB connection pool
+    await connect_to_mongo()
+    yield
+    # Shutdown: Gracefully close MongoDB connection pool
+    await close_mongo_connection()
+
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -24,6 +36,7 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     docs_url="/docs",
     redoc_url="/redoc",
+    lifespan=lifespan,
 )
 
 # CORS Middleware

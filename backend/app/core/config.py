@@ -24,8 +24,12 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
-    # Database
+    # Database (SQL & MongoDB)
     DATABASE_URL: str = "sqlite:///./kapate_os.db"
+    MONGODB_URL: str = "mongodb://localhost:27017"
+    MONGODB_DB_NAME: str = "kapate_os"
+    MONGODB_MIN_POOL_SIZE: int = 10
+    MONGODB_MAX_POOL_SIZE: int = 50
 
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = [
