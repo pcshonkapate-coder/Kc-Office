@@ -7,7 +7,8 @@ import {
   Star, Bookmark, Archive, Trash2, Reply, ReplyAll, Forward,
   Paperclip, Plus, CheckSquare, FolderKanban, FileText, Bot,
   Download, Sparkles, Send, Clock, ShieldCheck, ChevronDown,
-  ChevronUp, AlertCircle, CheckCircle2, User, ExternalLink
+  ChevronUp, AlertCircle, CheckCircle2, User, ExternalLink,
+  Edit3, Share2
 } from 'lucide-react';
 
 export const MailDetail: React.FC = () => {
@@ -15,14 +16,17 @@ export const MailDetail: React.FC = () => {
   const emailThreads = useDemoStore((state) => state.emailThreads);
   const selectedEmailThreadId = useDemoStore((state) => state.selectedEmailThreadId);
   const projects = useDemoStore((state) => state.projects);
+  const activeEmailAccountEmail = useDemoStore((state) => state.activeEmailAccountEmail);
   const toggleStarThread = useDemoStore((state) => state.toggleStarThread);
   const toggleImportantThread = useDemoStore((state) => state.toggleImportantThread);
   const moveThreadToFolder = useDemoStore((state) => state.moveThreadToFolder);
   const markThreadRead = useDemoStore((state) => state.markThreadRead);
+  const deleteDraft = useDemoStore((state) => state.deleteDraft);
   const linkEmailToProject = useDemoStore((state) => state.linkEmailToProject);
   const createTaskFromEmail = useDemoStore((state) => state.createTaskFromEmail);
   const saveEmailAttachmentToDocuments = useDemoStore((state) => state.saveEmailAttachmentToDocuments);
   const sendEmail = useDemoStore((state) => state.sendEmail);
+  const setMailComposeOpen = useDemoStore((state) => state.setMailComposeOpen);
   const showToast = useDemoStore((state) => state.showToast);
 
   const [replyMode, setReplyMode] = useState<'REPLY' | 'REPLY_ALL' | 'FORWARD'>('REPLY');
@@ -35,8 +39,8 @@ export const MailDetail: React.FC = () => {
   
   // Task generation state
   const [taskTitle, setTaskTitle] = useState('');
-  const [taskDueDate, setTaskDueDate] = useState('2026-09-30');
-  const [taskAssignee, setTaskAssignee] = useState('Rahul Deshmukh');
+  const [taskDueDate, setTaskDueDate] = useState(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+  const [taskAssignee, setTaskAssignee] = useState(currentUser.name);
   const [taskPriority, setTaskPriority] = useState<'Urgent' | 'High' | 'Medium' | 'Low'>('High');
 
   // AI Assistant State
@@ -53,13 +57,30 @@ export const MailDetail: React.FC = () => {
         </div>
         <h3 className="text-base font-bold text-slate-700">No Conversation Selected</h3>
         <p className="text-xs text-slate-400 max-w-sm mt-1">
-          Select an email thread from the message list to inspect the conversation history, attachments, and project integrations.
+          Select an email thread from the message list to inspect conversation history, attachments, and project integrations.
         </p>
       </div>
     );
   }
 
-  const latestMessage = activeThread.messages[activeThread.messages.length - 1];
+  const isDraft = activeThread.folder === 'DRAFTS';
+  const latestMessage = activeThread.messages[activeThread.messages.length - 1] || {
+    id: 'msg-fallback',
+    threadId: activeThread.id,
+    from: activeThread.participants[0] || { name: 'Sender', email: 'sender@kapateconsultancy.com' },
+    to: [],
+    subject: activeThread.subject,
+    body: activeThread.snippet,
+    timestamp: activeThread.lastMessageTimestamp,
+    date: '2026-09-18',
+    folder: activeThread.folder,
+    isRead: true,
+    isStarred: false,
+    isImportant: false,
+    priority: activeThread.priority,
+    labels: activeThread.labels,
+    attachments: []
+  };
 
   const toggleExpandMessage = (id: string) => {
     setExpandedMessageIds(prev =>
@@ -71,20 +92,21 @@ export const MailDetail: React.FC = () => {
     setIsAiSummarizing(true);
     setTimeout(() => {
       setAiSummary({
-        summary: `Thread focuses on architectural sign-off and OWASP compliance review for ${activeThread.relatedProjectName || activeThread.subject}. Key discussions include pgvector latency performance (42ms), Redis cache TTL extension (3600s), and formal management authorization.`,
+        summary: `Thread focuses on architectural milestones and operational sign-off for "${activeThread.relatedProjectName || activeThread.subject}". Discussions include delivery timelines, system verification against Kapate OS SLAs, and pending stakeholder action items.`,
         actionItems: [
-          'Review updated Redis TTL cluster spec in Terraform',
-          'Provide formal management sign-off on Task TSK-101',
-          'Verify Okta SAML XML metadata with client IT team'
+          `Review technical deliverables for ${activeThread.relatedProjectName || 'Project timeline'}`,
+          `Validate milestones with ${latestMessage.from.name}`,
+          `Verify audit and security compliance checklist`
         ]
       });
       setIsAiSummarizing(false);
       showToast('AI conversation summary generated', 'info');
-    }, 600);
+    }, 500);
   };
 
   const handleAiDraftReply = () => {
-    setReplyBody(`Hi ${latestMessage.from.name.split(' ')[0]},\n\nThank you for the detailed update. I have reviewed the technical specifications and benchmark results. Everything aligns with our project requirements and SLA caps.\n\nYou are cleared to proceed to the next phase. Let me know if any further sign-offs are needed.\n\nBest regards,\n${currentUser.name}\nKapate Consultancy`);
+    const senderFirstName = latestMessage.from.name.split(' ')[0] || 'Team';
+    setReplyBody(`Hi ${senderFirstName},\n\nThank you for the detailed update. I have reviewed the specifications and status report for ${activeThread.relatedProjectName || activeThread.subject}.\n\nEverything aligns with our delivery roadmap and enterprise SLA requirements. You are cleared to proceed with the next milestone.\n\nBest regards,\n${currentUser.name}\nKapate Consultancy`);
     showToast('AI draft inserted into reply box', 'success');
   };
 
@@ -93,28 +115,66 @@ export const MailDetail: React.FC = () => {
     if (!replyBody.trim()) return;
 
     let recipients: EmailRecipient[] = [latestMessage.from];
+    let outgoingAttachments: EmailAttachment[] = [];
+
     if (replyMode === 'REPLY_ALL') {
-      recipients = [latestMessage.from, ...latestMessage.to.filter(r => r.email !== currentUser.email)];
+      const allRecipients = [latestMessage.from, ...(latestMessage.to || []), ...(latestMessage.cc || [])];
+      recipients = allRecipients.filter(r => r.email !== (activeEmailAccountEmail || currentUser.email));
     } else if (replyMode === 'FORWARD') {
-      if (!forwardRecipientEmail) {
-        showToast('Please specify a recipient email to forward', 'warning');
+      if (!forwardRecipientEmail || !forwardRecipientEmail.includes('@')) {
+        showToast('Please specify a valid recipient email to forward', 'warning');
         return;
       }
-      recipients = [{ name: forwardRecipientEmail.split('@')[0], email: forwardRecipientEmail }];
+      recipients = [{ name: forwardRecipientEmail.split('@')[0], email: forwardRecipientEmail.trim() }];
+      // Forward includes attachments from the active thread
+      outgoingAttachments = activeThread.messages.flatMap(m => m.attachments || []);
     }
+
+    const currentSenderEmail = activeEmailAccountEmail && activeEmailAccountEmail !== 'ALL' 
+      ? activeEmailAccountEmail 
+      : (currentUser.email || 'shon@kapateconsultancy.com');
 
     sendEmail({
       threadId: activeThread.id,
+      fromEmail: currentSenderEmail,
       to: recipients,
-      subject: activeThread.subject.startsWith('Re:') ? activeThread.subject : `Re: ${activeThread.subject}`,
-      body: replyBody,
+      subject: replyMode === 'FORWARD' 
+        ? `Fwd: ${activeThread.subject.replace(/^(Re|Fwd):\s*/i, '')}`
+        : activeThread.subject.startsWith('Re:') ? activeThread.subject : `Re: ${activeThread.subject}`,
+      body: replyMode === 'FORWARD'
+        ? `---------- Forwarded message ---------\nFrom: ${latestMessage.from.name} <${latestMessage.from.email}>\nDate: ${latestMessage.timestamp}\nSubject: ${activeThread.subject}\n\n${replyBody}\n\n--- Original Message ---\n${latestMessage.body}`
+        : replyBody,
       priority: activeThread.priority,
       labels: activeThread.labels,
+      attachments: outgoingAttachments,
       relatedProjectId: activeThread.relatedProjectId,
       relatedProjectName: activeThread.relatedProjectName
     });
 
     setReplyBody('');
+    setForwardRecipientEmail('');
+  };
+
+  const handleEditDraft = () => {
+    setMailComposeOpen(true, {
+      id: latestMessage.id,
+      threadId: activeThread.id,
+      to: latestMessage.to || activeThread.participants.filter(p => p.email !== activeEmailAccountEmail),
+      cc: latestMessage.cc,
+      bcc: latestMessage.bcc,
+      subject: activeThread.subject,
+      body: latestMessage.body,
+      priority: activeThread.priority,
+      attachments: latestMessage.attachments || []
+    });
+  };
+
+  const handleDiscardDraft = () => {
+    deleteDraft(activeThread.id);
+  };
+
+  const handleDownloadAttachment = (att: EmailAttachment) => {
+    showToast(`Downloading "${att.filename}" (${att.size})...`, 'info');
   };
 
   const openTaskModal = () => {
@@ -150,10 +210,10 @@ export const MailDetail: React.FC = () => {
       
       {/* Top Header & Toolbar */}
       <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <button
             onClick={() => toggleStarThread(activeThread.id)}
-            className={`p-1.5 rounded-lg border transition-colors ${
+            className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
               activeThread.isStarred ? 'bg-amber-50 border-amber-200 text-amber-500' : 'border-slate-200 text-slate-400 hover:text-slate-600'
             }`}
             title="Star conversation"
@@ -163,7 +223,7 @@ export const MailDetail: React.FC = () => {
 
           <button
             onClick={() => toggleImportantThread(activeThread.id)}
-            className={`p-1.5 rounded-lg border transition-colors ${
+            className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
               activeThread.isImportant ? 'bg-purple-50 border-purple-200 text-purple-600' : 'border-slate-200 text-slate-400 hover:text-slate-600'
             }`}
             title="Mark important"
@@ -175,7 +235,7 @@ export const MailDetail: React.FC = () => {
 
           <button
             onClick={() => moveThreadToFolder(activeThread.id, 'ARCHIVE')}
-            className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 transition-colors"
+            className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
             title="Archive conversation"
           >
             <Archive className="w-4 h-4" />
@@ -183,7 +243,7 @@ export const MailDetail: React.FC = () => {
 
           <button
             onClick={() => moveThreadToFolder(activeThread.id, 'TRASH')}
-            className="p-1.5 rounded-lg border border-slate-200 text-rose-600 hover:bg-rose-50 transition-colors"
+            className="p-1.5 rounded-lg border border-slate-200 text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
             title="Move to trash"
           >
             <Trash2 className="w-4 h-4" />
@@ -191,7 +251,7 @@ export const MailDetail: React.FC = () => {
 
           <button
             onClick={() => markThreadRead(activeThread.id, false)}
-            className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 transition-colors"
+            className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
             title="Mark as unread"
           >
             <Clock className="w-4 h-4" />
@@ -202,7 +262,7 @@ export const MailDetail: React.FC = () => {
         <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={openTaskModal}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs border border-blue-200 transition-colors shadow-2xs"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs border border-blue-200 transition-colors shadow-2xs cursor-pointer"
           >
             <CheckSquare className="w-3.5 h-3.5" />
             <span>Create Task</span>
@@ -210,7 +270,7 @@ export const MailDetail: React.FC = () => {
 
           <button
             onClick={() => setShowProjectLinkModal(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs border border-purple-200 transition-colors shadow-2xs"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs border border-purple-200 transition-colors shadow-2xs cursor-pointer"
           >
             <FolderKanban className="w-3.5 h-3.5" />
             <span>{activeThread.relatedProjectName ? 'Linked Project' : 'Link to Project'}</span>
@@ -219,7 +279,7 @@ export const MailDetail: React.FC = () => {
           <button
             onClick={handleAiSummarize}
             disabled={isAiSummarizing}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-2xs transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-2xs transition-all cursor-pointer disabled:opacity-50"
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
             <span>{isAiSummarizing ? 'Analyzing...' : 'AI Summary'}</span>
@@ -230,6 +290,35 @@ export const MailDetail: React.FC = () => {
       {/* Main Conversation Thread Area */}
       <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-slate-50/30">
         
+        {/* DRAFT BANNER (If thread is draft) */}
+        {isDraft && (
+          <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-between gap-4 animate-fade-in shadow-xs">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold">
+                <Edit3 className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="font-bold text-amber-900 text-xs">Unsent Email Draft</div>
+                <div className="text-[11px] text-amber-700">This conversation is currently saved as a draft.</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleDiscardDraft}
+                className="px-3 py-1.5 rounded-xl bg-white border border-amber-300 text-rose-600 hover:bg-rose-50 text-xs font-bold transition-colors cursor-pointer"
+              >
+                Discard Draft
+              </button>
+              <button
+                onClick={handleEditDraft}
+                className="px-4 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs"
+              >
+                Continue Editing &rarr;
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Thread Subject Title & Tags */}
         <div className="space-y-2 pb-4 border-b border-slate-200">
           <div className="flex items-center gap-2 flex-wrap">
@@ -239,7 +328,7 @@ export const MailDetail: React.FC = () => {
                 Urgent Priority
               </span>
             )}
-            {activeThread.labels.map((lbl) => (
+            {activeThread.labels?.map((lbl) => (
               <span key={lbl} className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
                 {lbl}
               </span>
@@ -251,7 +340,7 @@ export const MailDetail: React.FC = () => {
             )}
           </div>
           <h2 className="text-xl font-extrabold text-slate-900 leading-tight">
-            {activeThread.subject}
+            {activeThread.subject || '(No Subject)'}
           </h2>
         </div>
 
@@ -263,7 +352,7 @@ export const MailDetail: React.FC = () => {
                 <Sparkles className="w-4 h-4 text-indigo-600" /> AI Executive Conversation Summary
               </span>
               <span className="text-[10px] font-mono text-indigo-500 bg-white/80 px-2 py-0.5 rounded border border-indigo-100">
-                AI Suggestion — Review before action
+                AI Suggestion
               </span>
             </div>
             <p className="text-xs text-indigo-950 leading-relaxed">
@@ -307,7 +396,7 @@ export const MailDetail: React.FC = () => {
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-9 h-9 rounded-xl bg-slate-900 text-white font-bold text-xs flex items-center justify-center shrink-0">
-                      {msg.from.name.split(' ').map(n => n[0]).join('')}
+                      {msg.from.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
@@ -315,7 +404,7 @@ export const MailDetail: React.FC = () => {
                         <span className="text-[11px] text-slate-400 font-mono hidden sm:inline">&lt;{msg.from.email}&gt;</span>
                       </div>
                       <div className="text-[11px] text-slate-500 truncate">
-                        to {msg.to.map(t => t.name).join(', ')}
+                        to {msg.to?.map(t => t.name).join(', ') || 'Recipients'}
                         {msg.cc && msg.cc.length > 0 && ` (cc: ${msg.cc.map(c => c.name).join(', ')})`}
                       </div>
                     </div>
@@ -324,7 +413,7 @@ export const MailDetail: React.FC = () => {
                   <div className="flex items-center gap-2 shrink-0">
                     <span className="text-[11px] text-slate-400 font-mono">{msg.timestamp}</span>
                     {!isLast && (
-                      <button className="text-slate-400 hover:text-slate-600">
+                      <button className="text-slate-400 hover:text-slate-600 cursor-pointer">
                         {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                       </button>
                     )}
@@ -360,8 +449,15 @@ export const MailDetail: React.FC = () => {
 
                               <div className="flex items-center gap-1.5 shrink-0">
                                 <button
+                                  onClick={() => handleDownloadAttachment(att)}
+                                  className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer"
+                                  title="Download"
+                                >
+                                  <Download className="w-3.5 h-3.5" />
+                                </button>
+                                <button
                                   onClick={() => saveEmailAttachmentToDocuments(att, 'Project Documents', activeThread.relatedProjectName || 'Project Nexus')}
-                                  className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-[10px] font-bold text-slate-700 transition-colors"
+                                  className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-[10px] font-bold text-slate-700 transition-colors cursor-pointer"
                                   title="Save directly into Kapate OS Authorized Documents"
                                 >
                                   Save to Docs
@@ -379,89 +475,91 @@ export const MailDetail: React.FC = () => {
           })}
         </div>
 
-        {/* INLINE REPLY BOX */}
-        <div className="p-5 rounded-3xl bg-white border border-slate-300 shadow-sm space-y-3">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <div className="flex items-center gap-2">
-              {(['REPLY', 'REPLY_ALL', 'FORWARD'] as const).map((mode) => (
-                <button
-                  key={mode}
-                  type="button"
-                  onClick={() => setReplyMode(mode)}
-                  className={`px-3 py-1 rounded-xl text-xs font-semibold transition-all ${
-                    replyMode === mode
-                      ? 'bg-slate-900 text-white shadow-2xs'
-                      : 'text-slate-600 hover:bg-slate-100'
-                  }`}
-                >
-                  {mode === 'REPLY' && 'Reply'}
-                  {mode === 'REPLY_ALL' && 'Reply All'}
-                  {mode === 'FORWARD' && 'Forward'}
-                </button>
-              ))}
-            </div>
-
-            <button
-              type="button"
-              onClick={handleAiDraftReply}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-purple-50 text-purple-700 hover:bg-purple-100 text-xs font-bold border border-purple-200 transition-colors"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-purple-600" />
-              <span>Draft with AI</span>
-            </button>
-          </div>
-
-          {replyMode === 'FORWARD' && (
-            <div>
-              <label className="text-[11px] font-bold text-slate-600 block mb-1">Forward To</label>
-              <input
-                type="email"
-                placeholder="recipient@kapateconsultancy.com"
-                value={forwardRecipientEmail}
-                onChange={(e) => setForwardRecipientEmail(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-blue-600"
-              />
-            </div>
-          )}
-
-          <form onSubmit={handleSendReply} className="space-y-3">
-            <textarea
-              rows={4}
-              value={replyBody}
-              onChange={(e) => setReplyBody(e.target.value)}
-              placeholder={`Write your response to ${latestMessage.from.name}...`}
-              className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 transition-colors custom-scrollbar"
-            />
-
-            <div className="flex items-center justify-between pt-1">
-              <div className="text-[11px] text-slate-400 font-mono">
-                Sending from: <strong>{currentUser.email || 'shon@kapateconsultancy.com'}</strong>
+        {/* INLINE REPLY BOX (Only if not in draft viewing mode) */}
+        {!isDraft && (
+          <div className="p-5 rounded-3xl bg-white border border-slate-300 shadow-sm space-y-3">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                {(['REPLY', 'REPLY_ALL', 'FORWARD'] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setReplyMode(mode)}
+                    className={`px-3 py-1 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                      replyMode === mode
+                        ? 'bg-slate-900 text-white shadow-2xs font-bold'
+                        : 'text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    {mode === 'REPLY' && 'Reply'}
+                    {mode === 'REPLY_ALL' && 'Reply All'}
+                    {mode === 'FORWARD' && 'Forward'}
+                  </button>
+                ))}
               </div>
 
               <button
-                type="submit"
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-600/20 transition-all cursor-pointer"
+                type="button"
+                onClick={handleAiDraftReply}
+                className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-purple-50 text-purple-700 hover:bg-purple-100 text-xs font-bold border border-purple-200 transition-colors cursor-pointer"
               >
-                <Send className="w-3.5 h-3.5" />
-                <span>Send Response</span>
+                <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+                <span>Draft with AI</span>
               </button>
             </div>
-          </form>
-        </div>
+
+            {replyMode === 'FORWARD' && (
+              <div>
+                <label className="text-[11px] font-bold text-slate-600 block mb-1">Forward To</label>
+                <input
+                  type="email"
+                  placeholder="recipient@kapateconsultancy.com"
+                  value={forwardRecipientEmail}
+                  onChange={(e) => setForwardRecipientEmail(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-blue-600"
+                />
+              </div>
+            )}
+
+            <form onSubmit={handleSendReply} className="space-y-3">
+              <textarea
+                rows={4}
+                value={replyBody}
+                onChange={(e) => setReplyBody(e.target.value)}
+                placeholder={
+                  replyMode === 'FORWARD'
+                    ? "Add optional comments to forward..."
+                    : `Write your response to ${latestMessage.from.name}...`
+                }
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 transition-colors custom-scrollbar"
+              />
+
+              <div className="flex items-center justify-between pt-1">
+                <div className="text-[11px] text-slate-400 font-mono">
+                  Sending from: <strong>{activeEmailAccountEmail !== 'ALL' ? activeEmailAccountEmail : (currentUser.email || 'shon@kapateconsultancy.com')}</strong>
+                </div>
+
+                <button
+                  type="submit"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-600/20 transition-all cursor-pointer"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>{replyMode === 'FORWARD' ? 'Forward Conversation' : 'Send Response'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
 
       </div>
 
-      {/* TASK CREATION MODAL FROM EMAIL */}
+      {/* CREATE TASK MODAL */}
       {showTaskCreateModal && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl p-6 w-full max-w-md space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
-                <CheckSquare className="w-4 h-4 text-blue-600" /> Create Task from Email
-              </h3>
-              <button onClick={() => setShowTaskCreateModal(false)} className="text-slate-400 hover:text-slate-600 font-bold text-sm">✕</button>
-            </div>
-
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-lg p-6 space-y-4">
+            <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+              <CheckSquare className="w-5 h-5 text-blue-600" /> Convert Email to Backlog Task
+            </h3>
             <div className="space-y-3 text-xs">
               <div>
                 <label className="font-bold text-slate-700 block mb-1">Task Title</label>
@@ -469,35 +567,46 @@ export const MailDetail: React.FC = () => {
                   type="text"
                   value={taskTitle}
                   onChange={(e) => setTaskTitle(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:border-blue-600"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-blue-600 font-medium"
                 />
-              </div>
-
-              <div>
-                <label className="font-bold text-slate-700 block mb-1">Target Project</label>
-                <select
-                  value={selectedProjectIdToLink}
-                  onChange={(e) => setSelectedProjectIdToLink(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-blue-600"
-                >
-                  {projects.map(p => (
-                    <option key={p.id} value={p.id}>{p.name} ({p.id})</option>
-                  ))}
-                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Assignee</label>
+                  <label className="font-bold text-slate-700 block mb-1">Target Project</label>
                   <select
+                    value={selectedProjectIdToLink}
+                    onChange={(e) => setSelectedProjectIdToLink(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none"
+                  >
+                    {projects.map(p => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Assignee</label>
+                  <input
+                    type="text"
                     value={taskAssignee}
                     onChange={(e) => setTaskAssignee(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-blue-600"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Priority</label>
+                  <select
+                    value={taskPriority}
+                    onChange={(e) => setTaskPriority(e.target.value as any)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none"
                   >
-                    <option value="Rahul Deshmukh">Rahul Deshmukh</option>
-                    <option value="Amit Patil">Amit Patil</option>
-                    <option value="Shon Kapate (Manager)">Shon Kapate (Manager)</option>
-                    <option value="Enterprise Client">Enterprise Client</option>
+                    <option value="Urgent">Urgent</option>
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
                   </select>
                 </div>
                 <div>
@@ -506,68 +615,64 @@ export const MailDetail: React.FC = () => {
                     type="date"
                     value={taskDueDate}
                     onChange={(e) => setTaskDueDate(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-blue-600"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
               <button
                 onClick={() => setShowTaskCreateModal(false)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmTaskCreate}
-                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-600/20"
+                className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-600/20 cursor-pointer"
               >
-                Create Task & Link
+                Create Task
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* PROJECT LINK MODAL */}
+      {/* LINK TO PROJECT MODAL */}
       {showProjectLinkModal && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl p-6 w-full max-w-md space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
-                <FolderKanban className="w-4 h-4 text-purple-600" /> Link Email to Project
-              </h3>
-              <button onClick={() => setShowProjectLinkModal(false)} className="text-slate-400 hover:text-slate-600 font-bold text-sm">✕</button>
-            </div>
-
-            <div className="space-y-3 text-xs">
-              <p className="text-slate-600">
-                Link this email thread to a project to display the communication history on the project activity timeline:
-              </p>
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-md p-6 space-y-4">
+            <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+              <FolderKanban className="w-5 h-5 text-purple-600" /> Link Thread to Project
+            </h3>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Tagging this conversation with an active project links all audit trails and team communications to that project's activity timeline.
+            </p>
+            <div className="space-y-2">
+              <label className="font-bold text-slate-700 block text-xs">Select Project</label>
               <select
                 value={selectedProjectIdToLink}
                 onChange={(e) => setSelectedProjectIdToLink(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-purple-600 font-semibold"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:border-purple-500"
               >
                 {projects.map(p => (
-                  <option key={p.id} value={p.id}>{p.name} ({p.client})</option>
+                  <option key={p.id} value={p.id}>{p.name} ({p.status})</option>
                 ))}
               </select>
             </div>
-
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
               <button
                 onClick={() => setShowProjectLinkModal(false)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmProjectLink}
-                className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-md shadow-purple-600/20"
+                className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-md shadow-purple-600/20 cursor-pointer"
               >
-                Link Conversation
+                Confirm Link
               </button>
             </div>
           </div>

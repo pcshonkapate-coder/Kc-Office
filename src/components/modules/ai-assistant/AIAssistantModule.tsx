@@ -6,19 +6,25 @@ import { aiService } from '../../../services';
 import { Bot, Sparkles, CheckCircle2, FileText, CheckSquare, MessageSquare } from 'lucide-react';
 
 export const AIAssistantModule: React.FC = () => {
+  const currentUser = useDemoStore((state) => state.currentUser);
+  const projects = useDemoStore((state) => state.projects);
   const addTask = useDemoStore((state) => state.addTask);
   const showToast = useDemoStore((state) => state.showToast);
 
   const [activeTab, setActiveTab] = useState<'lead' | 'meeting' | 'proposal' | 'tasks'>('tasks');
   const [loading, setLoading] = useState(false);
 
-  const [taskPrompt, setTaskPrompt] = useState('Build AI chatbot for customer support with Zendesk CRM sync');
+  const [taskPrompt, setTaskPrompt] = useState('');
   const [generatedTasks, setGeneratedTasks] = useState<any[]>([]);
 
-  const [leadInput, setLeadInput] = useState('Enterprise client looking to audit ML models for fraud detection in real-time banking.');
+  const [leadInput, setLeadInput] = useState('');
   const [leadSummary, setLeadSummary] = useState<any>(null);
 
   const handleGenerateTasks = async () => {
+    if (!taskPrompt.trim()) {
+      showToast('Please enter a project requirement prompt', 'warning');
+      return;
+    }
     setLoading(true);
     const tasks = await aiService.generateTaskBreakdown(taskPrompt);
     setGeneratedTasks(tasks);
@@ -26,15 +32,16 @@ export const AIAssistantModule: React.FC = () => {
   };
 
   const handleApproveTasks = () => {
+    const defaultProj = projects[0];
     generatedTasks.forEach((t) => {
       addTask({
         title: t.title,
-        projectId: 'PRJ-001',
-        projectName: 'AI Customer Support Platform',
-        assignedTo: 'Amit Patil',
+        projectId: defaultProj?.id || 'PRJ-NEW',
+        projectName: defaultProj?.name || 'New AI Initiative',
+        assignedTo: currentUser.name,
         priority: t.priority as any,
         status: 'TODO',
-        dueDate: '2026-10-15',
+        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         estimatedHours: t.estimatedHours,
         description: 'AI Generated Task'
       });

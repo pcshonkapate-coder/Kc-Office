@@ -463,27 +463,33 @@ export const ProjectsModule: React.FC = () => {
                 )}
 
                 {projectDetailTab === 'profitability' && (
-                  <div className="space-y-4">
-                    {selectedProject.profitability.alertMessage && (
-                      <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center gap-2">
-                        <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-                        <span>{selectedProject.profitability.alertMessage}</span>
-                      </div>
-                    )}
+                  selectedProject.profitability ? (
+                    <div className="space-y-4">
+                      {selectedProject.profitability.alertMessage && (
+                        <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center gap-2">
+                          <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                          <span>{selectedProject.profitability.alertMessage}</span>
+                        </div>
+                      )}
 
-                    <div className="grid grid-cols-2 gap-3 text-xs">
-                      <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                        <div className="text-slate-500 text-[10px]">Project Revenue</div>
-                        <div className="text-lg font-bold text-emerald-600 mt-1 font-mono">₹{selectedProject.profitability.revenue.toLocaleString('en-IN')}</div>
-                      </div>
-                      <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                        <div className="text-slate-500 text-[10px]">Gross Profit & Margin</div>
-                        <div className="text-lg font-bold text-blue-600 mt-1 font-mono">
-                          ₹{selectedProject.profitability.grossProfit.toLocaleString('en-IN')} ({selectedProject.profitability.grossMargin}%)
+                      <div className="grid grid-cols-2 gap-3 text-xs">
+                        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                          <div className="text-slate-500 text-[10px]">Project Revenue</div>
+                          <div className="text-lg font-bold text-emerald-600 mt-1 font-mono">₹{selectedProject.profitability.revenue.toLocaleString('en-IN')}</div>
+                        </div>
+                        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                          <div className="text-slate-500 text-[10px]">Gross Profit & Margin</div>
+                          <div className="text-lg font-bold text-blue-600 mt-1 font-mono">
+                            ₹{selectedProject.profitability.grossProfit.toLocaleString('en-IN')} ({selectedProject.profitability.grossMargin}%)
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="p-6 rounded-2xl bg-slate-50 border border-dashed border-slate-200 text-center text-xs text-slate-400">
+                      No financial profitability audit recorded for this project yet.
+                    </div>
+                  )
                 )}
               </>
             )}

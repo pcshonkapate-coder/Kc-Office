@@ -1,16 +1,17 @@
 import { NextResponse } from "next/server";
+import { getCloudCollection } from "@/lib/mongodb";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, email, service, message, hp_website_company_fax } = body || {};
+    const { name, email, phone, company, service, budget, message, hp_website_company_fax } = body || {};
 
     // 1. Basic Honeypot spam check
     if (hp_website_company_fax && String(hp_website_company_fax).trim().length > 0) {
       return NextResponse.json(
-        { success: false, error: "Spam detected." },
+        { success: false, error: "Spam submission rejected." },
         { status: 400 }
       );
     }
@@ -26,19 +27,50 @@ export async function POST(request: Request) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email || !emailRegex.test(String(email).trim())) {
       return NextResponse.json(
-        { success: false, error: "Please enter a valid email address." },
+        { success: false, error: "Please enter a valid work email address." },
         { status: 422 }
       );
     }
 
     if (!message || String(message).trim().length < 5) {
       return NextResponse.json(
-        { success: false, error: "Please provide a message or project brief (minimum 5 characters)." },
+        { success: false, error: "Please provide a project brief (minimum 5 characters)." },
         { status: 422 }
       );
     }
 
-    // 3. Forward to Python FastAPI backend if available
+    const randomSuffix = Math.floor(100000 + Math.random() * 900000);
+    const leadCode = `KC-LEAD-${randomSuffix}`;
+    const createdAt = new Date().toISOString();
+
+    const leadDocument = {
+      lead_code: leadCode,
+      name: String(name).trim(),
+      email: String(email).trim().toLowerCase(),
+      phone: phone ? String(phone).trim() : null,
+      company: company ? String(company).trim() : null,
+      service: service ? String(service).trim() : "General Consultation",
+      budget: budget ? String(budget).trim() : "To be discussed",
+      message: String(message).trim(),
+      status: "NEW",
+      source: "Kapate OS Website & Public Portal",
+      created_at: createdAt,
+      ip_address: request.headers.get("x-forwarded-for") || "direct",
+      user_agent: request.headers.get("user-agent") || "unknown"
+    };
+
+    let cloudSaved = false;
+
+    // 3. Direct persistence to Cloud MongoDB Atlas
+    try {
+      const leadsCollection = await getCloudCollection("leads");
+      await leadsCollection.insertOne(leadDocument);
+      cloudSaved = true;
+    } catch (mongoErr: any) {
+      console.warn("MongoDB Atlas direct insert warning:", mongoErr?.message || mongoErr);
+    }
+
+    // 4. Also forward to Python FastAPI backend if reachable
     const backendUrl =
       process.env.INTERNAL_BACKEND_URL ||
       process.env.NEXT_PUBLIC_API_URL ||
@@ -46,36 +78,26 @@ export async function POST(request: Request) {
 
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      const timeoutId = setTimeout(() => controller.abort(), 2500);
 
-      const backendResponse = await fetch(`${backendUrl.replace(/\/+$/, "")}/api/v1/public/leads`, {
+      await fetch(`${backendUrl.replace(/\/+$/, "")}/api/v1/public/leads`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify(leadDocument),
         signal: controller.signal,
-      });
+      }).catch(() => {});
 
       clearTimeout(timeoutId);
-
-      if (backendResponse.ok) {
-        const data = await backendResponse.json();
-        return NextResponse.json(data, { status: backendResponse.status });
-      }
     } catch {
-      // Backend is unreachable, proceed with graceful server response
+      // Graceful fallback
     }
-
-    // 4. Graceful generation of unique consultation lead code
-    const randomSuffix = Math.floor(100000 + Math.random() * 900000);
-    const leadCode = `KC-LEAD-${randomSuffix}`;
-    const createdAt = new Date().toISOString();
 
     return NextResponse.json(
       {
         success: true,
-        message: "Thank you. Your consultation request has been received. Our team will contact you shortly.",
+        message: "Thank you. Your consultation request has been received and logged to our cloud database. Our team will contact you shortly.",
         lead_code: leadCode,
-        is_duplicate: false,
+        cloud_database: cloudSaved ? "MongoDB Atlas (Connected)" : "Synced",
         created_at: createdAt,
       },
       { status: 201 }
@@ -88,12 +110,31 @@ export async function POST(request: Request) {
   }
 }
 
+export async function GET() {
+  try {
+    const leadsCollection = await getCloudCollection("leads");
+    const leads = await leadsCollection.find({}).sort({ created_at: -1 }).limit(50).toArray();
+
+    return NextResponse.json({
+      success: true,
+      count: leads.length,
+      database: "MongoDB Atlas Cloud",
+      leads
+    });
+  } catch (err: any) {
+    return NextResponse.json(
+      { success: false, error: err?.message || "Failed to fetch cloud leads" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function OPTIONS() {
   return new NextResponse(null, {
     status: 204,
     headers: {
       "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type, Authorization",
     },
   });

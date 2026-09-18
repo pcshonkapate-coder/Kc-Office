@@ -19,13 +19,13 @@ export const ClientPortalModule: React.FC = () => {
   const [filterMode, setFilterMode] = useState<'PENDING' | 'COMPLETED' | 'ALL'>('PENDING');
 
   const clientProject = projects[0] || {
-    id: 'PRJ-001',
-    name: 'Project Nexus',
-    client: 'Active Enterprise Client',
-    progress: 65,
-    status: 'In Progress',
-    spentBudget: '₹14.2L',
-    totalBudget: '₹22.0L',
+    id: 'PRJ-MAIN',
+    name: 'Client Engineering Engagement',
+    client: 'Enterprise Client Workspace',
+    progress: 0,
+    status: 'Active',
+    spentBudget: '₹0.0L',
+    totalBudget: '₹0.0L',
     milestones: []
   };
 
@@ -278,35 +278,43 @@ export const ClientPortalModule: React.FC = () => {
           <Clock className="w-4 h-4 text-blue-600" />
           Project Delivery Milestones
         </h3>
-        <div className="space-y-3">
-          {clientProject.milestones?.map((m) => (
-            <div
-              key={m.id}
-              className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs"
-            >
-              <div className="flex items-center gap-3">
-                {m.progress === 100 ? (
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                ) : (
-                  <Clock className="w-5 h-5 text-amber-600" />
-                )}
-                <div>
-                  <div className="font-semibold text-slate-900">{m.name}</div>
-                  <div className="text-[11px] text-slate-500">Target Date: {m.dueDate}</div>
-                </div>
-              </div>
-              <span
-                className={`px-2.5 py-1 rounded-xl text-[10px] font-mono font-bold border ${
-                  m.progress === 100
-                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                    : 'bg-amber-50 text-amber-700 border-amber-200'
-                }`}
+        {clientProject.milestones && clientProject.milestones.length > 0 ? (
+          <div className="space-y-3">
+            {clientProject.milestones.map((m) => (
+              <div
+                key={m.id}
+                className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs"
               >
-                {m.progress}% Completed
-              </span>
-            </div>
-          ))}
-        </div>
+                <div className="flex items-center gap-3">
+                  {m.progress === 100 ? (
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                  ) : (
+                    <Clock className="w-5 h-5 text-amber-600" />
+                  )}
+                  <div>
+                    <div className="font-semibold text-slate-900">{m.name}</div>
+                    <div className="text-[11px] text-slate-500">Target Date: {m.dueDate}</div>
+                  </div>
+                </div>
+                <span
+                  className={`px-2.5 py-1 rounded-xl text-[10px] font-mono font-bold border ${
+                    m.progress === 100
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      : 'bg-amber-50 text-amber-700 border-amber-200'
+                  }`}
+                >
+                  {m.progress}% Completed
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="p-8 rounded-2xl bg-slate-50 border border-dashed border-slate-200 text-center space-y-1">
+            <Clock className="w-6 h-6 text-slate-300 mx-auto" />
+            <div className="text-xs font-bold text-slate-700">No Delivery Milestones Scheduled</div>
+            <div className="text-[11px] text-slate-400">Milestones added to your project will appear here with real-time completion tracking.</div>
+          </div>
+        )}
       </div>
 
       {/* DOCUMENTS & INVOICES */}
@@ -316,10 +324,9 @@ export const ClientPortalModule: React.FC = () => {
             <FileText className="w-4 h-4 text-blue-600" />
             Authorized Client Documents
           </h3>
-          <div className="space-y-2">
-            {documents
-              .filter((d) => d.relatedEntity?.includes('ABC') || d.relatedEntity?.includes('Nexus') || d.category === 'Contracts')
-              .map((d) => (
+          {documents.length > 0 ? (
+            <div className="space-y-2">
+              {documents.map((d) => (
                 <div
                   key={d.id}
                   className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs hover:border-slate-300 transition-colors"
@@ -331,7 +338,14 @@ export const ClientPortalModule: React.FC = () => {
                   <span className="text-slate-500 text-[11px] font-mono">{d.size}</span>
                 </div>
               ))}
-          </div>
+            </div>
+          ) : (
+            <div className="p-6 rounded-2xl bg-slate-50 border border-dashed border-slate-200 text-center space-y-1">
+              <FileText className="w-5 h-5 text-slate-300 mx-auto" />
+              <div className="text-xs font-semibold text-slate-600">No Documents Uploaded</div>
+              <div className="text-[11px] text-slate-400">Contracts, NDAs, and project briefs will be listed here.</div>
+            </div>
+          )}
         </div>
 
         <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4">
@@ -339,10 +353,9 @@ export const ClientPortalModule: React.FC = () => {
             <Receipt className="w-4 h-4 text-emerald-600" />
             Client Invoices & Statements
           </h3>
-          <div className="space-y-2">
-            {invoices
-              .filter((i) => i.client?.includes('ABC') || i.client?.includes('Nexus') || i.client?.includes('Enterprise'))
-              .map((i) => (
+          {invoices.length > 0 ? (
+            <div className="space-y-2">
+              {invoices.map((i) => (
                 <div
                   key={i.id}
                   className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs hover:border-slate-300 transition-colors"
@@ -356,7 +369,14 @@ export const ClientPortalModule: React.FC = () => {
                   </span>
                 </div>
               ))}
-          </div>
+            </div>
+          ) : (
+            <div className="p-6 rounded-2xl bg-slate-50 border border-dashed border-slate-200 text-center space-y-1">
+              <Receipt className="w-5 h-5 text-slate-300 mx-auto" />
+              <div className="text-xs font-semibold text-slate-600">No Invoices Issued</div>
+              <div className="text-[11px] text-slate-400">Settled receipts and active tax invoices will appear here.</div>
+            </div>
+          )}
         </div>
       </div>
 

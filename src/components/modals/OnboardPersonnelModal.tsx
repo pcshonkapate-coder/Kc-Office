@@ -18,8 +18,8 @@ export const OnboardPersonnelModal: React.FC = () => {
   const [department, setDepartment] = useState('Engineering');
   const [employmentType, setEmploymentType] = useState<'EMPLOYEE' | 'INTERN' | 'FREELANCER'>('EMPLOYEE');
   const [role, setRole] = useState<UserRole>('EMPLOYEE');
-  const [manager, setManager] = useState('Amit Patil');
-  const [skills, setSkills] = useState('Python, FastAPI, Docker, PostgreSQL');
+  const [manager, setManager] = useState(employees[0]?.name || 'Shon Kapate');
+  const [skills, setSkills] = useState('');
 
   const [createdResult, setCreatedResult] = useState<any>(null);
   const [copied, setCopied] = useState(false);
@@ -202,9 +202,10 @@ export const OnboardPersonnelModal: React.FC = () => {
                   onChange={(e) => setManager(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-blue-500"
                 >
-                  <option value="Amit Patil">Amit Patil (Engineering Lead & PM)</option>
+                  {employees.map(emp => (
+                    <option key={emp.id} value={emp.name}>{emp.name} ({emp.role})</option>
+                  ))}
                   <option value="Shon Kapate">Shon Kapate (Founder & CEO)</option>
-                  <option value="Priya Sharma">Priya Sharma (Operations Manager)</option>
                 </select>
               </div>
 

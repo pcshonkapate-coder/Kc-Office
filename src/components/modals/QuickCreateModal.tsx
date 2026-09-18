@@ -25,17 +25,17 @@ export const QuickCreateModal: React.FC = () => {
 
   // Task fields
   const [taskTitle, setTaskTitle] = useState('');
-  const [taskProject, setTaskProject] = useState(projects[0]?.name || 'AI Customer Support Platform');
-  const [taskAssigned, setTaskAssigned] = useState(employees[0]?.name || 'Amit Patil');
+  const [taskProject, setTaskProject] = useState(projects[0]?.name || 'General Operations');
+  const [taskAssigned, setTaskAssigned] = useState(employees[0]?.name || 'Shon Kapate');
   const [taskPriority, setTaskPriority] = useState<'Low' | 'Medium' | 'High' | 'Urgent'>('High');
-  const [taskDueDate, setTaskDueDate] = useState('2026-09-30');
-  const [taskHours, setTaskHours] = useState(16);
+  const [taskDueDate, setTaskDueDate] = useState('');
+  const [taskHours, setTaskHours] = useState(8);
   const [taskClientVisible, setTaskClientVisible] = useState(false);
 
   // Project fields
   const [projectName, setProjectName] = useState('');
-  const [projectClient, setProjectClient] = useState('ABC Technologies');
-  const [projectBudget, setProjectBudget] = useState(1500000);
+  const [projectClient, setProjectClient] = useState('');
+  const [projectBudget, setProjectBudget] = useState(0);
 
   // Employee fields
   const [empName, setEmpName] = useState('');

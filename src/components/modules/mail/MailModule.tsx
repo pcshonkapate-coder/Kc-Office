@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { useDemoStore } from '../../../store/demoStore';
 import { MailSidebar } from './MailSidebar';
 import { MailList } from './MailList';
@@ -14,6 +14,34 @@ export const MailModule: React.FC = () => {
   const currentUser = useDemoStore((state) => state.currentUser);
   const selectedEmailThreadId = useDemoStore((state) => state.selectedEmailThreadId);
   const setSelectedEmailThreadId = useDemoStore((state) => state.setSelectedEmailThreadId);
+  const setMailComposeOpen = useDemoStore((state) => state.setMailComposeOpen);
+  const isMailComposeOpen = useDemoStore((state) => state.isMailComposeOpen);
+
+  // Global Keyboard Shortcuts (Superhuman / Gmail style)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeElement = document.activeElement;
+      const isInput =
+        activeElement instanceof HTMLInputElement ||
+        activeElement instanceof HTMLTextAreaElement ||
+        activeElement instanceof HTMLSelectElement ||
+        activeElement?.getAttribute('contenteditable') === 'true';
+
+      if (isInput) return;
+
+      if (e.key === 'c' || e.key === 'C') {
+        e.preventDefault();
+        setMailComposeOpen(true);
+      } else if (e.key === 'Escape') {
+        if (!isMailComposeOpen) {
+          setSelectedEmailThreadId(null);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isMailComposeOpen, setMailComposeOpen, setSelectedEmailThreadId]);
 
   // Security Check: External Client Portal accounts are strictly restricted from internal mail
   if (currentUser.role === 'CLIENT') {
@@ -61,7 +89,7 @@ export const MailModule: React.FC = () => {
             <div className="lg:hidden p-3 border-b border-slate-200 bg-slate-50 flex items-center gap-2">
               <button
                 onClick={() => setSelectedEmailThreadId(null)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-700 shadow-2xs"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-700 shadow-2xs cursor-pointer"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>Back to Inbox</span>

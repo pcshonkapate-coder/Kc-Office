@@ -31,7 +31,7 @@ export const SecurityDashboard: React.FC = () => {
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [approvalRole, setApprovalRole] = useState<UserRole>('EMPLOYEE');
   const [approvalDept, setApprovalDept] = useState('Engineering');
-  const [approvalManager, setApprovalManager] = useState('Amit Patil');
+  const [approvalManager, setApprovalManager] = useState(employees[0]?.name || 'Shon Kapate');
   const [approvalDesignation, setApprovalDesignation] = useState('Software Engineer');
   const [approvalEmpType, setApprovalEmpType] = useState<'EMPLOYEE' | 'INTERN' | 'FREELANCER'>('EMPLOYEE');
 
@@ -65,7 +65,7 @@ export const SecurityDashboard: React.FC = () => {
       setApprovalDesignation('Backend Developer');
       setApprovalDept('Engineering');
     }
-    setApprovalManager('Amit Patil');
+    setApprovalManager(employees[0]?.name || 'Shon Kapate');
   };
 
   const handleConfirmApproval = (e: React.FormEvent) => {
@@ -545,9 +545,10 @@ export const SecurityDashboard: React.FC = () => {
                   onChange={(e) => setApprovalManager(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200"
                 >
-                  <option value="Amit Patil">Amit Patil (Engineering Lead & PM)</option>
+                  {employees.map(emp => (
+                    <option key={emp.id} value={emp.name}>{emp.name} ({emp.role})</option>
+                  ))}
                   <option value="Shon Kapate">Shon Kapate (Founder & CEO)</option>
-                  <option value="Priya Sharma">Priya Sharma (Operations Lead)</option>
                 </select>
               </div>
 

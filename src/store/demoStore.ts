@@ -101,6 +101,8 @@ interface DemoStore {
   isMailTemplatesOpen: boolean;
 
   sendEmail: (msgData: {
+    from?: EmailRecipient | { name: string; email: string };
+    fromEmail?: string;
     to: EmailRecipient[];
     cc?: EmailRecipient[];
     bcc?: EmailRecipient[];
@@ -110,6 +112,7 @@ interface DemoStore {
     labels?: string[];
     attachments?: EmailAttachment[];
     threadId?: string;
+    draftId?: string;
     relatedProjectId?: string;
     relatedProjectName?: string;
     relatedDealId?: string;
@@ -222,7 +225,11 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
     if (typeof window !== 'undefined') {
       localStorage.setItem('kapate_user_role', roleKey);
     }
-    set({ currentUser: user });
+    const matchingAcc = get().emailAccounts.find(a => a.email === user.email || a.email === user.internalEmail);
+    set({
+      currentUser: user,
+      activeEmailAccountEmail: matchingAcc ? matchingAcc.email : (user.email || 'shon@kapateconsultancy.com')
+    });
     
     // Auto switch active view tab depending on role
     if (user.role === 'CLIENT') {
@@ -304,14 +311,16 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
   isMailTemplatesOpen: false,
 
   sendEmail: (msgData) => {
-    const sender = get().emailAccounts.find(a => a.email === get().activeEmailAccountEmail) || {
+    const activeAcc = get().emailAccounts.find(a => a.email === (msgData.fromEmail || get().activeEmailAccountEmail));
+    const sender = msgData.from || (activeAcc ? { name: activeAcc.name, email: activeAcc.email } : {
       name: get().currentUser.name,
       email: get().currentUser.email || 'shon@kapateconsultancy.com'
-    };
+    });
 
+    const threadId = msgData.threadId || `th-${Date.now()}`;
     const newMsg: EmailMessage = {
       id: `msg-${Date.now()}`,
-      threadId: msgData.threadId || `th-${Date.now()}`,
+      threadId,
       from: { name: sender.name, email: sender.email },
       to: msgData.to,
       cc: msgData.cc,
@@ -334,29 +343,47 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
     };
 
     set((state) => {
-      let updatedThreads = [...state.emailThreads];
-      const existingThreadIndex = updatedThreads.findIndex(t => t.id === msgData.threadId);
+      // Clean up draft if one was being edited
+      const draftIdToRemove = msgData.draftId;
+      let updatedThreads = state.emailThreads.filter(t => !draftIdToRemove || t.id !== draftIdToRemove);
+      let updatedEmails = state.emails.filter(e => !draftIdToRemove || (e.id !== draftIdToRemove && e.threadId !== draftIdToRemove));
+
+      const existingThreadIndex = updatedThreads.findIndex(t => t.id === threadId);
 
       if (existingThreadIndex >= 0) {
         const existing = updatedThreads[existingThreadIndex];
+        const existingParticipants = existing.participants || [];
+        const newParticipants = [
+          ...existingParticipants,
+          { name: sender.name, email: sender.email },
+          ...msgData.to,
+          ...(msgData.cc || [])
+        ];
+        const uniqueParticipants = Array.from(
+          new Map(newParticipants.map(p => [p.email.toLowerCase(), p])).values()
+        );
+
         const updatedThread: EmailThread = {
           ...existing,
           lastMessageTimestamp: 'Just now',
           lastSenderName: sender.name,
           messageCount: existing.messages.length + 1,
           snippet: newMsg.snippet,
+          participants: uniqueParticipants,
+          folder: existing.folder === 'DRAFTS' ? 'SENT' : existing.folder,
+          hasAttachments: existing.hasAttachments || (newMsg.attachments?.length || 0) > 0,
           messages: [...existing.messages, newMsg]
         };
         updatedThreads[existingThreadIndex] = updatedThread;
       } else {
         const newThread: EmailThread = {
-          id: newMsg.threadId,
+          id: threadId,
           subject: newMsg.subject,
           snippet: newMsg.snippet,
           lastMessageTimestamp: 'Just now',
           lastSenderName: sender.name,
           messageCount: 1,
-          participants: [{ name: sender.name, email: sender.email }, ...msgData.to],
+          participants: [{ name: sender.name, email: sender.email }, ...msgData.to, ...(msgData.cc || [])],
           isUnread: false,
           isStarred: false,
           isImportant: newMsg.isImportant,
@@ -366,7 +393,8 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
           hasAttachments: (newMsg.attachments?.length || 0) > 0,
           messages: [newMsg],
           relatedProjectId: msgData.relatedProjectId,
-          relatedProjectName: msgData.relatedProjectName
+          relatedProjectName: msgData.relatedProjectName,
+          relatedDealId: msgData.relatedDealId
         };
         updatedThreads = [newThread, ...updatedThreads];
       }
@@ -387,8 +415,9 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
 
       return {
         emailThreads: updatedThreads,
-        emails: [newMsg, ...state.emails],
+        emails: [newMsg, ...updatedEmails],
         activities: newActivities,
+        selectedEmailThreadId: threadId,
         isMailComposeOpen: false,
         mailComposeInitialData: null
       };
@@ -403,9 +432,12 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
       email: get().currentUser.email || 'shon@kapateconsultancy.com'
     };
 
+    const draftId = draftData.id || `draft-${Date.now()}`;
+    const threadId = draftData.threadId || `th-draft-${Date.now()}`;
+
     const draftMsg: EmailMessage = {
-      id: draftData.id || `draft-${Date.now()}`,
-      threadId: draftData.threadId || `th-draft-${Date.now()}`,
+      id: draftId,
+      threadId,
       from: { name: sender.name, email: sender.email },
       to: draftData.to || [],
       cc: draftData.cc,
@@ -425,24 +457,37 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
     };
 
     set((state) => {
-      const existingThread = state.emailThreads.find(t => t.id === draftMsg.threadId);
+      const existingThreadIndex = state.emailThreads.findIndex(t => t.id === threadId);
       let updatedThreads = [...state.emailThreads];
 
-      if (existingThread) {
-        updatedThreads = updatedThreads.map(t =>
-          t.id === draftMsg.threadId
-            ? { ...t, subject: draftMsg.subject, snippet: draftMsg.snippet, messages: [draftMsg] }
-            : t
-        );
+      const participants = [
+        { name: sender.name, email: sender.email },
+        ...(draftData.to || []),
+        ...(draftData.cc || [])
+      ];
+      const uniqueParticipants = Array.from(
+        new Map(participants.map(p => [p.email.toLowerCase(), p])).values()
+      );
+
+      if (existingThreadIndex >= 0) {
+        updatedThreads[existingThreadIndex] = {
+          ...updatedThreads[existingThreadIndex],
+          subject: draftMsg.subject,
+          snippet: draftMsg.snippet,
+          participants: uniqueParticipants,
+          folder: 'DRAFTS',
+          hasAttachments: (draftMsg.attachments?.length || 0) > 0,
+          messages: [draftMsg]
+        };
       } else {
         const newThread: EmailThread = {
-          id: draftMsg.threadId,
+          id: threadId,
           subject: draftMsg.subject,
           snippet: draftMsg.snippet,
           lastMessageTimestamp: 'Draft saved',
           lastSenderName: sender.name,
           messageCount: 1,
-          participants: [{ name: sender.name, email: sender.email }],
+          participants: uniqueParticipants,
           isUnread: false,
           isStarred: false,
           isImportant: false,
@@ -457,7 +502,7 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
 
       return {
         emailThreads: updatedThreads,
-        emails: [draftMsg, ...state.emails.filter(e => e.id !== draftMsg.id)]
+        emails: [draftMsg, ...state.emails.filter(e => e.id !== draftId && e.threadId !== threadId)]
       };
     });
 
@@ -467,7 +512,8 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
   deleteDraft: (draftId) => {
     set((state) => ({
       emailThreads: state.emailThreads.filter(t => t.id !== draftId),
-      emails: state.emails.filter(e => e.id !== draftId && e.threadId !== draftId)
+      emails: state.emails.filter(e => e.id !== draftId && e.threadId !== draftId),
+      selectedEmailThreadId: state.selectedEmailThreadId === draftId ? null : state.selectedEmailThreadId
     }));
     get().showToast('Draft discarded', 'info');
   },
@@ -737,12 +783,12 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
       ],
       profitability: {
         revenue: prjData.budget,
-        employeeCost: Math.round(prjData.budget * 0.3),
-        cloudCost: 50000,
-        aiApiCost: 30000,
-        otherCost: 20000,
-        grossProfit: Math.round(prjData.budget * 0.6),
-        grossMargin: 60.0
+        employeeCost: 0,
+        cloudCost: 0,
+        aiApiCost: 0,
+        otherCost: 0,
+        grossProfit: prjData.budget,
+        grossMargin: 100.0
       }
     };
     set((state) => ({ projects: [newProject, ...state.projects] }));

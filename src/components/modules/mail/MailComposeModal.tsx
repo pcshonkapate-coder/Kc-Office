@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useDemoStore } from '../../../store/demoStore';
 import { EmailRecipient, EmailAttachment, EmailPriority } from '../../../types';
 import {
   X, Send, Paperclip, Sparkles, Layers, Bold, Italic, List,
-  Heading, Code, Quote, Trash2, Shield, User, Check, Plus
+  Heading, Code, Quote, Trash2, Shield, User, Check, Plus,
+  UploadCloud, FileText, AlertCircle
 } from 'lucide-react';
 
 export const MailComposeModal: React.FC = () => {
@@ -13,49 +14,71 @@ export const MailComposeModal: React.FC = () => {
   const mailComposeInitialData = useDemoStore((state) => state.mailComposeInitialData);
   const emailAccounts = useDemoStore((state) => state.emailAccounts);
   const emailTemplates = useDemoStore((state) => state.emailTemplates);
+  const projects = useDemoStore((state) => state.projects);
   const activeEmailAccountEmail = useDemoStore((state) => state.activeEmailAccountEmail);
+  const currentUser = useDemoStore((state) => state.currentUser);
   const setMailComposeOpen = useDemoStore((state) => state.setMailComposeOpen);
   const sendEmail = useDemoStore((state) => state.sendEmail);
   const saveDraft = useDemoStore((state) => state.saveDraft);
   const showToast = useDemoStore((state) => state.showToast);
 
-  const [fromEmail, setFromEmail] = useState(activeEmailAccountEmail);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const defaultSender = activeEmailAccountEmail && activeEmailAccountEmail !== 'ALL'
+    ? activeEmailAccountEmail
+    : (currentUser.email || 'shon@kapateconsultancy.com');
+
+  const [fromEmail, setFromEmail] = useState(defaultSender);
   const [toInput, setToInput] = useState('');
   const [selectedRecipients, setSelectedRecipients] = useState<EmailRecipient[]>([]);
   const [showCc, setShowCc] = useState(false);
   const [showBcc, setShowBcc] = useState(false);
   const [ccInput, setCcInput] = useState('');
+  const [bccInput, setBccInput] = useState('');
   const [selectedCc, setSelectedCc] = useState<EmailRecipient[]>([]);
+  const [selectedBcc, setSelectedBcc] = useState<EmailRecipient[]>([]);
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [priority, setPriority] = useState<EmailPriority>('Normal');
   const [attachments, setAttachments] = useState<EmailAttachment[]>([]);
   const [showDirectoryDropdown, setShowDirectoryDropdown] = useState(false);
-  const [activeDirectoryField, setActiveDirectoryField] = useState<'TO' | 'CC'>('TO');
+  const [activeDirectoryField, setActiveDirectoryField] = useState<'TO' | 'CC' | 'BCC'>('TO');
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
 
   // Load initial data if replying/forwarding or opening draft
   useEffect(() => {
     if (mailComposeInitialData) {
       if (mailComposeInitialData.to) setSelectedRecipients(mailComposeInitialData.to);
+      if (mailComposeInitialData.cc) setSelectedCc(mailComposeInitialData.cc);
+      if (mailComposeInitialData.bcc) setSelectedBcc(mailComposeInitialData.bcc);
       if (mailComposeInitialData.subject) setSubject(mailComposeInitialData.subject);
       if (mailComposeInitialData.body) setBody(mailComposeInitialData.body);
       if (mailComposeInitialData.priority) setPriority(mailComposeInitialData.priority);
       if (mailComposeInitialData.attachments) setAttachments(mailComposeInitialData.attachments);
     } else {
-      // Default reset
-      setFromEmail(activeEmailAccountEmail);
+      setFromEmail(defaultSender);
       setSelectedRecipients([]);
+      setSelectedCc([]);
+      setSelectedBcc([]);
       setToInput('');
+      setCcInput('');
+      setBccInput('');
       setSubject('');
       setBody('');
       setAttachments([]);
+      setPriority('Normal');
     }
-  }, [mailComposeInitialData, activeEmailAccountEmail, isMailComposeOpen]);
+  }, [mailComposeInitialData, defaultSender, isMailComposeOpen]);
 
   if (!isMailComposeOpen) return null;
 
   // Directory search candidates
-  const currentQuery = activeDirectoryField === 'TO' ? toInput.toLowerCase() : ccInput.toLowerCase();
+  const currentQuery = activeDirectoryField === 'TO' 
+    ? toInput.toLowerCase() 
+    : activeDirectoryField === 'CC' 
+    ? ccInput.toLowerCase() 
+    : bccInput.toLowerCase();
+
   const directorySuggestions = emailAccounts.filter((acc) => {
     if (!currentQuery.trim()) return false;
     return (
@@ -79,94 +102,136 @@ export const MailComposeModal: React.FC = () => {
         setSelectedRecipients(prev => [...prev, recipient]);
       }
       setToInput('');
-    } else {
+    } else if (activeDirectoryField === 'CC') {
       if (!selectedCc.some(r => r.email === recipient.email)) {
         setSelectedCc(prev => [...prev, recipient]);
       }
       setCcInput('');
+    } else {
+      if (!selectedBcc.some(r => r.email === recipient.email)) {
+        setSelectedBcc(prev => [...prev, recipient]);
+      }
+      setBccInput('');
     }
     setShowDirectoryDropdown(false);
   };
 
-  const handleAddManualRecipient = (type: 'TO' | 'CC') => {
-    const val = type === 'TO' ? toInput.trim() : ccInput.trim();
+  const handleAddManualRecipient = (type: 'TO' | 'CC' | 'BCC') => {
+    const val = type === 'TO' ? toInput.trim() : type === 'CC' ? ccInput.trim() : bccInput.trim();
     if (!val || !val.includes('@')) return;
 
     const r: EmailRecipient = { name: val.split('@')[0], email: val };
     if (type === 'TO') {
       setSelectedRecipients(prev => [...prev, r]);
       setToInput('');
-    } else {
+    } else if (type === 'CC') {
       setSelectedCc(prev => [...prev, r]);
       setCcInput('');
+    } else {
+      setSelectedBcc(prev => [...prev, r]);
+      setBccInput('');
     }
     setShowDirectoryDropdown(false);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const newAttachments: EmailAttachment[] = Array.from(files).map((file) => {
+      const ext = file.name.split('.').pop()?.toUpperCase() || 'FILE';
+      let fileType: EmailAttachment['fileType'] = 'PDF';
+      if (ext === 'DOCX' || ext === 'DOC') fileType = 'DOCX';
+      else if (ext === 'ZIP' || ext === 'RAR') fileType = 'ZIP';
+      else if (['PNG', 'JPG', 'JPEG', 'WEBP'].includes(ext)) fileType = 'IMAGE';
+      else if (['XLS', 'XLSX', 'CSV'].includes(ext)) fileType = 'SHEET';
+
+      const sizeStr = file.size > 1024 * 1024
+        ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
+        : `${Math.round(file.size / 1024)} KB`;
+
+      return {
+        id: `att-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        filename: file.name,
+        size: sizeStr,
+        fileType,
+        url: URL.createObjectURL(file)
+      };
+    });
+
+    setAttachments(prev => [...prev, ...newAttachments]);
+    showToast(`Attached ${newAttachments.length} file(s)`, 'success');
+  };
+
+  const handleAttachPresetSample = () => {
+    const mockFiles: EmailAttachment[] = [
+      { id: `att-${Date.now()}-1`, filename: 'kapate-ai-architecture-blueprint.pdf', size: '2.8 MB', fileType: 'PDF', url: '#' },
+      { id: `att-${Date.now()}-2`, filename: 'q3-delivery-milestone-matrix.docx', size: '480 KB', fileType: 'DOCX', url: '#' },
+      { id: `att-${Date.now()}-3`, filename: 'benchmark-latency-traces.xlsx', size: '320 KB', fileType: 'SHEET', url: '#' }
+    ];
+    const picked = mockFiles[Math.floor(Math.random() * mockFiles.length)];
+    setAttachments(prev => [...prev, picked]);
+    showToast(`Attached sample: ${picked.filename}`, 'info');
   };
 
   const handleApplyTemplate = (templateId: string) => {
     const tmpl = emailTemplates.find(t => t.id === templateId);
     if (!tmpl) return;
 
-    let parsedSubject = tmpl.subject
-      .replace('{{project_name}}', 'Project Nexus')
-      .replace('{{client_name}}', 'InnovateTech Pvt Ltd')
-      .replace('{{intern_name}}', 'Riya Sharma')
-      .replace('{{milestone_name}}', 'Sprint 4 Vector Staging')
-      .replace('{{invoice_number}}', 'INV-2026-002')
-      .replace('{{due_date}}', '2026-10-05')
-      .replace('{{amount}}', '₹7,08,000');
+    const defaultProjName = projects[0]?.name || 'Client Engagement';
+    const parsedSubject = tmpl.subject
+      .replace('{{project_name}}', defaultProjName)
+      .replace('{{client_name}}', 'Valued Client')
+      .replace('{{intern_name}}', currentUser.name)
+      .replace('{{milestone_name}}', 'Delivery Milestone')
+      .replace('{{invoice_number}}', 'INV-001')
+      .replace('{{due_date}}', new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
+      .replace('{{amount}}', '₹0.00');
 
-    let parsedBody = tmpl.body
-      .replace('{{project_name}}', 'Project Nexus')
-      .replace('{{client_name}}', 'InnovateTech Pvt Ltd')
-      .replace('{{intern_name}}', 'Riya Sharma')
-      .replace('{{milestone_name}}', 'Sprint 4 Vector Staging')
-      .replace('{{invoice_number}}', 'INV-2026-002')
-      .replace('{{due_date}}', '2026-10-05')
-      .replace('{{amount}}', '₹7,08,000')
-      .replace('{{employee_name}}', 'Shon Kapate')
-      .replace('{{sender_name}}', 'Sneha Joshi');
+    const parsedBody = tmpl.body
+      .replace('{{project_name}}', defaultProjName)
+      .replace('{{client_name}}', 'Valued Client')
+      .replace('{{intern_name}}', currentUser.name)
+      .replace('{{milestone_name}}', 'Delivery Milestone')
+      .replace('{{invoice_number}}', 'INV-001')
+      .replace('{{due_date}}', new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
+      .replace('{{amount}}', '₹0.00')
+      .replace('{{employee_name}}', currentUser.name)
+      .replace('{{sender_name}}', currentUser.name);
 
     setSubject(parsedSubject);
     setBody(parsedBody);
     showToast(`Template "${tmpl.title}" loaded!`, 'info');
   };
 
-  const handleAttachMockFile = () => {
-    const mockFiles: EmailAttachment[] = [
-      { id: `att-${Date.now()}-1`, filename: 'project-technical-spec-v3.pdf', size: '2.8 MB', fileType: 'PDF', url: '#' },
-      { id: `att-${Date.now()}-2`, filename: 'benchmark-latency-matrix.docx', size: '420 KB', fileType: 'DOCX', url: '#' }
-    ];
-    const picked = mockFiles[Math.floor(Math.random() * mockFiles.length)];
-    setAttachments(prev => [...prev, picked]);
-    showToast(`Attached ${picked.filename}`, 'success');
-  };
-
   const handleAiImprove = (mode: 'FORMAL' | 'CONCISE') => {
     if (!body.trim()) return;
     if (mode === 'FORMAL') {
-      setBody(`Dear Team,\n\nI am writing to formally communicate the latest development updates and architectural verifications.\n\n${body}\n\nPlease let me know if any further clarification or documentation is required.\n\nSincerely,\nShon Kapate\nKapate Consultancy`);
+      setBody(`Dear Team,\n\nI am writing to formally communicate the operational status and milestone verifications regarding our current delivery cycle.\n\n${body}\n\nPlease let me know if any further documentation or architectural clarification is needed.\n\nSincerely,\n${currentUser.name}\nKapate Consultancy`);
     } else {
-      setBody(`Team — Quick summary:\n\n${body.replace(/\n\n/g, ' ')}\n\nAction required by EOD.`);
+      setBody(`Team — Quick summary:\n\n${body.replace(/\n\n/g, ' ')}\n\nAction requested by end of sprint.`);
     }
     showToast(`AI polished message (${mode.toLowerCase()})`, 'info');
   };
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedRecipients.length === 0 && !toInput.trim()) {
-      showToast('Please specify at least one recipient', 'warning');
-      return;
-    }
-
     let finalTo = [...selectedRecipients];
     if (toInput.trim() && toInput.includes('@')) {
       finalTo.push({ name: toInput.split('@')[0], email: toInput.trim() });
     }
 
+    if (finalTo.length === 0) {
+      showToast('Please specify at least one recipient email', 'warning');
+      return;
+    }
+
     sendEmail({
+      draftId: mailComposeInitialData?.id || mailComposeInitialData?.threadId,
+      fromEmail,
       to: finalTo,
       cc: selectedCc,
+      bcc: selectedBcc,
       subject: subject || '(No Subject)',
       body: body || '',
       priority,
@@ -176,9 +241,17 @@ export const MailComposeModal: React.FC = () => {
   };
 
   const handleSaveDraft = () => {
+    let finalTo = [...selectedRecipients];
+    if (toInput.trim() && toInput.includes('@')) {
+      finalTo.push({ name: toInput.split('@')[0], email: toInput.trim() });
+    }
+
     saveDraft({
-      to: selectedRecipients,
+      id: mailComposeInitialData?.id,
+      threadId: mailComposeInitialData?.threadId,
+      to: finalTo,
       cc: selectedCc,
+      bcc: selectedBcc,
       subject: subject || '(Draft)',
       body,
       priority,
@@ -189,7 +262,29 @@ export const MailComposeModal: React.FC = () => {
 
   return (
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-3xl flex flex-col max-h-[90vh] overflow-hidden">
+      {/* Hidden native file picker */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileUpload}
+        multiple
+        className="hidden"
+      />
+
+      <div
+        onDragOver={(e) => { e.preventDefault(); setIsDraggingFile(true); }}
+        onDragLeave={() => setIsDraggingFile(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setIsDraggingFile(false);
+          if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            handleFileUpload({ target: { files: e.dataTransfer.files } } as any);
+          }
+        }}
+        className={`bg-white rounded-3xl border ${
+          isDraggingFile ? 'border-blue-500 ring-4 ring-blue-500/20' : 'border-slate-200'
+        } shadow-2xl w-full max-w-3xl flex flex-col max-h-[90vh] overflow-hidden transition-all`}
+      >
         
         {/* Modal Header */}
         <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
@@ -204,13 +299,13 @@ export const MailComposeModal: React.FC = () => {
             <button
               type="button"
               onClick={handleSaveDraft}
-              className="px-3 py-1 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-200 transition-colors"
+              className="px-3 py-1 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
             >
               Save Draft
             </button>
             <button
               onClick={() => setMailComposeOpen(false)}
-              className="p-1 rounded-lg text-slate-400 hover:text-slate-700 transition-colors"
+              className="p-1 rounded-lg text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -220,7 +315,7 @@ export const MailComposeModal: React.FC = () => {
         {/* Compose Form */}
         <form onSubmit={handleSend} className="flex-1 flex flex-col overflow-hidden">
           
-          {/* Header Fields (From, To, CC, Subject) */}
+          {/* Header Fields (From, To, CC, BCC, Subject) */}
           <div className="p-4 space-y-2.5 border-b border-slate-100 text-xs">
             
             {/* FROM FIELD */}
@@ -253,7 +348,7 @@ export const MailComposeModal: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setSelectedRecipients(prev => prev.filter((_, idx) => idx !== i))}
-                        className="text-blue-400 hover:text-blue-700"
+                        className="text-blue-400 hover:text-blue-700 cursor-pointer"
                       >
                         ×
                       </button>
@@ -261,7 +356,7 @@ export const MailComposeModal: React.FC = () => {
                   ))}
                   <input
                     type="text"
-                    placeholder={selectedRecipients.length === 0 ? "Type name or email (e.g., rahul, amit, hr)..." : "Add more..."}
+                    placeholder={selectedRecipients.length === 0 ? "Type name or email (e.g. amit, rahul, hr)..." : "Add more..."}
                     value={toInput}
                     onFocus={() => {
                       setActiveDirectoryField('TO');
@@ -276,6 +371,8 @@ export const MailComposeModal: React.FC = () => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
                         handleAddManualRecipient('TO');
+                      } else if (e.key === 'Backspace' && !toInput && selectedRecipients.length > 0) {
+                        setSelectedRecipients(prev => prev.slice(0, -1));
                       }
                     }}
                     className="flex-1 bg-transparent text-xs text-slate-900 placeholder-slate-400 focus:outline-none min-w-[140px]"
@@ -286,14 +383,14 @@ export const MailComposeModal: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setShowCc(!showCc)}
-                    className="px-1.5 py-0.5 rounded hover:bg-slate-100 font-mono text-[11px] font-bold"
+                    className={`px-1.5 py-0.5 rounded font-mono text-[11px] font-bold cursor-pointer transition-colors ${showCc ? 'bg-blue-50 text-blue-600' : 'hover:bg-slate-100 text-slate-500'}`}
                   >
                     Cc
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowBcc(!showBcc)}
-                    className="px-1.5 py-0.5 rounded hover:bg-slate-100 font-mono text-[11px] font-bold"
+                    className={`px-1.5 py-0.5 rounded font-mono text-[11px] font-bold cursor-pointer transition-colors ${showBcc ? 'bg-blue-50 text-blue-600' : 'hover:bg-slate-100 text-slate-500'}`}
                   >
                     Bcc
                   </button>
@@ -319,7 +416,7 @@ export const MailComposeModal: React.FC = () => {
                         </div>
                       </div>
                       <span className="text-[10px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded font-medium">
-                        {sug.designation} • {sug.department}
+                        {sug.designation}
                       </span>
                     </div>
                   ))}
@@ -341,7 +438,7 @@ export const MailComposeModal: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setSelectedCc(prev => prev.filter((_, idx) => idx !== i))}
-                        className="text-slate-400 hover:text-slate-700"
+                        className="text-slate-400 hover:text-slate-700 cursor-pointer"
                       >
                         ×
                       </button>
@@ -351,11 +448,64 @@ export const MailComposeModal: React.FC = () => {
                     type="text"
                     placeholder="Cc recipients..."
                     value={ccInput}
-                    onChange={(e) => setCcInput(e.target.value)}
+                    onFocus={() => {
+                      setActiveDirectoryField('CC');
+                      setShowDirectoryDropdown(true);
+                    }}
+                    onChange={(e) => {
+                      setCcInput(e.target.value);
+                      setActiveDirectoryField('CC');
+                      setShowDirectoryDropdown(true);
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
                         handleAddManualRecipient('CC');
+                      }
+                    }}
+                    className="flex-1 bg-transparent text-xs text-slate-900 focus:outline-none min-w-[100px]"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* BCC FIELD */}
+            {showBcc && (
+              <div className="flex items-center gap-2">
+                <span className="w-16 font-bold text-slate-500 shrink-0">Bcc:</span>
+                <div className="flex-1 flex items-center gap-1.5 flex-wrap bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5">
+                  {selectedBcc.map((r, i) => (
+                    <span
+                      key={i}
+                      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700"
+                    >
+                      <span>{r.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedBcc(prev => prev.filter((_, idx) => idx !== i))}
+                        className="text-slate-400 hover:text-slate-700 cursor-pointer"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                  <input
+                    type="text"
+                    placeholder="Bcc confidential recipients..."
+                    value={bccInput}
+                    onFocus={() => {
+                      setActiveDirectoryField('BCC');
+                      setShowDirectoryDropdown(true);
+                    }}
+                    onChange={(e) => {
+                      setBccInput(e.target.value);
+                      setActiveDirectoryField('BCC');
+                      setShowDirectoryDropdown(true);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddManualRecipient('BCC');
                       }
                     }}
                     className="flex-1 bg-transparent text-xs text-slate-900 focus:outline-none min-w-[100px]"
@@ -385,7 +535,7 @@ export const MailComposeModal: React.FC = () => {
               {/* Template Picker */}
               <div className="flex items-center gap-1.5">
                 <Layers className="w-3.5 h-3.5 text-purple-600" />
-                <span className="font-semibold text-slate-600 text-[11px]">Insert Template:</span>
+                <span className="font-semibold text-slate-600 text-[11px]">Template:</span>
                 <select
                   onChange={(e) => handleApplyTemplate(e.target.value)}
                   className="bg-white border border-slate-200 rounded-lg px-2 py-1 text-[11px] font-semibold text-slate-700 focus:outline-none cursor-pointer"
@@ -420,14 +570,14 @@ export const MailComposeModal: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handleAiImprove('FORMAL')}
-                className="px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 text-[11px] font-bold border border-purple-200 flex items-center gap-1 transition-colors"
+                className="px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 text-[11px] font-bold border border-purple-200 flex items-center gap-1 transition-colors cursor-pointer"
               >
                 <Sparkles className="w-3 h-3" /> Make Formal
               </button>
               <button
                 type="button"
                 onClick={() => handleAiImprove('CONCISE')}
-                className="px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 text-[11px] font-bold border border-purple-200 flex items-center gap-1 transition-colors"
+                className="px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 text-[11px] font-bold border border-purple-200 flex items-center gap-1 transition-colors cursor-pointer"
               >
                 <Sparkles className="w-3 h-3" /> Make Concise
               </button>
@@ -439,7 +589,7 @@ export const MailComposeModal: React.FC = () => {
             <textarea
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              placeholder="Compose your enterprise communication here..."
+              placeholder="Compose your enterprise communication here... (You can drag & drop attachments here)"
               className="flex-1 w-full p-3 bg-transparent text-xs text-slate-800 placeholder-slate-400 focus:outline-none resize-none leading-relaxed custom-scrollbar font-sans"
               rows={12}
             />
@@ -458,7 +608,7 @@ export const MailComposeModal: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setAttachments(prev => prev.filter((_, idx) => idx !== i))}
-                      className="text-slate-400 hover:text-rose-600"
+                      className="text-slate-400 hover:text-rose-600 cursor-pointer"
                     >
                       ×
                     </button>
@@ -473,12 +623,22 @@ export const MailComposeModal: React.FC = () => {
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={handleAttachMockFile}
-                className="p-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs"
-                title="Attach Document"
+                onClick={() => fileInputRef.current?.click()}
+                className="p-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
+                title="Browse local files"
               >
-                <Paperclip className="w-3.5 h-3.5 text-slate-500" />
-                <span>Attach File</span>
+                <UploadCloud className="w-3.5 h-3.5 text-blue-600" />
+                <span>Upload File</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleAttachPresetSample}
+                className="p-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
+                title="Attach sample project document"
+              >
+                <Paperclip className="w-3.5 h-3.5 text-slate-400" />
+                <span>Preset Sample</span>
               </button>
             </div>
 
@@ -486,7 +646,7 @@ export const MailComposeModal: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setMailComposeOpen(false)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-200 transition-colors"
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
               >
                 Discard
               </button>
