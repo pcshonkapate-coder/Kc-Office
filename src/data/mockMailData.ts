@@ -190,7 +190,7 @@ export const INITIAL_EMAIL_SIGNATURES: EmailSignature[] = [
     id: 'sig-1',
     userId: 'usr-admin',
     title: 'Executive Founder Signature',
-    content: `Regards,\n**Shon Kapate**\nFounder & Technology Consultant\nKapate Consultancy | Enterprise AI & Software Systems\nWeb: https://kapateconsultancy.com • Phone: +91 98000 11223`,
+    content: `Regards,\n**Shon Kapate**\nFounder & Technology Consultant\nKapate Consultancy | Enterprise AI & Software Systems\nWeb: https://kapateconsultancy.in • Phone: +91 98000 11223`,
     isDefault: true
   },
   {

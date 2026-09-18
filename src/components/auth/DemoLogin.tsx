@@ -20,7 +20,7 @@ export const DemoLogin: React.FC<DemoLoginProps> = ({ onLoginSuccess }) => {
   const [error, setError] = useState('');
 
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-  const websiteUrl = process.env.NEXT_PUBLIC_WEBSITE_URL || 'http://localhost:3001';
+  const websiteUrl = process.env.NEXT_PUBLIC_MAIN_SITE_URL || process.env.NEXT_PUBLIC_WEBSITE_URL || '/';
 
   const applyRoleFromEmailOrRoles = (emailAddr: string, roles?: string[]) => {
     if (roles && roles.length > 0) {

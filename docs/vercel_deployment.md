@@ -50,10 +50,10 @@ Connecting your repository directly to Vercel provides automatic CI/CD preview d
 
    | Variable | Value | Description |
    | :--- | :--- | :--- |
-   | `NEXT_PUBLIC_API_URL` | `https://api.kapateconsultancy.com` | Production FastAPI backend URL |
+   | `NEXT_PUBLIC_API_URL` | `https://api.kapateconsultancy.in` | Production FastAPI backend URL |
    | `NEXT_PUBLIC_APP_NAME` | `Kapate OS` | System title |
    | `NEXT_PUBLIC_COMPANY_NAME` | `Kapate Consultancy` | Corporate entity name |
-   | `NEXT_PUBLIC_WEBSITE_URL` | `https://kapateconsultancy.com` | Marketing website URL |
+   | `NEXT_PUBLIC_MAIN_SITE_URL` | `https://kapateconsultancy.in` | Marketing website URL |
 
 4. **Deploy**:
    - Click **Deploy**.

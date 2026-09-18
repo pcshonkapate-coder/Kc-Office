@@ -401,6 +401,7 @@ export const crmApi = {
     status?: string;
     priority?: string;
   }): Promise<Lead[]> {
+    let resultLeads: Lead[] = [];
     try {
       const query = new URLSearchParams();
       if (params?.search) query.append("search", params.search);
@@ -412,19 +413,73 @@ export const crmApi = {
       const res = await fetch(`${API_BASE_URL}/crm/leads?${query.toString()}`, {
         headers: getAuthHeaders(),
       });
-      if (res.ok) return await res.json();
+      if (res.ok) {
+        resultLeads = await res.json();
+      }
     } catch {}
-    return FALLBACK_LEADS;
+
+    if (resultLeads.length === 0) {
+      resultLeads = [...FALLBACK_LEADS];
+    }
+
+    // Merge any locally captured consultation leads from the website
+    if (typeof window !== "undefined") {
+      try {
+        const stored = JSON.parse(localStorage.getItem("kapate_crm_leads") || "[]");
+        if (Array.isArray(stored) && stored.length > 0) {
+          const existingIds = new Set(resultLeads.map((l) => l.lead_code || l.id));
+          const uniqueStored = stored.filter((l: Lead) => !existingIds.has(l.lead_code || l.id));
+          resultLeads = [...uniqueStored, ...resultLeads];
+        }
+      } catch {}
+    }
+
+    return resultLeads;
   },
 
   async createLead(payload: Partial<Lead>): Promise<Lead> {
-    const res = await fetch(`${API_BASE_URL}/crm/leads`, {
-      method: "POST",
-      headers: getAuthHeaders(),
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) throw new Error("Failed to create lead");
-    return await res.json();
+    try {
+      const res = await fetch(`${API_BASE_URL}/crm/leads`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) return await res.json();
+    } catch {}
+
+    // Fallback: save to local CRM storage
+    const randomSuffix = Math.floor(100000 + Math.random() * 900000);
+    const newLead: Lead = {
+      id: "lead_" + Date.now(),
+      lead_code: `KC-LEAD-${randomSuffix}`,
+      name: payload.name || "Anonymous",
+      contact_name: payload.contact_name || payload.name || "Anonymous",
+      company_name: payload.company_name || "Unknown Organization",
+      email: payload.email || "",
+      phone: payload.phone,
+      country: payload.country || "India",
+      city: payload.city,
+      job_title: payload.job_title,
+      service_interest: payload.service_interest || "AI Development",
+      budget: payload.budget || "₹25L - ₹50L",
+      currency: payload.currency || "INR",
+      project_description: payload.project_description || "",
+      source: payload.source || "Website contact form",
+      priority: (payload.priority as any) || "medium",
+      lead_score: payload.lead_score ?? 75,
+      status: payload.status || "NEW LEAD",
+      created_at: new Date().toISOString(),
+    };
+
+    if (typeof window !== "undefined") {
+      try {
+        const stored = JSON.parse(localStorage.getItem("kapate_crm_leads") || "[]");
+        stored.unshift(newLead);
+        localStorage.setItem("kapate_crm_leads", JSON.stringify(stored.slice(0, 100)));
+      } catch {}
+    }
+
+    return newLead;
   },
 
   async updateLead(id: string, payload: Partial<Lead>): Promise<Lead> {

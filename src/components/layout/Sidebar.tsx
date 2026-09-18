@@ -434,7 +434,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => 
       {/* Sidebar Footer Link to Public Website */}
       <div className="p-3 border-t border-slate-200 bg-slate-50">
         <a
-          href="http://localhost:3000"
+          href={process.env.NEXT_PUBLIC_MAIN_SITE_URL || process.env.NEXT_PUBLIC_WEBSITE_URL || '/'}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-3 p-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-xs text-slate-800 transition-colors shadow-sm"

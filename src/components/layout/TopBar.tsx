@@ -42,7 +42,7 @@ export const TopBar: React.FC = () => {
     showToast(`Switched view to ${roleKey} persona`, 'info');
   };
 
-  const websiteUrl = process.env.NEXT_PUBLIC_WEBSITE_URL || '/';
+  const websiteUrl = process.env.NEXT_PUBLIC_MAIN_SITE_URL || process.env.NEXT_PUBLIC_WEBSITE_URL || '/';
 
   return (
     <header className="h-16 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 lg:px-6 flex items-center justify-between sticky top-0 z-20 shadow-xs">
