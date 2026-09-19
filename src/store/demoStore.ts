@@ -168,6 +168,7 @@ interface DemoStore {
   addTask: (task: Omit<Task, 'id' | 'loggedHours'>) => void;
   updateTaskStatus: (id: string, status: TaskStatus) => void;
   addEmployee: (employee: Partial<Employee>) => Promise<Employee>;
+  deleteEmployee: (id: string, permanent?: boolean) => Promise<boolean>;
   addIntern: (intern: Omit<Intern, 'id' | 'tasksCompleted' | 'tasksPending' | 'loggedHours' | 'attendancePct' | 'trainingProgress' | 'status' | 'evaluations'>) => void;
   addTimesheet: (ts: Omit<TimesheetEntry, 'id' | 'status' | 'employeeName'>) => void;
   approveTimesheet: (id: string) => void;
@@ -954,6 +955,31 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
       return savedEmployee;
     } catch (err: any) {
       get().showToast(err.message || 'Error saving employee to database', 'error');
+      throw err;
+    }
+  },
+
+  deleteEmployee: async (id: string, permanent: boolean = false) => {
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    try {
+      const res = await fetch(`/api/v1/workforce/team?id=${encodeURIComponent(id)}${permanent ? '&permanent=true' : ''}`, {
+        method: 'DELETE',
+        headers
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'Failed to delete employee record from database.');
+      }
+      set((state) => ({
+        employees: state.employees.filter(e => e.id !== id && e.kapateId !== id)
+      }));
+      get().showToast(json.message || 'Employee record deleted successfully.', 'success');
+      return true;
+    } catch (err: any) {
+      get().showToast(err.message || 'Error deleting employee from database', 'error');
       throw err;
     }
   },

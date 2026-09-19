@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "lastUpdated": "2026-09-19T11:39:20.192Z",
+  "lastUpdated": "2026-09-19T12:05:09.942Z",
   "users": [
     {
       "id": "usr-admin",
@@ -22,7 +22,7 @@
       "assignedProjects": [],
       "failedLogins": 0,
       "lockedUntil": null,
-      "lastLoginAt": "2026-09-19T11:35:23.553Z",
+      "lastLoginAt": "2026-09-19T12:05:09.811Z",
       "mfaEnabled": true,
       "created": "2024-01-01",
       "passwordHash": "69cc9f3960789a67f9f3f09b9b1c8e7b:e08652c5e766b8d399b17f2626c620635858a341e975a8bd89de1f3c4fed9bd0b1325165ed73f4d97dd99eda9110c5b212fb66a0d0de09e57cbfeb03e3dc8602"
@@ -72,9 +72,51 @@
       "mfaEnabled": false,
       "created": "2026-09-19",
       "passwordHash": "7234fc8ecff2ba013a0ac09207884921:9906868846251d2b5b977c46d588ba49a48b4945598d9309606aa05b49ea77049b3f9fdf72e5e4c103aae9d8e47be21e179771966fcd41b6545f40d1cae19f34"
+    },
+    {
+      "id": "usr-1789819509887-946",
+      "name": "Temporary User 404",
+      "email": "temporary.user.404@kapateconsultancy.in",
+      "role": "EMPLOYEE",
+      "designation": "QA Automation Trainee",
+      "department": "Engineering",
+      "kapateId": "KAP-EMP-000004",
+      "internalEmail": "temporary.user.404@kapateconsultancy.in",
+      "status": "ACTIVE",
+      "phone": "+91 98230 00000",
+      "manager": "Shon Kapate",
+      "skills": [
+        "Enterprise Solutions"
+      ],
+      "assignedProjects": [],
+      "failedLogins": 0,
+      "lockedUntil": null,
+      "lastLoginAt": "2026-09-19T12:05:09.887Z",
+      "mfaEnabled": false,
+      "created": "2026-09-19",
+      "passwordHash": "113e6501a4c30e1ca185b02fcb557ea9:04bf6feaa17d210a16be0f5b34a6e4a1a8c1e3ddb3560e8fd619c15ac5c390fa451bdd1c536f0b9bf6745287a380e8f34363f5186f84849e1808e3b313868848"
     }
   ],
   "employees": [
+    {
+      "id": "emp-1789819509859-371",
+      "name": "Temporary User 404",
+      "email": "temp.user404@kapateconsultancy.in",
+      "role": "QA Automation Trainee",
+      "department": "Engineering",
+      "phone": "+91 98230 00000",
+      "manager": "Shon Kapate",
+      "skills": [
+        "Engineering"
+      ],
+      "joinDate": "2026-09-19",
+      "status": "Inactive",
+      "projectsCount": 0,
+      "utilization": 100,
+      "kapateId": "KAP-EMP-000004",
+      "internalEmail": "temporary.user.404@kapateconsultancy.in",
+      "deletedAt": "2026-09-19T12:05:09.939Z"
+    },
     {
       "id": "emp-1789817960170-980",
       "name": "Vikram Malhotra",
@@ -142,6 +184,19 @@
   "freelancers": [],
   "sessions": [
     {
+      "id": "sess-mu8cbodz-wxv3",
+      "userId": "usr-admin",
+      "userName": "Shon Kapate",
+      "email": "admin@kapateconsultancy.in",
+      "role": "SUPER_ADMIN",
+      "ipAddress": "::1",
+      "userAgent": "node",
+      "loginAt": "2026-09-19T12:05:09.815Z",
+      "lastActiveAt": "Just now",
+      "isImpersonated": false,
+      "status": "ACTIVE"
+    },
+    {
       "id": "sess-mu8b9e3p-jlyj",
       "userId": "usr-admin",
       "userName": "Shon Kapate",
@@ -195,6 +250,70 @@
     }
   ],
   "audit_logs": [
+    {
+      "id": "aud-1789819509942-381",
+      "timestamp": "2026-09-19 12:05:09",
+      "actor": "Shon Kapate",
+      "actorKapateId": "KAP-EMP-000001",
+      "action": "EMPLOYEE_DELETED",
+      "module": "workforce",
+      "targetResource": "employees/KAP-EMP-000004",
+      "targetUser": "System",
+      "previousValue": "",
+      "newValue": "",
+      "ipAddress": "127.0.0.1",
+      "result": "SUCCESS",
+      "requestId": "req-mu8cbohi",
+      "reason": "Admin soft-deleted employee record"
+    },
+    {
+      "id": "aud-1789819509890-956",
+      "timestamp": "2026-09-19 12:05:09",
+      "actor": "Admin",
+      "actorKapateId": "KAP-EMP-000001",
+      "action": "USER_CREATED",
+      "module": "security",
+      "targetResource": "users/usr-1789819509887-946",
+      "targetUser": "temporary.user.404@kapateconsultancy.in",
+      "previousValue": "",
+      "newValue": "{\"name\":\"Temporary User 404\",\"role\":\"EMPLOYEE\"}",
+      "ipAddress": "127.0.0.1",
+      "result": "SUCCESS",
+      "requestId": "req-mu8cbog2",
+      "reason": "Created enterprise user login account"
+    },
+    {
+      "id": "aud-1789819509867-701",
+      "timestamp": "2026-09-19 12:05:09",
+      "actor": "Admin",
+      "actorKapateId": "KAP-EMP-000001",
+      "action": "EMPLOYEE_CREATED",
+      "module": "workforce",
+      "targetResource": "employees/emp-1789819509859-371",
+      "targetUser": "temp.user404@kapateconsultancy.in",
+      "previousValue": "",
+      "newValue": "{\"name\":\"Temporary User 404\",\"role\":\"QA Automation Trainee\",\"kapateId\":\"KAP-EMP-000004\"}",
+      "ipAddress": "127.0.0.1",
+      "result": "SUCCESS",
+      "requestId": "req-mu8cboff",
+      "reason": "Onboarded new enterprise employee record"
+    },
+    {
+      "id": "aud-1789819509817-108",
+      "timestamp": "2026-09-19 12:05:09",
+      "actor": "Shon Kapate",
+      "actorKapateId": "KAP-EMP-000001",
+      "action": "USER_LOGIN",
+      "module": "auth",
+      "targetResource": "sessions/sess-mu8cbodz-wxv3",
+      "targetUser": "admin@kapateconsultancy.in",
+      "previousValue": "",
+      "newValue": "",
+      "ipAddress": "127.0.0.1",
+      "result": "SUCCESS",
+      "requestId": "req-mu8cboe1",
+      "reason": "Successful enterprise password authentication"
+    },
     {
       "id": "aud-1789817960192-311",
       "timestamp": "2026-09-19 11:39:20",

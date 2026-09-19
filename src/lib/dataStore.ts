@@ -344,11 +344,19 @@ class DataStore {
 
   public deleteEmployee(id: string, soft = true): boolean {
     const store = this.loadStore();
-    const index = store.employees.findIndex(e => e.id === id || e.kapateId === id);
+    const cleanId = id.trim().toLowerCase();
+    const index = store.employees.findIndex(
+      e => e.id.toLowerCase() === cleanId || (e.kapateId && e.kapateId.toLowerCase() === cleanId)
+    );
     if (index === -1) return false;
 
     // Prevent deleting Master Admin
-    if (store.employees[index].email === 'admin@kapateconsultancy.in') {
+    const emp = store.employees[index];
+    if (
+      emp.email.toLowerCase() === 'admin@kapateconsultancy.in' ||
+      emp.email.toLowerCase() === 'shon@kapateconsultancy.in' ||
+      emp.kapateId === 'KAP-EMP-000001'
+    ) {
       throw new Error('Protected Account: The Master Admin employee record cannot be deleted.');
     }
 
@@ -357,6 +365,18 @@ class DataStore {
       store.employees[index].status = 'Inactive';
     } else {
       store.employees.splice(index, 1);
+    }
+
+    // Also deactivate or remove linked user account if present
+    const userIndex = store.users.findIndex(
+      u => u.email.toLowerCase() === emp.email.toLowerCase() || (u.kapateId && u.kapateId.toLowerCase() === cleanId)
+    );
+    if (userIndex !== -1 && store.users[userIndex].email !== 'admin@kapateconsultancy.in') {
+      if (soft) {
+        store.users[userIndex].status = 'SUSPENDED';
+      } else {
+        store.users.splice(userIndex, 1);
+      }
     }
 
     this.saveStore();

@@ -184,7 +184,8 @@ export async function DELETE(req: NextRequest) {
   }
 
   try {
-    const success = dataStore.deleteEmployee(id, true);
+    const permanent = searchParams.get('permanent') === 'true';
+    const success = dataStore.deleteEmployee(id, !permanent);
     if (!success) {
       return NextResponse.json({ success: false, error: 'Employee not found.' }, { status: 404 });
     }
