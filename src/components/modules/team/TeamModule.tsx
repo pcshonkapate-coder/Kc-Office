@@ -11,6 +11,13 @@ export const TeamModule: React.FC = () => {
   const interns = useDemoStore((state) => state.interns);
   const freelancers = useDemoStore((state) => state.freelancers);
   const showToast = useDemoStore((state) => state.showToast);
+  const fetchEmployees = useDemoStore((state) => state.fetchEmployees);
+  const [loadingEmployees, setLoadingEmployees] = useState(false);
+
+  React.useEffect(() => {
+    setLoadingEmployees(true);
+    fetchEmployees().finally(() => setLoadingEmployees(false));
+  }, [fetchEmployees]);
 
   const [subTab, setSubTab] = useState<'employees' | 'interns' | 'freelancers'>(
     activeTab === 'interns' ? 'interns' : 'employees'

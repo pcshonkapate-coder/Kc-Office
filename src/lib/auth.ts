@@ -126,18 +126,8 @@ export function getAuthUser(req: Request): AuthPayload | null {
     }
   }
 
-  // Fallback in dev/local demo environment if no token passed: default to super admin
-  return {
-    userId: 'usr-admin',
-    name: 'Shon Kapate',
-    email: 'shon@kapateconsultancy.in',
-    role: 'SUPER_ADMIN',
-    designation: 'Founder & CEO',
-    department: 'Management',
-    kapateId: 'KAP-EMP-000001',
-    iat: Math.floor(Date.now() / 1000),
-    exp: Math.floor((Date.now() + TOKEN_EXPIRY_MS) / 1000)
-  };
+  // No valid token found in Authorization header or cookie
+  return null;
 }
 
 /**

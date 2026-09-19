@@ -46,20 +46,27 @@ export const QuickCreateModal: React.FC = () => {
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (activeType === 'employee') {
       const skillsArray = empSkills.split(',').map((s) => s.trim()).filter(Boolean);
-      addEmployee({
-        name: empName || 'New Team Member',
-        email: empEmail || `${(empName || 'employee').toLowerCase().replace(/\s+/g, '.')}@kapateconsultancy.in`,
-        role: empRole,
-        department: empDepartment,
-        phone: '+91 98765 43210',
-        manager: 'Priya Sharma',
-        skills: skillsArray.length > 0 ? skillsArray : ['AI', 'Python', 'Full Stack'],
-      });
+      try {
+        await addEmployee({
+          name: empName || 'New Team Member',
+          email: empEmail || `${(empName || 'employee').toLowerCase().replace(/\s+/g, '.')}@kapateconsultancy.in`,
+          role: empRole,
+          department: empDepartment,
+          phone: '+91 98765 43210',
+          manager: 'Priya Sharma',
+          skills: skillsArray.length > 0 ? skillsArray : ['AI', 'Python', 'Full Stack'],
+        });
+        setOpen(false);
+        setEmpName('');
+        setEmpEmail('');
+      } catch {
+        // Error handled with toast
+      }
     } else if (activeType === 'task') {
       const selectedProj = projects.find((p) => p.name === taskProject) || projects[0];
       const isClient = taskAssigned.includes('Client');

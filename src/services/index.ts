@@ -241,7 +241,7 @@ export const employeeService = {
     }
     return useDemoStore.getState().interns;
   },
-  addEmployee: (emp: Omit<Employee, 'id' | 'projectsCount' | 'utilization' | 'joinDate' | 'status'>) => useDemoStore.getState().addEmployee(emp),
+  addEmployee: (emp: Partial<Employee>) => useDemoStore.getState().addEmployee(emp),
   addIntern: (intern: Omit<Intern, 'id' | 'tasksCompleted' | 'tasksPending' | 'loggedHours' | 'attendancePct' | 'trainingProgress' | 'status' | 'evaluations'>) => useDemoStore.getState().addIntern(intern)
 };
 

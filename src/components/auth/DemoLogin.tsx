@@ -64,28 +64,25 @@ export const DemoLogin: React.FC<DemoLoginProps> = ({ onLoginSuccess }) => {
       }
 
       const data = await res.json();
-      localStorage.setItem('kapate_token', data.access_token || 'local_auth_token');
-      localStorage.setItem('kapate_access_token', data.access_token || 'local_auth_token');
+      if (!data.success || !data.access_token) {
+        throw new Error(data.error || 'Authentication rejected by server.');
+      }
+
+      localStorage.setItem('kapate_token', data.access_token);
+      localStorage.setItem('kapate_access_token', data.access_token);
       if (data.user) {
         localStorage.setItem('kapate_user', JSON.stringify(data.user));
+        login(data.user);
+      } else {
+        login();
       }
-      applyRoleFromEmailOrRoles(email, data.user?.role ? [data.user.role] : data.user?.roles);
-      login();
 
-      showToast('Authenticated successfully to Kapate OS', 'success');
+      showToast(`Welcome back, ${data.user?.name || email}`, 'success');
       onLoginSuccess?.();
     } catch (err: unknown) {
-      // Vercel deployment & offline fallback
-      if (password.length >= 4) {
-        applyRoleFromEmailOrRoles(email);
-        localStorage.setItem('kapate_token', 'local_auth_token');
-        localStorage.setItem('kapate_access_token', 'local_auth_token');
-        login();
-        showToast('Signed in to Kapate OS', 'success');
-        onLoginSuccess?.();
-      } else {
-        setError(err instanceof Error ? err.message : 'Authentication failed.');
-      }
+      const message = err instanceof Error ? err.message : 'Authentication failed.';
+      setError(message);
+      showToast(message, 'error');
     } finally {
       setLoading(false);
     }

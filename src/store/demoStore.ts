@@ -36,10 +36,11 @@ interface DemoStore {
   currentUser: User;
   isAuthenticated: boolean;
   setIsAuthenticated: (auth: boolean) => void;
-  checkAuth: () => void;
-  login: (roleKey?: string) => void;
-  logout: () => void;
+  checkAuth: () => Promise<void>;
+  login: (userOrRoleKey?: User | string) => void;
+  logout: () => Promise<void>;
   switchRole: (roleKey: string) => void;
+  fetchEmployees: () => Promise<Employee[]>;
 
   // Active view tab navigation
   activeTab: string;
@@ -166,7 +167,7 @@ interface DemoStore {
   addProject: (project: Omit<Project, 'id' | 'spentBudget' | 'progress' | 'status' | 'milestones' | 'profitability'>) => void;
   addTask: (task: Omit<Task, 'id' | 'loggedHours'>) => void;
   updateTaskStatus: (id: string, status: TaskStatus) => void;
-  addEmployee: (employee: Omit<Employee, 'id' | 'projectsCount' | 'utilization' | 'joinDate' | 'status'>) => void;
+  addEmployee: (employee: Partial<Employee>) => Promise<Employee>;
   addIntern: (intern: Omit<Intern, 'id' | 'tasksCompleted' | 'tasksPending' | 'loggedHours' | 'attendancePct' | 'trainingProgress' | 'status' | 'evaluations'>) => void;
   addTimesheet: (ts: Omit<TimesheetEntry, 'id' | 'status' | 'employeeName'>) => void;
   approveTimesheet: (id: string) => void;
@@ -237,24 +238,67 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
   currentUser: DEMO_USERS.ADMIN,
   isAuthenticated: false,
   setIsAuthenticated: (auth: boolean) => set({ isAuthenticated: auth }),
-  checkAuth: () => {
+  checkAuth: async () => {
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token');
-      const savedRole = localStorage.getItem('kapate_user_role');
-      if (savedRole && DEMO_USERS[savedRole]) {
-        set({ currentUser: DEMO_USERS[savedRole] });
+      if (!token) {
+        set({ isAuthenticated: false });
+        return;
       }
-      set({ isAuthenticated: !!token });
+      try {
+        const res = await fetch('/api/v1/auth/me', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.user) {
+            set({ currentUser: json.user, isAuthenticated: true });
+            // Also fetch employees from database once authenticated
+            get().fetchEmployees().catch(() => {});
+            return;
+          }
+        }
+        // Invalid session
+        localStorage.removeItem('kapate_token');
+        localStorage.removeItem('kapate_access_token');
+        localStorage.removeItem('kapate_user');
+        set({ isAuthenticated: false });
+      } catch {
+        const cached = localStorage.getItem('kapate_user');
+        if (cached) {
+          try {
+            set({ currentUser: JSON.parse(cached), isAuthenticated: true });
+          } catch {
+            set({ isAuthenticated: false });
+          }
+        }
+      }
     }
   },
-  login: (roleKey?: string) => {
-    if (roleKey) {
-      get().switchRole(roleKey);
+  login: (userOrRoleKey?: User | string) => {
+    if (userOrRoleKey && typeof userOrRoleKey === 'object') {
+      set({ currentUser: userOrRoleKey, isAuthenticated: true });
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('kapate_user', JSON.stringify(userOrRoleKey));
+      }
+    } else if (typeof userOrRoleKey === 'string') {
+      get().switchRole(userOrRoleKey);
+      set({ isAuthenticated: true });
+    } else {
+      set({ isAuthenticated: true });
     }
-    set({ isAuthenticated: true });
+    // Fetch live employee data on login
+    get().fetchEmployees().catch(() => {});
   },
-  logout: () => {
+  logout: async () => {
     if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token');
+      try {
+        await fetch('/api/v1/auth/logout', {
+          method: 'POST',
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+      } catch {}
       localStorage.removeItem('kapate_token');
       localStorage.removeItem('kapate_access_token');
       localStorage.removeItem('kapate_user');
@@ -262,6 +306,24 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
     }
     set({ isAuthenticated: false });
     get().showToast('Signed out of Kapate OS', 'info');
+  },
+  fetchEmployees: async () => {
+    try {
+      const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch('/api/v1/workforce/team?type=employees', { headers });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data && Array.isArray(json.data)) {
+          set({ employees: json.data });
+          return json.data;
+        }
+      }
+    } catch (err) {
+      console.warn('[demoStore] fetchEmployees notice:', err);
+    }
+    return get().employees;
   },
   switchRole: (roleKey: string) => {
     const user = DEMO_USERS[roleKey] || DEMO_USERS.ADMIN;
@@ -869,17 +931,31 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
     get().showToast(`Task status updated to ${status}`, 'info');
   },
 
-  addEmployee: (empData) => {
-    const newEmp: Employee = {
-      ...empData,
-      id: `emp-${get().employees.length + 101}`,
-      projectsCount: 1,
-      utilization: 80,
-      joinDate: new Date().toISOString().split('T')[0],
-      status: 'Active'
-    };
-    set((state) => ({ employees: [newEmp, ...state.employees] }));
-    get().showToast(`Employee ${newEmp.name} onboarded successfully`, 'success');
+  addEmployee: async (empData) => {
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    try {
+      const res = await fetch('/api/v1/workforce/team', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ type: 'employee', member: empData })
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'Failed to persist employee record to database.');
+      }
+      const savedEmployee: Employee = json.data;
+      set((state) => ({
+        employees: [savedEmployee, ...state.employees.filter(e => e.id !== savedEmployee.id)]
+      }));
+      get().showToast(`Employee ${savedEmployee.name} (${savedEmployee.kapateId}) saved successfully.`, 'success');
+      return savedEmployee;
+    } catch (err: any) {
+      get().showToast(err.message || 'Error saving employee to database', 'error');
+      throw err;
+    }
   },
 
   addIntern: (internData) => {
@@ -1290,6 +1366,9 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
         internalEmail
       };
       set((state) => ({ employees: [newEmployee, ...state.employees] }));
+      get().addEmployee(newEmployee).catch((err) => {
+        console.warn('[onboardPersonnel] Database persistence notice:', err);
+      });
     }
 
     const newEvent: SecurityEvent = {

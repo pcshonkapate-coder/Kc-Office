@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
-import { getCloudCollection } from '@/lib/mongodb';
-import { User } from '@/types';
+import { dataStore } from '@/lib/dataStore';
 
 export async function GET(req: Request) {
   const auth = requireAuth(req);
@@ -10,33 +9,19 @@ export async function GET(req: Request) {
   }
 
   try {
-    const usersColl = await getCloudCollection<User>('users');
-    const user = await usersColl.findOne({
-      $or: [
-        { id: auth.user.userId },
-        { email: auth.user.email.toLowerCase() }
-      ]
-    });
+    const user = dataStore.getUserById(auth.user.userId) || dataStore.getUserByEmail(auth.user.email);
 
     if (!user) {
-      return NextResponse.json({
-        success: true,
-        user: {
-          id: auth.user.userId,
-          email: auth.user.email,
-          name: auth.user.name,
-          role: auth.user.role,
-          designation: auth.user.designation,
-          department: auth.user.department,
-          kapateId: auth.user.kapateId
-        }
-      });
+      return NextResponse.json(
+        { success: false, error: 'User account not found or deactivated.' },
+        { status: 401 }
+      );
     }
 
     return NextResponse.json({
       success: true,
       user: {
-        id: user.id || (user as any)._id?.toString(),
+        id: user.id,
         name: user.name,
         email: user.email,
         role: user.role,

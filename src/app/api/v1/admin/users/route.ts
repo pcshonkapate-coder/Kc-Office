@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, hashPassword } from '@/lib/auth';
-import { getDatabase } from '@/lib/mongodb';
-import { INITIAL_ENTERPRISE_USERS } from '@/data/superAdminData';
+import { dataStore } from '@/lib/dataStore';
 import { User, UserRole } from '@/types';
-
-// In-memory cache fallback for when cloud database is in local isolated mode
-let localUsersCache: User[] = [...INITIAL_ENTERPRISE_USERS];
 
 export async function GET(req: NextRequest) {
   const auth = await requireAuth(req, ['SUPER_ADMIN', 'ADMIN']);
@@ -19,18 +15,7 @@ export async function GET(req: NextRequest) {
   const status = searchParams.get('status');
   const department = searchParams.get('department');
 
-  let users = [...localUsersCache];
-
-  try {
-    const { db } = await getDatabase();
-    const dbUsers = await db.collection<User>('users').find({}).toArray();
-    if (dbUsers && dbUsers.length > 0) {
-      users = dbUsers;
-      localUsersCache = [...dbUsers];
-    }
-  } catch {
-    // Database connection fallback
-  }
+  let users = dataStore.getUsers();
 
   if (search) {
     users = users.filter(u =>
@@ -53,10 +38,16 @@ export async function GET(req: NextRequest) {
     users = users.filter(u => u.department === department);
   }
 
+  // Sanitize password hashes before returning
+  const sanitized = users.map(u => {
+    const { passwordHash, ...safe } = u;
+    return safe;
+  });
+
   return NextResponse.json({
     success: true,
-    data: users,
-    total: users.length
+    data: sanitized,
+    total: sanitized.length
   });
 }
 
@@ -74,7 +65,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Name, email, and role are required fields.' }, { status: 400 });
     }
 
-    // Standardize email to @kapateconsultancy.in if not supplied with domain
     let standardizedEmail = email.trim().toLowerCase();
     if (!standardizedEmail.includes('@')) {
       standardizedEmail = `${standardizedEmail}@kapateconsultancy.in`;
@@ -83,64 +73,42 @@ export async function POST(req: NextRequest) {
     }
 
     // Check duplication
-    const exists = localUsersCache.some(u => u.email.toLowerCase() === standardizedEmail);
+    const exists = dataStore.getUserByEmail(standardizedEmail);
     if (exists) {
       return NextResponse.json({ error: `User with email ${standardizedEmail} already exists.` }, { status: 409 });
     }
 
-    const prefix = role === 'INTERN' ? 'KAP-INT' : role === 'CLIENT' ? 'KAP-CLI' : 'KAP-EMP';
-    const kapateId = `${prefix}-${Math.floor(100000 + Math.random() * 900000)}`;
     const hashedPassword = password ? hashPassword(password) : hashPassword('Kapate@2026!Secured');
 
-    const newUser: User = {
-      id: `usr-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+    const newUser = dataStore.addUser({
       name: name.trim(),
       email: standardizedEmail,
       role: role as UserRole,
       department: department || 'Engineering',
       designation: designation || 'Associate Consultant',
       phone: phone || '+91 98765 43210',
-      kapateId,
       status: 'ACTIVE',
       mfaEnabled: true,
-      lastLoginAt: 'Never',
       passwordHash: hashedPassword,
-      failedLogins: 0,
-      lockedUntil: null,
-      created: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      customPermissions: ['crm.view', 'projects.view', 'tasks.view', 'mail.view'],
-    };
+    });
 
-    localUsersCache.unshift(newUser);
+    dataStore.addAuditLog({
+      actor: auth.user.name,
+      actorKapateId: auth.user.kapateId,
+      action: 'USER_CREATE',
+      module: 'security',
+      targetResource: `users/${newUser.id}`,
+      targetUser: newUser.email,
+      newValue: JSON.stringify({ name: newUser.name, role: newUser.role }),
+      result: 'SUCCESS',
+      reason: `Created enterprise user with role ${newUser.role}`
+    });
 
-    try {
-      const { db } = await getDatabase();
-      await db.collection('users').insertOne(newUser as any);
-      // Log audit
-      await db.collection('audit_logs').insertOne({
-        id: `aud-${Date.now()}`,
-        timestamp: new Date().toISOString(),
-        actorId: auth.user.userId,
-        actorName: auth.user.name,
-        actorEmail: auth.user.email,
-        actorRole: auth.user.role,
-        action: 'USER_CREATE',
-        resource: 'User Management',
-        targetId: newUser.id,
-        targetLabel: `${newUser.name} (${newUser.email})`,
-        severity: 'info',
-        details: `Created enterprise user with role ${newUser.role} and ID ${newUser.kapateId}.`,
-        ipAddress: req.headers.get('x-forwarded-for') || '127.0.0.1',
-      });
-    } catch {
-      // Fallback in-memory
-    }
-
+    const { passwordHash: _, ...safeUser } = newUser;
     return NextResponse.json({
       success: true,
       message: `User ${newUser.name} created successfully.`,
-      data: newUser
+      data: safeUser
     }, { status: 201 });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
@@ -161,15 +129,13 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'Target userId is required' }, { status: 400 });
     }
 
-    const targetUserIdx = localUsersCache.findIndex(u => u.id === userId);
-    const targetUser = targetUserIdx !== -1 ? localUsersCache[targetUserIdx] : null;
-
+    const targetUser = dataStore.getUserById(userId);
     if (!targetUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     // Protect Master Super Admin
-    if (targetUser.email === 'admin@kapateconsultancy.in') {
+    if (targetUser.email === 'admin@kapateconsultancy.in' || targetUser.email === 'shon@kapateconsultancy.in') {
       if (action === 'suspend' || action === 'lock' || status === 'SUSPENDED' || status === 'LOCKED') {
         return NextResponse.json({
           error: 'Critical Security Violation: The Master Super Admin account cannot be suspended or locked.'
@@ -177,67 +143,57 @@ export async function PUT(req: NextRequest) {
       }
     }
 
+    const patch: Partial<User & { passwordHash?: string }> = {};
     let auditAction = 'USER_UPDATE';
     let auditDetails = `Updated user ${targetUser.email}`;
 
     if (action === 'reset_password') {
       const pwdToSet = newPassword || 'Kapate@Reset2026!';
-      targetUser.passwordHash = hashPassword(pwdToSet);
-      targetUser.failedLogins = 0;
-      targetUser.lockedUntil = null;
-      targetUser.status = 'ACTIVE';
+      patch.passwordHash = hashPassword(pwdToSet);
+      patch.failedLogins = 0;
+      patch.lockedUntil = null;
+      patch.status = 'ACTIVE';
       auditAction = 'PASSWORD_RESET';
       auditDetails = `Reset administrative credentials for ${targetUser.email}`;
     } else if (action === 'lock') {
-      targetUser.status = 'LOCKED';
-      targetUser.lockedUntil = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+      patch.status = 'LOCKED';
+      patch.lockedUntil = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
       auditAction = 'USER_LOCK';
       auditDetails = `Manually locked enterprise account for ${targetUser.email}`;
     } else if (action === 'unlock') {
-      targetUser.status = 'ACTIVE';
-      targetUser.failedLogins = 0;
-      targetUser.lockedUntil = null;
+      patch.status = 'ACTIVE';
+      patch.failedLogins = 0;
+      patch.lockedUntil = null;
       auditAction = 'USER_UNLOCK';
       auditDetails = `Unlocked enterprise account for ${targetUser.email}`;
     } else if (action === 'toggle_status') {
-      targetUser.status = status || (targetUser.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE');
-      auditAction = targetUser.status === 'ACTIVE' ? 'USER_ACTIVATE' : 'USER_SUSPEND';
-      auditDetails = `Changed account status to ${targetUser.status} for ${targetUser.email}`;
+      patch.status = status || (targetUser.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE');
+      auditAction = patch.status === 'ACTIVE' ? 'USER_ACTIVATE' : 'USER_SUSPEND';
+      auditDetails = `Changed account status to ${patch.status} for ${targetUser.email}`;
     } else if (updates) {
-      Object.assign(targetUser, updates);
-      targetUser.updatedAt = new Date().toISOString();
+      Object.assign(patch, updates);
       auditAction = 'USER_EDIT';
       auditDetails = `Modified profile fields for ${targetUser.email}`;
     }
 
-    localUsersCache[targetUserIdx] = { ...targetUser };
+    const updated = dataStore.updateUser(userId, patch);
 
-    try {
-      const { db } = await getDatabase();
-      await db.collection('users').updateOne({ id: userId }, { $set: localUsersCache[targetUserIdx] });
-      await db.collection('audit_logs').insertOne({
-        id: `aud-${Date.now()}`,
-        timestamp: new Date().toISOString(),
-        actorId: auth.user.userId,
-        actorName: auth.user.name,
-        actorEmail: auth.user.email,
-        actorRole: auth.user.role,
-        action: auditAction,
-        resource: 'User Management',
-        targetId: targetUser.id,
-        targetLabel: `${targetUser.name} (${targetUser.email})`,
-        severity: auditAction === 'USER_LOCK' || auditAction === 'USER_SUSPEND' ? 'warning' : 'info',
-        details: auditDetails,
-        ipAddress: req.headers.get('x-forwarded-for') || '127.0.0.1',
-      });
-    } catch {
-      // Fallback
-    }
+    dataStore.addAuditLog({
+      actor: auth.user.name,
+      actorKapateId: auth.user.kapateId,
+      action: auditAction,
+      module: 'security',
+      targetResource: `users/${userId}`,
+      targetUser: targetUser.email,
+      result: 'SUCCESS',
+      reason: auditDetails
+    });
 
+    const { passwordHash: _, ...safeUser } = updated || targetUser;
     return NextResponse.json({
       success: true,
       message: `User ${targetUser.name} updated successfully.`,
-      data: targetUser
+      data: safeUser
     });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
@@ -251,50 +207,38 @@ export async function DELETE(req: NextRequest) {
   }
 
   const { searchParams } = new URL(req.url);
-  const userId = searchParams.get('userId');
+  const targetId = searchParams.get('id');
 
-  if (!userId) {
-    return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+  if (!targetId) {
+    return NextResponse.json({ error: 'Target user ID is required' }, { status: 400 });
   }
 
-  const targetUser = localUsersCache.find(u => u.id === userId);
+  const targetUser = dataStore.getUserById(targetId);
   if (!targetUser) {
-    return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    return NextResponse.json({ error: 'Target user not found' }, { status: 404 });
   }
 
-  // Master Super Admin account cannot be deleted
   if (targetUser.email === 'admin@kapateconsultancy.in' || targetUser.email === 'shon@kapateconsultancy.in') {
     return NextResponse.json({
-      error: 'Security Policy: Primary Super Admin accounts are immutable and cannot be deleted.'
+      error: 'CRITICAL: Root Master Administrator account cannot be deleted.'
     }, { status: 403 });
   }
 
-  localUsersCache = localUsersCache.filter(u => u.id !== userId);
+  dataStore.updateUser(targetId, { status: 'SUSPENDED' });
 
-  try {
-    const { db } = await getDatabase();
-    await db.collection('users').deleteOne({ id: userId });
-    await db.collection('audit_logs').insertOne({
-      id: `aud-${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      actorId: auth.user.userId,
-      actorName: auth.user.name,
-      actorEmail: auth.user.email,
-      actorRole: auth.user.role,
-      action: 'USER_DELETE',
-      resource: 'User Management',
-      targetId: targetUser.id,
-      targetLabel: `${targetUser.name} (${targetUser.email})`,
-      severity: 'warning',
-      details: `Permanently deleted user account ${targetUser.email} (${targetUser.kapateId}).`,
-      ipAddress: req.headers.get('x-forwarded-for') || '127.0.0.1',
-    });
-  } catch {
-    // Fallback
-  }
+  dataStore.addAuditLog({
+    actor: auth.user.name,
+    actorKapateId: auth.user.kapateId,
+    action: 'USER_DELETED',
+    module: 'security',
+    targetResource: `users/${targetId}`,
+    targetUser: targetUser.email,
+    result: 'SUCCESS',
+    reason: 'Super Admin deactivated enterprise user account'
+  });
 
   return NextResponse.json({
     success: true,
-    message: `User ${targetUser.name} deleted successfully.`
+    message: `User ${targetUser.name} deactivated successfully.`
   });
 }
