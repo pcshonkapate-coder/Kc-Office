@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "lastUpdated": "2026-09-19T12:05:09.942Z",
+  "lastUpdated": "2026-09-19T12:10:18.621Z",
   "users": [
     {
       "id": "usr-admin",
@@ -132,11 +132,12 @@
         "Next.js"
       ],
       "joinDate": "2026-09-19",
-      "status": "Active",
+      "status": "Inactive",
       "projectsCount": 0,
       "utilization": 100,
       "kapateId": "KAP-EMP-000003",
-      "internalEmail": "vikram.malhotra@kapateconsultancy.in"
+      "internalEmail": "vikram.malhotra@kapateconsultancy.in",
+      "deletedAt": "2026-09-19T12:10:12.524Z"
     },
     {
       "id": "emp-1789817649841-735",
@@ -153,11 +154,12 @@
         "Enterprise Architecture"
       ],
       "joinDate": "2026-09-19",
-      "status": "Active",
+      "status": "Inactive",
       "projectsCount": 0,
       "utilization": 100,
       "kapateId": "KAP-EMP-000002",
-      "internalEmail": "aarav.deshmukh.9825@kapateconsultancy.in"
+      "internalEmail": "aarav.deshmukh.9825@kapateconsultancy.in",
+      "deletedAt": "2026-09-19T12:10:18.617Z"
     },
     {
       "id": "EMP-001",
@@ -250,6 +252,38 @@
     }
   ],
   "audit_logs": [
+    {
+      "id": "aud-1789819818620-849",
+      "timestamp": "2026-09-19 12:10:18",
+      "actor": "Shon Kapate",
+      "actorKapateId": "KAP-EMP-000001",
+      "action": "EMPLOYEE_DELETED",
+      "module": "workforce",
+      "targetResource": "employees/KAP-EMP-000002",
+      "targetUser": "System",
+      "previousValue": "",
+      "newValue": "",
+      "ipAddress": "127.0.0.1",
+      "result": "SUCCESS",
+      "requestId": "req-mu8cianx",
+      "reason": "Admin soft-deleted employee record"
+    },
+    {
+      "id": "aud-1789819812528-996",
+      "timestamp": "2026-09-19 12:10:12",
+      "actor": "Shon Kapate",
+      "actorKapateId": "KAP-EMP-000001",
+      "action": "EMPLOYEE_DELETED",
+      "module": "workforce",
+      "targetResource": "employees/KAP-EMP-000003",
+      "targetUser": "System",
+      "previousValue": "",
+      "newValue": "",
+      "ipAddress": "127.0.0.1",
+      "result": "SUCCESS",
+      "requestId": "req-mu8ci5yo",
+      "reason": "Admin soft-deleted employee record"
+    },
     {
       "id": "aud-1789819509942-381",
       "timestamp": "2026-09-19 12:05:09",

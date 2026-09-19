@@ -1259,6 +1259,9 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
         internalEmail
       };
       set((state) => ({ employees: [newEmployee, ...state.employees] }));
+      get().addEmployee(newEmployee).catch((err) => {
+        console.warn('[approveRegistrationRequest] Database persistence notice:', err);
+      });
     }
 
     const newEvent: SecurityEvent = {
