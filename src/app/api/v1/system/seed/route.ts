@@ -11,12 +11,12 @@ export async function POST(req: NextRequest) {
   const { db } = await getDatabase();
 
   // Create default admin user if not exists
-  const existingAdmin = await db.collection('users').findOne({ email: 'admin@kapate.internal' });
+  const existingAdmin = await db.collection('users').findOne({ email: 'admin@kapateconsultancy.in' });
   if (!existingAdmin) {
     await db.collection('users').insertOne({
       id: 'usr-admin-1',
       name: 'Executive Lead',
-      email: 'admin@kapate.internal',
+      email: 'admin@kapateconsultancy.in',
       role: 'SUPER_ADMIN',
       department: 'Executive Leadership',
       designation: 'Managing Director & Principal Architect',

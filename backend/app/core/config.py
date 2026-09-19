@@ -55,8 +55,8 @@ class Settings(BaseSettings):
         raise ValueError(v)
 
     # Superadmin Seed Defaults
-    FIRST_SUPERADMIN_EMAIL: str = "admin@kapateconsultancy.com"
-    FIRST_SUPERADMIN_PASSWORD: str = "KapateOS@2026!"
+    FIRST_SUPERADMIN_EMAIL: str = "admin@kapateconsultancy.in"
+    FIRST_SUPERADMIN_PASSWORD: str = "Admin@KC8421174957"
     FIRST_SUPERADMIN_NAME: str = "Kapate Master Admin"
 
     # Real-Time SMTP Email Dispatch
@@ -67,7 +67,7 @@ class Settings(BaseSettings):
     SMTP_TLS: bool = True
     SMTP_SSL: bool = False
     SMTP_TIMEOUT: int = 10
-    EMAILS_FROM_EMAIL: str = "security@kapateconsultancy.com"
+    EMAILS_FROM_EMAIL: str = "security@kapateconsultancy.in"
     EMAILS_FROM_NAME: str = "Kapate OS Security"
 
     # User Onboarding & OTP Settings

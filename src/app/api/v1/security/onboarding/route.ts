@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
     const token = `kc-tok-${Math.random().toString(36).substr(2, 9)}-${Date.now().toString(36)}`;
     const prefix = employmentType === 'INTERN' ? 'KC-INT' : employmentType === 'FREELANCER' ? 'KC-FRL' : 'KC-EMP';
     const kapateId = `${prefix}-${Math.floor(100 + Math.random() * 900)}`;
-    const internalEmail = `${fullName.toLowerCase().replace(/\s+/g, '.')}@kapate.internal`;
+    const internalEmail = `${fullName.toLowerCase().replace(/\s+/g, '.')}@kapateconsultancy.in`;
 
     const newInv: OnboardingInvitation = {
       id: `inv-${Date.now()}`,

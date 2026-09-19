@@ -20,8 +20,8 @@ Production environments must provide configuration through environment variables
 | `REFRESH_TOKEN_EXPIRE_DAYS` | Integer | Refresh token TTL in days | `7` |
 | `DATABASE_URL` | String | PostgreSQL database connection string | `postgresql://kapate_admin:<secret_pass>@db.internal:5432/kapate_os_prod` |
 | `BACKEND_CORS_ORIGINS` | JSON Array | Whitelisted origins for API access | `["https://os.kapateconsultancy.com"]` |
-| `FIRST_SUPERADMIN_EMAIL` | String | Initial superadmin user | `admin@kapateconsultancy.com` |
-| `FIRST_SUPERADMIN_PASSWORD` | String | Initial superadmin password | `SecureProductionPassword2026!` |
+| `FIRST_SUPERADMIN_EMAIL` | String | Initial superadmin user | `admin@kapateconsultancy.in` |
+| `FIRST_SUPERADMIN_PASSWORD` | String | Initial superadmin password | `Admin@KC8421174957` |
 
 > [!CAUTION]
 > Never commit production secrets or `SECRET_KEY` values to version control. Set `DEBUG=false` in production so FastAPI suppresses unhandled exception stack traces and returns sanitized JSON error payloads with tracking `request_id`s.

@@ -130,7 +130,7 @@ export function getAuthUser(req: Request): AuthPayload | null {
   return {
     userId: 'usr-admin',
     name: 'Shon Kapate',
-    email: 'shon@kapateconsultancy.com',
+    email: 'shon@kapateconsultancy.in',
     role: 'SUPER_ADMIN',
     designation: 'Founder & CEO',
     department: 'Management',

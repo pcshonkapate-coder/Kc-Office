@@ -461,7 +461,7 @@ pm2 startup"""
     <b>Approved By:</b> Shon Kapate, Founder & CEO<br/>
     <b>Organization:</b> Kapate Consultancy (AI, ML & Enterprise Software Engineering)<br/>
     <b>Document Status:</b> Official Production Baseline (v1.0)<br/>
-    <b>Support & Incident Escalation:</b> support@kapateconsultancy.com
+    <b>Support & Incident Escalation:</b> support@kapateconsultancy.in
     """
     story.append(Paragraph(signoff_text, meta_style))
 

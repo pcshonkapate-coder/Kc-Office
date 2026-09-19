@@ -34,7 +34,7 @@ export async function POST(req: Request) {
 
     const senderRecipient: EmailRecipient = {
       name: auth.user.name,
-      email: senderAccountEmail || auth.user.email || 'shon@kapateconsultancy.com',
+      email: senderAccountEmail || auth.user.email || 'shon@kapateconsultancy.in',
       department: auth.user.department,
       type: 'TO'
     };

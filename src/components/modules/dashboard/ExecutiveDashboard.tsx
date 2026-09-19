@@ -217,7 +217,7 @@ export const ExecutiveDashboard: React.FC = () => {
               <button
                 onClick={() => {
                   setMailComposeOpen(true, {
-                    to: [{ name: 'Shon Kapate', email: 'shon@kapateconsultancy.com' }],
+                    to: [{ name: 'Shon Kapate', email: 'shon@kapateconsultancy.in' }],
                     subject: 'Internship Progress & Technical Queries'
                   } as any);
                 }}

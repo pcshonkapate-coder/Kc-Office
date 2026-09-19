@@ -9,7 +9,7 @@ export type UserRole =
   | 'CLIENT' 
   | 'FINANCE';
 
-export type AccountStatus = 'INVITED' | 'PENDING' | 'ACTIVE' | 'SUSPENDED' | 'DISABLED' | 'TERMINATED';
+export type AccountStatus = 'INVITED' | 'PENDING' | 'ACTIVE' | 'SUSPENDED' | 'DISABLED' | 'TERMINATED' | 'LOCKED';
 
 export interface User {
   id: string;
@@ -22,6 +22,19 @@ export interface User {
   kapateId?: string;
   internalEmail?: string;
   status?: AccountStatus;
+  phone?: string;
+  manager?: string;
+  skills?: string[];
+  assignedProjects?: string[];
+  customPermissions?: string[];
+  failedLogins?: number;
+  lockedUntil?: string | null;
+  lastLoginAt?: string;
+  mfaEnabled?: boolean;
+  passwordHash?: string;
+  created?: string;
+  updatedAt?: string;
+  deletedAt?: string | null;
 }
 
 export type LeadStatus = 'New Lead' | 'Qualified' | 'Discovery Booked' | 'Discovery Completed' | 'Proposal Sent' | 'Unqualified' | 'Lost';
@@ -516,5 +529,168 @@ export interface SecurityEvent {
   severity: 'info' | 'warning' | 'alert' | 'success';
   ipAddress?: string;
 }
+
+// ==================== SUPER ADMIN & ENTERPRISE GOVERNANCE ====================
+
+export type PermissionAction = 'view' | 'create' | 'edit' | 'delete' | 'approve' | 'export';
+
+export type PermissionModule = 
+  | 'crm' 
+  | 'projects' 
+  | 'finance' 
+  | 'workforce' 
+  | 'interns' 
+  | 'mail' 
+  | 'security' 
+  | 'documents'
+  | 'system';
+
+export interface AuditLogEntry {
+  id: string;
+  timestamp: string;
+  actor: string;
+  actorKapateId?: string;
+  actorName?: string;
+  actorEmail?: string;
+  actorRole?: string;
+  action: string;
+  module: string;
+  resource?: string;
+  targetResource?: string;
+  targetUser?: string;
+  targetLabel?: string;
+  details?: string;
+  severity?: 'info' | 'warning' | 'critical' | 'alert';
+  previousValue?: string | null;
+  newValue?: string | null;
+  ipAddress?: string;
+  userAgent?: string;
+  result: 'SUCCESS' | 'FAILURE' | 'BLOCKED';
+  requestId?: string;
+  reason?: string;
+  metadata?: Record<string, any>;
+}
+
+export interface SecuritySession {
+  id: string;
+  userId: string;
+  userName: string;
+  email: string;
+  userEmail?: string;
+  role: UserRole;
+  ipAddress: string;
+  userAgent: string;
+  browser?: string;
+  device?: string;
+  location?: string;
+  loginAt: string;
+  lastActiveAt: string;
+  isImpersonated: boolean;
+  impersonatedBy?: string;
+  status: 'ACTIVE' | 'EXPIRED' | 'REVOKED';
+}
+
+export interface SystemSettings {
+  organization: {
+    companyName: string;
+    domain: string;
+    supportEmail: string;
+    hqAddress: string;
+    gstin: string;
+    fiscalYearStart: string;
+    currency: string;
+  };
+  authentication: {
+    sessionDurationHours: number;
+    maxLoginAttempts: number;
+    accountLockoutMinutes: number;
+    mfaEnforced: boolean;
+    requirePasswordResetDays: number;
+    minPasswordLength: number;
+  };
+  email: {
+    smtpHost: string;
+    smtpPort: number;
+    senderEmail: string;
+    senderName: string;
+    notificationsEnabled: boolean;
+  };
+  finance: {
+    defaultTaxRate: number;
+    invoicePrefix: string;
+    paymentTermsDays: number;
+    gstThresholdAmount: number;
+  };
+  notifications: {
+    taskAssigned: boolean;
+    invoiceOverdue: boolean;
+    securityAlerts: boolean;
+    dailyDigest: boolean;
+  };
+  ai: {
+    enabled: boolean;
+    provider: 'gemini' | 'openai' | 'anthropic';
+    model: string;
+    enableSummarizer: boolean;
+    enableSmartReply: boolean;
+    enableEstimates: boolean;
+    monthlyTokenLimit: number;
+    tokensUsedThisMonth: number;
+  };
+  storage: {
+    maxUploadSizeMB: number;
+    allowedTypes: string[];
+    backupRetentionDays: number;
+    autoBackupEnabled: boolean;
+  };
+}
+
+export interface ComponentHealth {
+  name: string;
+  status: 'HEALTHY' | 'DEGRADED' | 'DOWN';
+  latencyMs: number;
+  message?: string;
+  lastChecked: string;
+}
+
+export interface SystemHealthStatus {
+  overall: 'HEALTHY' | 'DEGRADED' | 'DOWN';
+  uptimeSeconds: number;
+  lastChecked: string;
+  components: ComponentHealth[];
+  databaseStats: {
+    type: string;
+    connectionsActive: number;
+    pingStatus: string;
+    collectionsCount: number;
+  };
+  memoryUsage: {
+    heapUsedMB: number;
+    heapTotalMB: number;
+  };
+}
+
+export interface SuperAdminStats {
+  totalUsers: number;
+  activeUsers: number;
+  suspendedUsers: number;
+  employeesCount: number;
+  internsCount: number;
+  clientsCount: number;
+  activeProjects: number;
+  completedProjects: number;
+  openTasks: number;
+  overdueTasks: number;
+  activeLeads: number;
+  wonDeals: number;
+  totalRevenue: number;
+  outstandingInvoices: number;
+  overdueInvoices: number;
+  totalExpenses: number;
+  systemAlertsCount: number;
+  activeSessionsCount: number;
+  healthStatus: 'HEALTHY' | 'DEGRADED' | 'DOWN';
+}
+
 
 

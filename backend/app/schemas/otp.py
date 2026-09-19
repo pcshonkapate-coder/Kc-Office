@@ -11,7 +11,7 @@ class OTPPurpose(str, Enum):
 
 
 class OTPRequestPayload(BaseModel):
-    identifier: EmailStr = Field(..., description="Employee work email address", example="admin@kapateconsultancy.com")
+    identifier: EmailStr = Field(..., description="Employee work email address", example="admin@kapateconsultancy.in")
     purpose: OTPPurpose = Field(default=OTPPurpose.LOGIN, description="Purpose of OTP issuance")
 
 
@@ -43,11 +43,11 @@ class OTPRequestResponse(BaseModel):
 
 
 class OTPVerifyPayload(BaseModel):
-    identifier: EmailStr = Field(..., description="Employee work email address", example="admin@kapateconsultancy.com")
+    identifier: EmailStr = Field(..., description="Employee work email address", example="admin@kapateconsultancy.in")
     otp_code: str = Field(..., min_length=6, max_length=6, pattern=r"^\d{6}$", description="6-digit OTP verification code", example="123456")
     purpose: OTPPurpose = Field(default=OTPPurpose.LOGIN, description="Purpose of OTP verification")
 
 
 class OTPResendPayload(BaseModel):
-    identifier: EmailStr = Field(..., description="Employee work email address", example="admin@kapateconsultancy.com")
+    identifier: EmailStr = Field(..., description="Employee work email address", example="admin@kapateconsultancy.in")
     purpose: OTPPurpose = Field(default=OTPPurpose.LOGIN, description="Purpose of OTP resend")

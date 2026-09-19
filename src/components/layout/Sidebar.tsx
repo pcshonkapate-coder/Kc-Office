@@ -5,7 +5,7 @@ import { useDemoStore } from '../../store/demoStore';
 import {
   LayoutDashboard, Users, Building2, UserCheck, DollarSign,
   FolderKanban, CheckSquare, Clock, Users2, FileText, Bot,
-  TrendingUp, Settings, Shield, ChevronDown, ChevronRight,
+  TrendingUp, Settings, Shield, ShieldCheck, ChevronDown, ChevronRight,
   ChevronLeft, Calendar, Award, Receipt, PieChart, Globe, Mail
 } from 'lucide-react';
 
@@ -397,6 +397,28 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => 
                   {!collapsed && <span>Analytics & BI</span>}
                 </button>
               )}
+              {/* Super Admin Tier 0 Control Center */}
+              {(currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'ADMIN') && (
+                <button
+                  onClick={() => setActiveTab('super-admin')}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                    activeTab === 'super-admin'
+                      ? 'bg-gradient-to-r from-indigo-900 to-slate-900 text-white shadow-md border border-indigo-500/40'
+                      : 'text-indigo-700 bg-indigo-50/70 hover:bg-indigo-100 border border-indigo-200/80'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <ShieldCheck className="w-4 h-4 text-indigo-600 shrink-0" />
+                    {!collapsed && <span>Super Admin Center</span>}
+                  </div>
+                  {!collapsed && (
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-indigo-600 text-white">
+                      ROOT
+                    </span>
+                  )}
+                </button>
+              )}
+
               {isAdmin && (
                 <button
                   onClick={() => setActiveTab('security')}

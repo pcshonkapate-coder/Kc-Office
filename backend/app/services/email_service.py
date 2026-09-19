@@ -62,7 +62,7 @@ class EmailService:
 
               <!-- Security Notice -->
               <p style="margin: 24px 0 0 0; font-size: 12px; color: #64748b; line-height: 1.5;">
-                If you did not request this security code, your account may be under observation. Please notify <strong>security@kapateconsultancy.com</strong> immediately.
+                If you did not request this security code, your account may be under observation. Please notify <strong>security@kapateconsultancy.in</strong> immediately.
               </p>
             </td>
           </tr>

@@ -67,7 +67,7 @@ export const MailDetail: React.FC = () => {
   const latestMessage = activeThread.messages[activeThread.messages.length - 1] || {
     id: 'msg-fallback',
     threadId: activeThread.id,
-    from: activeThread.participants[0] || { name: 'Sender', email: 'sender@kapateconsultancy.com' },
+    from: activeThread.participants[0] || { name: 'Sender', email: 'sender@kapateconsultancy.in' },
     to: [],
     subject: activeThread.subject,
     body: activeThread.snippet,
@@ -132,7 +132,7 @@ export const MailDetail: React.FC = () => {
 
     const currentSenderEmail = activeEmailAccountEmail && activeEmailAccountEmail !== 'ALL' 
       ? activeEmailAccountEmail 
-      : (currentUser.email || 'shon@kapateconsultancy.com');
+      : (currentUser.email || 'shon@kapateconsultancy.in');
 
     sendEmail({
       threadId: activeThread.id,
@@ -513,7 +513,7 @@ export const MailDetail: React.FC = () => {
                 <label className="text-[11px] font-bold text-slate-600 block mb-1">Forward To</label>
                 <input
                   type="email"
-                  placeholder="recipient@kapateconsultancy.com"
+                  placeholder="recipient@kapateconsultancy.in"
                   value={forwardRecipientEmail}
                   onChange={(e) => setForwardRecipientEmail(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-blue-600"
@@ -536,7 +536,7 @@ export const MailDetail: React.FC = () => {
 
               <div className="flex items-center justify-between pt-1">
                 <div className="text-[11px] text-slate-400 font-mono">
-                  Sending from: <strong>{activeEmailAccountEmail !== 'ALL' ? activeEmailAccountEmail : (currentUser.email || 'shon@kapateconsultancy.com')}</strong>
+                  Sending from: <strong>{activeEmailAccountEmail !== 'ALL' ? activeEmailAccountEmail : (currentUser.email || 'shon@kapateconsultancy.in')}</strong>
                 </div>
 
                 <button

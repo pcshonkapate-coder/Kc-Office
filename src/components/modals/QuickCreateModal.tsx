@@ -53,7 +53,7 @@ export const QuickCreateModal: React.FC = () => {
       const skillsArray = empSkills.split(',').map((s) => s.trim()).filter(Boolean);
       addEmployee({
         name: empName || 'New Team Member',
-        email: empEmail || `${(empName || 'employee').toLowerCase().replace(/\s+/g, '.')}@kapateconsultancy.com`,
+        email: empEmail || `${(empName || 'employee').toLowerCase().replace(/\s+/g, '.')}@kapateconsultancy.in`,
         role: empRole,
         department: empDepartment,
         phone: '+91 98765 43210',
@@ -188,7 +188,7 @@ export const QuickCreateModal: React.FC = () => {
                     required
                     value={empEmail}
                     onChange={(e) => setEmpEmail(e.target.value)}
-                    placeholder="vikram@kapateconsultancy.com"
+                    placeholder="vikram@kapateconsultancy.in"
                     className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600"
                   />
                 </div>

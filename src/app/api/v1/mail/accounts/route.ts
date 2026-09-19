@@ -17,7 +17,7 @@ export async function GET(req: Request) {
         {
           id: 'acc-shon',
           userId: 'usr-admin',
-          email: 'shon@kapateconsultancy.com',
+          email: 'shon@kapateconsultancy.in',
           name: 'Shon Kapate',
           designation: 'Founder & Technology Consultant',
           department: 'Executive Leadership',
@@ -29,7 +29,7 @@ export async function GET(req: Request) {
         {
           id: 'acc-dept-admin',
           userId: 'dept-admin',
-          email: 'admin@kapateconsultancy.com',
+          email: 'admin@kapateconsultancy.in',
           name: 'Executive Office Mailbox',
           designation: 'System & Corporate Communications',
           department: 'Operations',
@@ -42,7 +42,7 @@ export async function GET(req: Request) {
         {
           id: 'acc-dept-hr',
           userId: 'dept-hr',
-          email: 'hr@kapateconsultancy.com',
+          email: 'hr@kapateconsultancy.in',
           name: 'HR Operations Desk',
           designation: 'Shared Department Mailbox',
           department: 'Human Resources',
@@ -55,7 +55,7 @@ export async function GET(req: Request) {
         {
           id: 'acc-dept-finance',
           userId: 'dept-fin',
-          email: 'finance@kapateconsultancy.com',
+          email: 'finance@kapateconsultancy.in',
           name: 'Finance & Accounts Desk',
           designation: 'Shared Billing Mailbox',
           department: 'Finance',
@@ -68,7 +68,7 @@ export async function GET(req: Request) {
         {
           id: 'acc-dept-sales',
           userId: 'dept-sales',
-          email: 'sales@kapateconsultancy.com',
+          email: 'sales@kapateconsultancy.in',
           name: 'Enterprise Sales Desk',
           designation: 'Shared CRM Pipeline Mailbox',
           department: 'Business Development',

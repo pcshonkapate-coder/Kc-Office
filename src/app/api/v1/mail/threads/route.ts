@@ -9,7 +9,7 @@ export async function GET(req: Request) {
 
   try {
     const url = new URL(req.url);
-    const mailbox = url.searchParams.get('mailbox'); // e.g. 'shon@kapateconsultancy.com' or 'ALL'
+    const mailbox = url.searchParams.get('mailbox'); // e.g. 'shon@kapateconsultancy.in' or 'ALL'
     const folder = url.searchParams.get('folder'); // 'INBOX', 'SENT', 'DRAFTS', 'TRASH', 'SPAM', 'ARCHIVE', 'STARRED', 'IMPORTANT'
     const label = url.searchParams.get('label');
     const query = url.searchParams.get('q');

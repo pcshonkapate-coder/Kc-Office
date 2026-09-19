@@ -32,7 +32,7 @@ def clean_database():
             pass
 
     # Clean non-admin users if desired, or keep the initial superadmin user
-    cursor.execute("DELETE FROM users WHERE email != 'admin@kapateconsultancy.com' AND email != 'shon@kapateconsultancy.com';")
+    cursor.execute("DELETE FROM users WHERE email != 'admin@kapateconsultancy.in' AND email != 'shon@kapateconsultancy.in';")
 
     conn.commit()
     conn.close()

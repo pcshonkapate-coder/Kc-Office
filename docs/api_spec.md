@@ -57,7 +57,7 @@ Authorization: Bearer <JWT_ACCESS_TOKEN>
 ### B. Identity & Authentication
 - `POST /api/v1/auth/login`
   - **Auth**: None
-  - **Body**: `{ "email": "user@kapateconsultancy.com", "password": "..." }`
+  - **Body**: `{ "email": "user@kapateconsultancy.in", "password": "..." }`
   - **Returns**: JWT access token, refresh token, expiry, and user summary.
 - `POST /api/v1/auth/refresh`
   - **Auth**: Refresh Token

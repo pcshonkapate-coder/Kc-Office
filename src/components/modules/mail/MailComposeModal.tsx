@@ -26,7 +26,7 @@ export const MailComposeModal: React.FC = () => {
 
   const defaultSender = activeEmailAccountEmail && activeEmailAccountEmail !== 'ALL'
     ? activeEmailAccountEmail
-    : (currentUser.email || 'shon@kapateconsultancy.com');
+    : (currentUser.email || 'shon@kapateconsultancy.in');
 
   const [fromEmail, setFromEmail] = useState(defaultSender);
   const [toInput, setToInput] = useState('');

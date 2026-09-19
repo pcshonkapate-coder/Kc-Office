@@ -21,6 +21,7 @@ export const TopBar: React.FC = () => {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const roleColors: Record<string, string> = {
+    SUPER_ADMIN: 'bg-purple-100 text-purple-800 border-purple-300 font-bold',
     ADMIN: 'bg-slate-100 text-slate-800 border-slate-300',
     EMPLOYEE: 'bg-blue-50 text-blue-700 border-blue-200',
     INTERN: 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -70,6 +71,17 @@ export const TopBar: React.FC = () => {
           <Globe className="w-3.5 h-3.5 text-blue-600" />
           <span>Public Website</span>
         </a>
+
+        {/* SUPER ADMIN CONSOLE BUTTON */}
+        {(currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'ADMIN') && (
+          <button
+            onClick={() => useDemoStore.getState().setActiveTab('super-admin')}
+            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs border border-indigo-200 transition-all shadow-2xs"
+          >
+            <Shield className="w-3.5 h-3.5 text-indigo-600" />
+            <span>Super Admin</span>
+          </button>
+        )}
 
         {/* QUICK CREATE (+) BUTTON */}
         <button
@@ -197,6 +209,18 @@ export const TopBar: React.FC = () => {
                   {currentUser.role === 'EMPLOYEE' && <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />}
                 </button>
               </div>
+
+              {(currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'ADMIN') && (
+                <button
+                  onClick={() => {
+                    useDemoStore.getState().setActiveTab('super-admin');
+                    setShowUserMenu(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors font-bold"
+                >
+                  <Shield className="w-4 h-4 text-indigo-600" /> Super Admin Center
+                </button>
+              )}
 
               <a
                 href={websiteUrl}

@@ -554,7 +554,7 @@ export const SecurityDashboard: React.FC = () => {
 
               <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 text-[11px] space-y-1">
                 <div className="font-bold flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5 text-blue-600" /> Automated Credential Generation</div>
-                <div>System will generate an atomic Kapate ID and corporate email <strong className="font-mono">{selectedRequest.fullName.split(' ')[0].toLowerCase()}@kapateconsultancy.com</strong>.</div>
+                <div>System will generate an atomic Kapate ID and corporate email <strong className="font-mono">{selectedRequest.fullName.split(' ')[0].toLowerCase()}@kapateconsultancy.in</strong>.</div>
               </div>
 
               <div className="pt-2 flex justify-end gap-2">

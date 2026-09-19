@@ -25,11 +25,16 @@ import { AnalyticsModule } from '../modules/analytics/AnalyticsModule';
 import { SettingsModule } from '../modules/settings/SettingsModule';
 import { MailModule } from '../modules/mail/MailModule';
 import { SecurityDashboard } from '../modules/security/SecurityDashboard';
+import { SuperAdminModule } from '../modules/super-admin/SuperAdminModule';
 import { OnboardPersonnelModal } from '../modals/OnboardPersonnelModal';
+import { ShieldAlert, LogOut, Shield } from 'lucide-react';
 
 export const AppShell: React.FC = () => {
   const activeTab = useDemoStore((state) => state.activeTab);
   const currentUser = useDemoStore((state) => state.currentUser);
+  const impersonatedOriginalUser = useDemoStore((state) => state.impersonatedOriginalUser);
+  const impersonationReason = useDemoStore((state) => state.impersonationReason);
+  const exitImpersonation = useDemoStore((state) => state.exitImpersonation);
   const [collapsed, setCollapsed] = useState(false);
 
   const renderModule = () => {
@@ -90,6 +95,9 @@ export const AppShell: React.FC = () => {
       case 'security':
       case 'identity':
         return <SecurityDashboard />;
+      case 'super-admin':
+      case 'admin-control':
+        return <SuperAdminModule />;
       default:
         return <ExecutiveDashboard />;
     }
@@ -97,6 +105,43 @@ export const AppShell: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col font-sans selection:bg-blue-600 selection:text-white">
+      {/* Persistent Super Admin Impersonation Banner */}
+      {impersonatedOriginalUser && (
+        <div className="bg-gradient-to-r from-amber-600 via-amber-500 to-orange-600 text-white px-4 py-2.5 text-xs shadow-md sticky top-0 z-50 flex items-center justify-between border-b border-amber-400">
+          <div className="flex items-center gap-2.5 flex-1 min-w-0">
+            <span className="p-1.5 rounded-lg bg-black/20 shrink-0">
+              <ShieldAlert className="w-4 h-4 text-white animate-pulse" />
+            </span>
+            <div className="truncate">
+              <span className="font-black uppercase tracking-wider text-[11px] bg-black/25 px-2 py-0.5 rounded-md mr-2">
+                SUPER ADMIN IMPERSONATION ACTIVE
+              </span>
+              <span className="font-semibold">
+                Operating as: <strong className="underline decoration-white/50">{currentUser.name}</strong> ({currentUser.email} • {currentUser.role})
+              </span>
+              {impersonationReason && (
+                <span className="text-amber-100 ml-2 hidden sm:inline text-[11px] italic">
+                  — Reason: &ldquo;{impersonationReason}&rdquo;
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 shrink-0 ml-4">
+            <span className="text-[11px] text-amber-100 hidden md:inline">
+              Primary Root: {impersonatedOriginalUser.name}
+            </span>
+            <button
+              onClick={() => exitImpersonation()}
+              className="px-3 py-1.5 rounded-lg bg-black/30 hover:bg-black/40 text-white font-bold text-xs flex items-center gap-1.5 border border-white/20 transition-all shadow-xs"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              Exit Impersonation
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-1 relative">
         
         {/* Left Collapsible Navigation Sidebar */}

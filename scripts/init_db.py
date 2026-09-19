@@ -557,13 +557,13 @@ def init_db():
                         db.flush()
                 return u
 
-            u_vikram = create_staff_user("vikram@kapateconsultancy.com", "Vikram", "Nair", "+91 98234 11111", "consultant")
-            u_priya = create_staff_user("priya@kapateconsultancy.com", "Priya", "Sharma", "+91 98234 22222", "engineer")
-            u_karan = create_staff_user("karan@kapateconsultancy.com", "Karan", "Singh", "+91 98234 33333", "engineer")
-            u_divya = create_staff_user("divya@kapateconsultancy.com", "Divya", "Rao", "+91 98234 44444", "consultant")
-            u_sneha = create_staff_user("sneha@kapateconsultancy.com", "Sneha", "Patel", "+91 98234 55555", "engineer")
-            u_rohan = create_staff_user("rohan.intern@kapateconsultancy.com", "Rohan", "Kumar", "+91 77234 11111", "intern")
-            u_aishwarya = create_staff_user("aishwarya.intern@kapateconsultancy.com", "Aishwarya", "Menon", "+91 77234 22222", "intern")
+            u_vikram = create_staff_user("vikram@kapateconsultancy.in", "Vikram", "Nair", "+91 98234 11111", "consultant")
+            u_priya = create_staff_user("priya@kapateconsultancy.in", "Priya", "Sharma", "+91 98234 22222", "engineer")
+            u_karan = create_staff_user("karan@kapateconsultancy.in", "Karan", "Singh", "+91 98234 33333", "engineer")
+            u_divya = create_staff_user("divya@kapateconsultancy.in", "Divya", "Rao", "+91 98234 44444", "consultant")
+            u_sneha = create_staff_user("sneha@kapateconsultancy.in", "Sneha", "Patel", "+91 98234 55555", "engineer")
+            u_rohan = create_staff_user("rohan.intern@kapateconsultancy.in", "Rohan", "Kumar", "+91 77234 11111", "intern")
+            u_aishwarya = create_staff_user("aishwarya.intern@kapateconsultancy.in", "Aishwarya", "Menon", "+91 77234 22222", "intern")
             u_alex = create_staff_user("alex.carter@freelance.com", "Alex", "Carter", "+1 555 123 4567", "freelancer")
 
             if not db.query(Employee).first():

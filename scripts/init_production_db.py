@@ -147,10 +147,10 @@ def init_production_database():
         logger.info(f"Seeded {len(svc_map)} core services.")
 
         # 6. Seed Super Admin User (Production Ready)
-        admin_email = "admin@kapateconsultancy.com"
+        admin_email = "admin@kapateconsultancy.in"
         admin_user = User(
             email=admin_email,
-            hashed_password=get_password_hash("KapateAdmin@2026!"),
+            hashed_password=get_password_hash("Admin@KC8421174957"),
             full_name="Shon Kapate",
             phone="+91 98230 00000",
             is_active=True,

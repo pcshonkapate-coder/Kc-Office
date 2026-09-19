@@ -10,51 +10,51 @@ export const DEMO_USERS: Record<string, User> = {
   ADMIN: {
     id: 'usr-admin',
     name: 'Shon Kapate',
-    email: 'shon@kapateconsultancy.com',
-    role: 'ADMIN',
+    email: 'admin@kapateconsultancy.in',
+    role: 'SUPER_ADMIN',
     designation: 'Founder & CEO / Super Admin',
-    department: 'Management',
+    department: 'Executive Leadership',
     kapateId: 'KAP-EMP-000001',
-    internalEmail: 'shon@kapateconsultancy.com',
+    internalEmail: 'admin@kapateconsultancy.in',
     status: 'ACTIVE'
   },
   PROJECT_MANAGER: {
     id: 'usr-pm',
     name: 'Technical Project Lead',
-    email: 'pm@kapateconsultancy.com',
+    email: 'pm@kapateconsultancy.in',
     role: 'PROJECT_MANAGER',
     designation: 'Technical Lead & Delivery PM',
     department: 'Engineering',
     kapateId: 'KAP-EMP-000002',
-    internalEmail: 'pm@kapateconsultancy.com',
+    internalEmail: 'pm@kapateconsultancy.in',
     status: 'ACTIVE'
   },
   EMPLOYEE: {
     id: 'usr-emp1',
     name: 'Engineering Personnel',
-    email: 'engineer@kapateconsultancy.com',
+    email: 'engineer@kapateconsultancy.in',
     role: 'EMPLOYEE',
     designation: 'Senior Backend Developer',
     department: 'Engineering',
     kapateId: 'KAP-EMP-000003',
-    internalEmail: 'engineer@kapateconsultancy.com',
+    internalEmail: 'engineer@kapateconsultancy.in',
     status: 'ACTIVE'
   },
   INTERN: {
     id: 'usr-intern1',
     name: 'Research Intern',
-    email: 'intern@kapateconsultancy.com',
+    email: 'intern@kapateconsultancy.in',
     role: 'INTERN',
     designation: 'Engineering Solutions Intern',
     department: 'Research',
     kapateId: 'KAP-INT-000001',
-    internalEmail: 'intern@kapateconsultancy.com',
+    internalEmail: 'intern@kapateconsultancy.in',
     status: 'ACTIVE'
   },
   CLIENT: {
     id: 'usr-client1',
     name: 'Enterprise Client',
-    email: 'client@enterprise.com',
+    email: 'client@kapateconsultancy.in',
     role: 'CLIENT',
     designation: 'VP of Technology',
     department: 'Client Representative',
@@ -63,12 +63,12 @@ export const DEMO_USERS: Record<string, User> = {
   FINANCE: {
     id: 'usr-finance',
     name: 'Finance Controller',
-    email: 'finance@kapateconsultancy.com',
+    email: 'finance@kapateconsultancy.in',
     role: 'FINANCE_ADMIN',
     designation: 'Head of Accounts & Financial Operations',
     department: 'Finance',
     kapateId: 'KAP-EMP-000004',
-    internalEmail: 'finance@kapateconsultancy.com',
+    internalEmail: 'finance@kapateconsultancy.in',
     status: 'ACTIVE'
   }
 };
@@ -94,7 +94,7 @@ export const INITIAL_EMPLOYEES: Employee[] = [
   {
     id: 'EMP-001',
     name: 'Shon Kapate',
-    email: 'shon@kapateconsultancy.com',
+    email: 'admin@kapateconsultancy.in',
     role: 'Founder & CEO',
     department: 'Executive Leadership',
     phone: '+91 98230 00000',
@@ -105,7 +105,7 @@ export const INITIAL_EMPLOYEES: Employee[] = [
     projectsCount: 0,
     utilization: 100,
     kapateId: 'KAP-EMP-000001',
-    internalEmail: 'shon@kapateconsultancy.com'
+    internalEmail: 'admin@kapateconsultancy.in'
   }
 ];
 

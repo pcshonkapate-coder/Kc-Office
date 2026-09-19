@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
       utilization: member.utilization || 100,
       joinDate: member.joinDate || new Date().toISOString().split('T')[0],
       kapateId: member.kapateId || `KC-EMP-${Math.floor(100 + Math.random() * 900)}`,
-      internalEmail: member.internalEmail || `${(member.name || 'emp').toLowerCase().replace(/\s+/g, '.')}@kapate.internal`,
+      internalEmail: member.internalEmail || `${(member.name || 'emp').toLowerCase().replace(/\s+/g, '.')}@kapateconsultancy.in`,
     };
     await db.collection<Employee>('employees').insertOne(newEmployee as any);
     return NextResponse.json({ data: newEmployee }, { status: 201 });
@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
         taskCompletion: 80,
       },
       kapateId: member.kapateId || `KC-INT-${Math.floor(100 + Math.random() * 900)}`,
-      internalEmail: member.internalEmail || `${(member.name || 'intern').toLowerCase().replace(/\s+/g, '.')}@kapate.internal`,
+      internalEmail: member.internalEmail || `${(member.name || 'intern').toLowerCase().replace(/\s+/g, '.')}@kapateconsultancy.in`,
     };
     await db.collection<Intern>('interns').insertOne(newIntern as any);
     return NextResponse.json({ data: newIntern }, { status: 201 });
@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
       availability: member.availability || 'Available',
       status: member.status || 'Available',
       kapateId: member.kapateId || `KC-FRL-${Math.floor(100 + Math.random() * 900)}`,
-      internalEmail: member.internalEmail || `${(member.name || 'contractor').toLowerCase().replace(/\s+/g, '.')}@kapate.internal`,
+      internalEmail: member.internalEmail || `${(member.name || 'contractor').toLowerCase().replace(/\s+/g, '.')}@kapateconsultancy.in`,
     };
     await db.collection<Freelancer>('freelancers').insertOne(newFreelancer as any);
     return NextResponse.json({ data: newFreelancer }, { status: 201 });

@@ -7,7 +7,7 @@ export const INITIAL_EMAIL_ACCOUNTS: EmailAccount[] = [
   {
     id: 'acc-shon',
     userId: 'usr-admin',
-    email: 'shon@kapateconsultancy.com',
+    email: 'shon@kapateconsultancy.in',
     name: 'Shon Kapate',
     designation: 'Founder & Technology Consultant',
     department: 'Executive Leadership',
@@ -19,7 +19,7 @@ export const INITIAL_EMAIL_ACCOUNTS: EmailAccount[] = [
   {
     id: 'acc-dept-admin',
     userId: 'dept-admin',
-    email: 'admin@kapateconsultancy.com',
+    email: 'admin@kapateconsultancy.in',
     name: 'Executive Office Mailbox',
     designation: 'System & Corporate Communications',
     department: 'Operations',
@@ -32,7 +32,7 @@ export const INITIAL_EMAIL_ACCOUNTS: EmailAccount[] = [
   {
     id: 'acc-dept-hr',
     userId: 'dept-hr',
-    email: 'hr@kapateconsultancy.com',
+    email: 'hr@kapateconsultancy.in',
     name: 'HR Operations Desk',
     designation: 'Shared Department Mailbox',
     department: 'Human Resources',
@@ -45,7 +45,7 @@ export const INITIAL_EMAIL_ACCOUNTS: EmailAccount[] = [
   {
     id: 'acc-dept-finance',
     userId: 'dept-fin',
-    email: 'finance@kapateconsultancy.com',
+    email: 'finance@kapateconsultancy.in',
     name: 'Finance & Accounts Desk',
     designation: 'Shared Billing Mailbox',
     department: 'Finance',
@@ -58,7 +58,7 @@ export const INITIAL_EMAIL_ACCOUNTS: EmailAccount[] = [
   {
     id: 'acc-dept-sales',
     userId: 'dept-sales',
-    email: 'sales@kapateconsultancy.com',
+    email: 'sales@kapateconsultancy.in',
     name: 'Enterprise Sales Desk',
     designation: 'Shared CRM Pipeline Mailbox',
     department: 'Business Development',
@@ -95,7 +95,7 @@ export const INITIAL_EMAIL_TEMPLATES: EmailTemplate[] = [
     title: 'Internship Welcome & First Week Goals',
     category: 'HR',
     subject: 'Welcome to the Kapate OS Engineering Team, {{intern_name}}!',
-    body: `Hi {{intern_name}},\n\nWelcome aboard to the Kapate Consultancy Engineering Team! We are thrilled to have you join us for your internship journey.\n\n### First Week Checklist:\n- [ ] Review the Kapate OS Engineering Handbook\n- [ ] Complete internal email & git repository setup\n- [ ] Schedule your 1-on-1 intro with your mentor\n- [ ] Review your allocated tasks in Intern Hub\n\nIf you have any questions, feel free to reach out directly on this thread or to hr@kapateconsultancy.com.\n\nBest of luck!\n{{sender_name}}\nPeople Operations`,
+    body: `Hi {{intern_name}},\n\nWelcome aboard to the Kapate Consultancy Engineering Team! We are thrilled to have you join us for your internship journey.\n\n### First Week Checklist:\n- [ ] Review the Kapate OS Engineering Handbook\n- [ ] Complete internal email & git repository setup\n- [ ] Schedule your 1-on-1 intro with your mentor\n- [ ] Review your allocated tasks in Intern Hub\n\nIf you have any questions, feel free to reach out directly on this thread or to hr@kapateconsultancy.in.\n\nBest of luck!\n{{sender_name}}\nPeople Operations`,
     variables: ['intern_name', 'sender_name']
   },
   {
@@ -119,7 +119,7 @@ export const INITIAL_EMAIL_TEMPLATES: EmailTemplate[] = [
     title: 'Invoice Due Reminder',
     category: 'Finance',
     subject: 'Friendly Reminder: Invoice {{invoice_number}} Due on {{due_date}}',
-    body: `Dear {{client_name}},\n\nThis is a friendly reminder that Invoice **{{invoice_number}}** for amount **{{amount}}** is scheduled for payment on **{{due_date}}**.\n\nYou can review and download the GST compliant tax invoice PDF directly inside your Kapate Client Portal under Authorized Documents.\n\nPlease reply with the bank wire or UPI reference once executed so our accounts desk can issue the payment receipt.\n\nBest regards,\nFinance & Accounts Desk\nfinance@kapateconsultancy.com`,
+    body: `Dear {{client_name}},\n\nThis is a friendly reminder that Invoice **{{invoice_number}}** for amount **{{amount}}** is scheduled for payment on **{{due_date}}**.\n\nYou can review and download the GST compliant tax invoice PDF directly inside your Kapate Client Portal under Authorized Documents.\n\nPlease reply with the bank wire or UPI reference once executed so our accounts desk can issue the payment receipt.\n\nBest regards,\nFinance & Accounts Desk\nfinance@kapateconsultancy.in`,
     variables: ['invoice_number', 'amount', 'due_date', 'client_name']
   }
 ];
@@ -129,14 +129,14 @@ export const INITIAL_EMAIL_SIGNATURES: EmailSignature[] = [
     id: 'sig-1',
     userId: 'usr-admin',
     title: 'Executive Founder Signature',
-    content: `Regards,\n**Shon Kapate**\nFounder & Technology Consultant\nKapate Consultancy | Enterprise AI & Software Systems\nWeb: https://kapateconsultancy.in • Email: shon@kapateconsultancy.com`,
+    content: `Regards,\n**Shon Kapate**\nFounder & Technology Consultant\nKapate Consultancy | Enterprise AI & Software Systems\nWeb: https://kapateconsultancy.in • Email: shon@kapateconsultancy.in`,
     isDefault: true
   },
   {
     id: 'sig-2',
     userId: 'dept-admin',
     title: 'Corporate Executive Signature',
-    content: `Best regards,\n**Executive Administration**\nKapate Consultancy\nadmin@kapateconsultancy.com`,
+    content: `Best regards,\n**Executive Administration**\nKapate Consultancy\nadmin@kapateconsultancy.in`,
     isDefault: true
   }
 ];

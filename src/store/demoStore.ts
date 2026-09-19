@@ -6,8 +6,14 @@ import {
   Invoice, Payment, Expense, Notification, ActivityLog, AppDocument,
   EmailAccount, EmailAttachment, EmailLabel, EmailMessage, EmailRecipient,
   EmailSignature, EmailTemplate, EmailThread, MailFolder, EmailPriority,
-  RegistrationRequest, OnboardingInvitation, SecurityEvent, AccountStatus
+  RegistrationRequest, OnboardingInvitation, SecurityEvent, AccountStatus,
+  AuditLogEntry, SecuritySession, SystemSettings, SystemHealthStatus
 } from '../types';
+import {
+  DEFAULT_ROLE_PERMISSIONS, INITIAL_ENTERPRISE_USERS,
+  DEFAULT_SYSTEM_SETTINGS, INITIAL_AUDIT_LOGS,
+  INITIAL_SESSIONS, INITIAL_SYSTEM_HEALTH
+} from '../data/superAdminData';
 import {
   DEMO_USERS, INITIAL_LEADS, INITIAL_COMPANIES, INITIAL_CONTACTS, INITIAL_DEALS,
   INITIAL_PROPOSALS, INITIAL_CONTRACTS, INITIAL_PROJECTS, INITIAL_TASKS,
@@ -188,6 +194,43 @@ interface DemoStore {
   changeUserRole: (userId: string, newRole: UserRole) => { success: boolean; error?: string };
   changeUserStatus: (userId: string, newStatus: AccountStatus, reason?: string) => void;
   addTaskWithNotification: (taskData: Omit<Task, 'id' | 'loggedHours'>) => { success: boolean; error?: string };
+
+  // ==================== SUPER ADMIN CONTROL CENTER ====================
+  usersList: User[];
+  createUser: (userData: Partial<User>) => { success: boolean; user?: User; error?: string };
+  updateUser: (id: string, updates: Partial<User>) => void;
+  setUserStatus: (id: string, status: AccountStatus, reason?: string) => void;
+  resetUserPassword: (id: string, newPass?: string) => { success: boolean; message: string };
+  lockUserAccount: (id: string, minutes?: number) => void;
+  unlockUserAccount: (id: string) => void;
+  deleteUser: (id: string) => { success: boolean; error?: string };
+
+  // Impersonation
+  impersonatedOriginalUser: User | null;
+  impersonationReason: string | null;
+  startImpersonation: (targetUser: User, reason: string) => { success: boolean; error?: string };
+  exitImpersonation: () => void;
+
+  // Granular Permissions
+  rolePermissions: Record<UserRole, string[]>;
+  updateRolePermissions: (role: UserRole, permissions: string[]) => void;
+
+  // Audit Logs
+  auditLogs: AuditLogEntry[];
+  logAuditEvent: (event: Omit<AuditLogEntry, 'id' | 'timestamp'>) => void;
+
+  // Security Center
+  activeSessions: SecuritySession[];
+  revokeSession: (sessionId: string) => void;
+  forceLogoutAll: () => void;
+
+  // System Settings
+  systemSettings: SystemSettings;
+  updateSystemSettings: (updates: Partial<SystemSettings>) => void;
+
+  // System Health
+  systemHealth: SystemHealthStatus;
+  refreshSystemHealth: () => Promise<void>;
 }
 
 export const useDemoStore = create<DemoStore>((set, get) => ({
@@ -228,7 +271,7 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
     const matchingAcc = get().emailAccounts.find(a => a.email === user.email || a.email === user.internalEmail);
     set({
       currentUser: user,
-      activeEmailAccountEmail: matchingAcc ? matchingAcc.email : (user.email || 'shon@kapateconsultancy.com')
+      activeEmailAccountEmail: matchingAcc ? matchingAcc.email : (user.email || 'shon@kapateconsultancy.in')
     });
     
     // Auto switch active view tab depending on role
@@ -302,7 +345,7 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
   emailLabels: INITIAL_EMAIL_LABELS,
   activeMailFolder: 'INBOX',
   selectedEmailThreadId: INITIAL_EMAIL_THREADS[0]?.id || null,
-  activeEmailAccountEmail: 'shon@kapateconsultancy.com',
+  activeEmailAccountEmail: 'shon@kapateconsultancy.in',
   mailSearchQuery: '',
   selectedMailLabel: null,
   isMailComposeOpen: false,
@@ -314,7 +357,7 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
     const activeAcc = get().emailAccounts.find(a => a.email === (msgData.fromEmail || get().activeEmailAccountEmail));
     const sender = msgData.from || (activeAcc ? { name: activeAcc.name, email: activeAcc.email } : {
       name: get().currentUser.name,
-      email: get().currentUser.email || 'shon@kapateconsultancy.com'
+      email: get().currentUser.email || 'shon@kapateconsultancy.in'
     });
 
     const threadId = msgData.threadId || `th-${Date.now()}`;
@@ -429,7 +472,7 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
   saveDraft: (draftData) => {
     const sender = get().emailAccounts.find(a => a.email === get().activeEmailAccountEmail) || {
       name: get().currentUser.name,
-      email: get().currentUser.email || 'shon@kapateconsultancy.com'
+      email: get().currentUser.email || 'shon@kapateconsultancy.in'
     };
 
     const draftId = draftData.id || `draft-${Date.now()}`;
@@ -1043,7 +1086,7 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
     
     // Provision internal company email
     const baseName = req.fullName.split(' ')[0].toLowerCase();
-    const internalEmail = `${baseName}@kapateconsultancy.com`;
+    const internalEmail = `${baseName}@kapateconsultancy.in`;
 
     const token = `inv_tok_${Math.random().toString(36).substring(2, 12)}`;
     const expiresAt = new Date(Date.now() + 72 * 3600 * 1000).toISOString();
@@ -1177,7 +1220,7 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
     const kapateId = `KAP-${prefix}-${String(count).padStart(6, '0')}`;
     
     const baseName = data.fullName.split(' ')[0].toLowerCase();
-    const internalEmail = `${baseName}@kapateconsultancy.com`;
+    const internalEmail = `${baseName}@kapateconsultancy.in`;
 
     const token = `inv_tok_${Math.random().toString(36).substring(2, 12)}`;
     const expiresAt = new Date(Date.now() + 72 * 3600 * 1000).toISOString();
@@ -1450,7 +1493,7 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
     };
 
     // Auto-generate internal email notification to the assignee
-    const assigneeEmail = `${taskData.assignedTo.split(' ')[0].toLowerCase()}@kapateconsultancy.com`;
+    const assigneeEmail = `${taskData.assignedTo.split(' ')[0].toLowerCase()}@kapateconsultancy.in`;
     const emailSubject = `New Task Assigned — ${taskData.projectName}`;
     const emailBody = `Hello ${taskData.assignedTo},\n\nA new delivery task has been assigned to you by ${actor.name}.\n\nProject: ${taskData.projectName}\nTask: ${taskData.title}\nPriority: ${taskData.priority}\nDue Date: ${taskData.dueDate}\n\nPlease review and track your progress in Kapate OS.`;
 
@@ -1460,7 +1503,7 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
     const newMailMsg: EmailMessage = {
       id: `msg-task-${Date.now()}`,
       threadId: newThreadId,
-      from: { name: actor.name, email: actor.email || 'system@kapateconsultancy.com', avatar: actor.avatar },
+      from: { name: actor.name, email: actor.email || 'system@kapateconsultancy.in', avatar: actor.avatar },
       to: [{ name: taskData.assignedTo, email: assigneeEmail, type: 'TO' }],
       subject: emailSubject,
       body: emailBody,
@@ -1494,7 +1537,7 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
       priority: taskPriority,
       labels: ['Project', 'Work'],
       participants: [
-        { name: actor.name, email: actor.email || 'system@kapateconsultancy.com', avatar: actor.avatar },
+        { name: actor.name, email: actor.email || 'system@kapateconsultancy.in', avatar: actor.avatar },
         { name: taskData.assignedTo, email: assigneeEmail }
       ],
       messages: [newMailMsg],
@@ -1511,5 +1554,406 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
 
     get().showToast(`Task assigned to ${taskData.assignedTo}. In-app and internal email notifications dispatched.`, 'success');
     return { success: true };
+  },
+
+  // ==================== SUPER ADMIN IMPLEMENTATION ====================
+  usersList: INITIAL_ENTERPRISE_USERS,
+  impersonatedOriginalUser: null,
+  impersonationReason: null,
+  rolePermissions: DEFAULT_ROLE_PERMISSIONS,
+  auditLogs: INITIAL_AUDIT_LOGS,
+  activeSessions: INITIAL_SESSIONS,
+  systemSettings: DEFAULT_SYSTEM_SETTINGS,
+  systemHealth: INITIAL_SYSTEM_HEALTH,
+
+  createUser: (userData) => {
+    if (!userData.email || !userData.name) {
+      return { success: false, error: 'Name and email are required.' };
+    }
+    const count = get().usersList.length + 1;
+    const prefix = userData.role === 'INTERN' ? 'INT' : userData.role === 'CLIENT' ? 'CLI' : 'EMP';
+    const kapateId = userData.kapateId || `KAP-${prefix}-${String(count).padStart(6, '0')}`;
+    const baseEmail = userData.email.toLowerCase().trim();
+    const internalEmail = baseEmail.includes('@') ? baseEmail : `${baseEmail}@kapateconsultancy.in`;
+
+    const newUser: User = {
+      id: `usr-${Date.now()}`,
+      name: userData.name,
+      email: internalEmail,
+      role: userData.role || 'EMPLOYEE',
+      department: userData.department || 'Engineering',
+      designation: userData.designation || 'Software Engineer',
+      kapateId,
+      internalEmail,
+      status: 'ACTIVE',
+      phone: userData.phone || '+91 98230 00000',
+      manager: userData.manager || 'Shon Kapate',
+      skills: userData.skills || ['TypeScript', 'Full Stack'],
+      assignedProjects: userData.assignedProjects || [],
+      failedLogins: 0,
+      lockedUntil: null,
+      lastLoginAt: 'Never',
+      mfaEnabled: false,
+      created: new Date().toISOString().split('T')[0]
+    };
+
+    set((state) => ({
+      usersList: [newUser, ...state.usersList]
+    }));
+
+    get().logAuditEvent({
+      actor: get().currentUser.name,
+      actorKapateId: get().currentUser.kapateId,
+      action: 'USER_CREATED',
+      module: 'users',
+      targetResource: `users/${newUser.id}`,
+      targetUser: newUser.email,
+      newValue: JSON.stringify({ name: newUser.name, role: newUser.role, kapateId: newUser.kapateId }),
+      result: 'SUCCESS',
+      reason: 'Admin provisioned new personnel profile'
+    });
+
+    get().showToast(`User ${newUser.name} provisioned successfully with Kapate ID ${newUser.kapateId}`, 'success');
+    return { success: true, user: newUser };
+  },
+
+  updateUser: (id, updates) => {
+    const existing = get().usersList.find(u => u.id === id);
+    if (!existing) return;
+
+    set((state) => ({
+      usersList: state.usersList.map(u => u.id === id ? { ...u, ...updates, updatedAt: new Date().toISOString() } : u)
+    }));
+
+    get().logAuditEvent({
+      actor: get().currentUser.name,
+      actorKapateId: get().currentUser.kapateId,
+      action: 'USER_UPDATED',
+      module: 'users',
+      targetResource: `users/${id}`,
+      targetUser: existing.email,
+      previousValue: JSON.stringify({ role: existing.role, department: existing.department, status: existing.status }),
+      newValue: JSON.stringify(updates),
+      result: 'SUCCESS'
+    });
+
+    get().showToast(`User profile for ${existing.name} updated`, 'success');
+  },
+
+  setUserStatus: (id, status, reason) => {
+    const target = get().usersList.find(u => u.id === id);
+    if (!target) return;
+    if (target.email === 'admin@kapateconsultancy.in' && status !== 'ACTIVE') {
+      get().showToast('The Master Super Admin account cannot be suspended or deactivated.', 'error');
+      return;
+    }
+
+    set((state) => ({
+      usersList: state.usersList.map(u => u.id === id ? { ...u, status, updatedAt: new Date().toISOString() } : u)
+    }));
+
+    get().logAuditEvent({
+      actor: get().currentUser.name,
+      actorKapateId: get().currentUser.kapateId,
+      action: `USER_STATUS_${status}`,
+      module: 'users',
+      targetResource: `users/${id}`,
+      targetUser: target.email,
+      previousValue: target.status,
+      newValue: status,
+      result: 'SUCCESS',
+      reason: reason || `Admin updated status to ${status}`
+    });
+
+    get().showToast(`User ${target.name} status updated to ${status}`, 'info');
+  },
+
+  resetUserPassword: (id, newPass) => {
+    const target = get().usersList.find(u => u.id === id);
+    if (!target) return { success: false, message: 'User not found' };
+
+    const generatedPass = newPass || `Kapate@${Math.floor(100000 + Math.random() * 900000)}`;
+
+    get().logAuditEvent({
+      actor: get().currentUser.name,
+      actorKapateId: get().currentUser.kapateId,
+      action: 'PASSWORD_RESET',
+      module: 'security',
+      targetResource: `users/${id}`,
+      targetUser: target.email,
+      result: 'SUCCESS',
+      reason: 'Administrator triggered password reset'
+    });
+
+    get().showToast(`Password reset successfully for ${target.name}. Temporary key generated.`, 'success');
+    return { success: true, message: `Password reset to: ${generatedPass}` };
+  },
+
+  lockUserAccount: (id, minutes = 30) => {
+    const target = get().usersList.find(u => u.id === id);
+    if (!target) return;
+    if (target.email === 'admin@kapateconsultancy.in') {
+      get().showToast('The Master Super Admin account cannot be locked.', 'error');
+      return;
+    }
+
+    const lockedUntil = new Date(Date.now() + minutes * 60 * 1000).toISOString();
+    set((state) => ({
+      usersList: state.usersList.map(u => u.id === id ? { ...u, lockedUntil } : u)
+    }));
+
+    get().logAuditEvent({
+      actor: get().currentUser.name,
+      actorKapateId: get().currentUser.kapateId,
+      action: 'ACCOUNT_LOCKED',
+      module: 'security',
+      targetResource: `users/${id}`,
+      targetUser: target.email,
+      newValue: `Locked until ${lockedUntil}`,
+      result: 'SUCCESS',
+      reason: `Account locked for ${minutes} minutes by administrator`
+    });
+
+    get().showToast(`Account for ${target.name} locked for ${minutes} minutes.`, 'warning');
+  },
+
+  unlockUserAccount: (id) => {
+    const target = get().usersList.find(u => u.id === id);
+    if (!target) return;
+
+    set((state) => ({
+      usersList: state.usersList.map(u => u.id === id ? { ...u, lockedUntil: null, failedLogins: 0 } : u)
+    }));
+
+    get().logAuditEvent({
+      actor: get().currentUser.name,
+      actorKapateId: get().currentUser.kapateId,
+      action: 'ACCOUNT_UNLOCKED',
+      module: 'security',
+      targetResource: `users/${id}`,
+      targetUser: target.email,
+      result: 'SUCCESS',
+      reason: 'Account unlocked by administrator'
+    });
+
+    get().showToast(`Account for ${target.name} unlocked.`, 'success');
+  },
+
+  deleteUser: (id) => {
+    const target = get().usersList.find(u => u.id === id);
+    if (!target) return { success: false, error: 'User not found' };
+    if (target.email === 'admin@kapateconsultancy.in') {
+      get().showToast('The Master Super Admin cannot be deleted.', 'error');
+      return { success: false, error: 'Cannot delete master admin' };
+    }
+
+    // Soft delete
+    set((state) => ({
+      usersList: state.usersList.map(u => u.id === id ? { ...u, status: 'TERMINATED', deletedAt: new Date().toISOString() } : u)
+    }));
+
+    get().logAuditEvent({
+      actor: get().currentUser.name,
+      actorKapateId: get().currentUser.kapateId,
+      action: 'USER_DELETED_SOFT',
+      module: 'users',
+      targetResource: `users/${id}`,
+      targetUser: target.email,
+      result: 'SUCCESS',
+      reason: 'User archived and soft-deleted by administrator'
+    });
+
+    get().showToast(`User ${target.name} soft-deleted and access terminated.`, 'info');
+    return { success: true };
+  },
+
+  // Impersonation Implementation
+  startImpersonation: (targetUser, reason) => {
+    const current = get().currentUser;
+    if (current.role !== 'SUPER_ADMIN' && current.role !== 'ADMIN') {
+      return { success: false, error: 'Only Super Administrators can initiate impersonation mode.' };
+    }
+    if (targetUser.id === current.id) {
+      return { success: false, error: 'Cannot impersonate your own session.' };
+    }
+    if (!reason || reason.trim().length < 5) {
+      return { success: false, error: 'A justification/reason of at least 5 characters is required for impersonation auditing.' };
+    }
+
+    set({
+      impersonatedOriginalUser: current,
+      impersonationReason: reason.trim(),
+      currentUser: targetUser,
+      activeTab: targetUser.role === 'CLIENT' ? 'client-portal' : targetUser.role === 'INTERN' ? 'intern-dashboard' : 'dashboard'
+    });
+
+    get().logAuditEvent({
+      actor: current.name,
+      actorKapateId: current.kapateId,
+      action: 'IMPERSONATION_STARTED',
+      module: 'security',
+      targetResource: `users/${targetUser.id}`,
+      targetUser: targetUser.email,
+      newValue: `Impersonated as ${targetUser.name} (${targetUser.role})`,
+      result: 'SUCCESS',
+      reason: reason.trim()
+    });
+
+    get().showToast(`Impersonating ${targetUser.name} (${targetUser.role})`, 'warning');
+    return { success: true };
+  },
+
+  exitImpersonation: () => {
+    const original = get().impersonatedOriginalUser;
+    const target = get().currentUser;
+    if (!original) return;
+
+    set({
+      currentUser: original,
+      impersonatedOriginalUser: null,
+      impersonationReason: null,
+      activeTab: 'super-admin'
+    });
+
+    get().logAuditEvent({
+      actor: original.name,
+      actorKapateId: original.kapateId,
+      action: 'IMPERSONATION_ENDED',
+      module: 'security',
+      targetResource: `users/${target.id}`,
+      targetUser: target.email,
+      result: 'SUCCESS',
+      reason: 'Administrator terminated impersonation session'
+    });
+
+    get().showToast('Exited impersonation mode. Restored Super Admin privileges.', 'info');
+  },
+
+  // Granular Permissions
+  updateRolePermissions: (role, permissions) => {
+    const prev = get().rolePermissions[role] || [];
+    set((state) => ({
+      rolePermissions: {
+        ...state.rolePermissions,
+        [role]: permissions
+      }
+    }));
+
+    get().logAuditEvent({
+      actor: get().currentUser.name,
+      actorKapateId: get().currentUser.kapateId,
+      action: 'PERMISSION_CHANGED',
+      module: 'security',
+      targetResource: `roles/${role}`,
+      targetUser: `Role: ${role}`,
+      previousValue: prev.join(', '),
+      newValue: permissions.join(', '),
+      result: 'SUCCESS',
+      reason: `Updated permissions matrix for role ${role}`
+    });
+
+    get().showToast(`Permissions updated for ${role} role`, 'success');
+  },
+
+  // Audit Logs
+  logAuditEvent: (event) => {
+    const newEntry: AuditLogEntry = {
+      id: `aud-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+      ipAddress: '127.0.0.1',
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Server',
+      requestId: `req-${Date.now().toString().slice(-6)}`,
+      ...event
+    };
+
+    set((state) => ({
+      auditLogs: [newEntry, ...state.auditLogs].slice(0, 500)
+    }));
+  },
+
+  // Security Center Sessions
+  revokeSession: (sessionId) => {
+    const sess = get().activeSessions.find(s => s.id === sessionId);
+    set((state) => ({
+      activeSessions: state.activeSessions.filter(s => s.id !== sessionId)
+    }));
+
+    get().logAuditEvent({
+      actor: get().currentUser.name,
+      actorKapateId: get().currentUser.kapateId,
+      action: 'SESSION_REVOKED',
+      module: 'security',
+      targetResource: `sessions/${sessionId}`,
+      targetUser: sess?.email || 'Unknown',
+      result: 'SUCCESS',
+      reason: 'Administrator revoked active user session'
+    });
+
+    get().showToast('Session revoked successfully', 'info');
+  },
+
+  forceLogoutAll: () => {
+    const count = get().activeSessions.length;
+    set((state) => ({
+      activeSessions: state.activeSessions.filter(s => s.userId === get().currentUser.id)
+    }));
+
+    get().logAuditEvent({
+      actor: get().currentUser.name,
+      actorKapateId: get().currentUser.kapateId,
+      action: 'ALL_SESSIONS_REVOKED',
+      module: 'security',
+      targetResource: 'sessions/all',
+      result: 'SUCCESS',
+      reason: `Forced global logout of all other active sessions (${count - 1} sessions)`
+    });
+
+    get().showToast('Terminated all remote user sessions across the cluster.', 'warning');
+  },
+
+  // System Settings
+  updateSystemSettings: (updates) => {
+    set((state) => ({
+      systemSettings: {
+        ...state.systemSettings,
+        ...updates
+      }
+    }));
+
+    get().logAuditEvent({
+      actor: get().currentUser.name,
+      actorKapateId: get().currentUser.kapateId,
+      action: 'SYSTEM_SETTINGS_CHANGED',
+      module: 'system',
+      targetResource: 'system_settings',
+      newValue: JSON.stringify(updates),
+      result: 'SUCCESS',
+      reason: 'Administrator updated enterprise system configurations'
+    });
+
+    get().showToast('System configuration settings saved successfully', 'success');
+  },
+
+  // System Health
+  refreshSystemHealth: async () => {
+    try {
+      const res = await fetch('/api/v1/health');
+      const data = await res.json();
+      set((state) => ({
+        systemHealth: {
+          ...state.systemHealth,
+          overall: data.status === 'healthy' ? 'HEALTHY' : 'DEGRADED',
+          lastChecked: new Date().toISOString()
+        }
+      }));
+      get().showToast('System health verified across all cloud microservices', 'info');
+    } catch {
+      set((state) => ({
+        systemHealth: {
+          ...state.systemHealth,
+          lastChecked: new Date().toISOString()
+        }
+      }));
+    }
   }
 }));

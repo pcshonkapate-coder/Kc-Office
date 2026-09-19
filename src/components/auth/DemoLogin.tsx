@@ -51,10 +51,10 @@ export const DemoLogin: React.FC<DemoLoginProps> = ({ onLoginSuccess }) => {
     setError('');
 
     try {
-      const res = await fetch(`${API_BASE}/api/v1/auth/login`, {
+      const res = await fetch('/api/v1/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: email.trim(), password }),
       });
 
       if (!res.ok) {
@@ -64,9 +64,12 @@ export const DemoLogin: React.FC<DemoLoginProps> = ({ onLoginSuccess }) => {
       }
 
       const data = await res.json();
-      localStorage.setItem('kapate_token', data.access_token);
-      localStorage.setItem('kapate_access_token', data.access_token);
-      applyRoleFromEmailOrRoles(email, data.user?.roles);
+      localStorage.setItem('kapate_token', data.access_token || 'local_auth_token');
+      localStorage.setItem('kapate_access_token', data.access_token || 'local_auth_token');
+      if (data.user) {
+        localStorage.setItem('kapate_user', JSON.stringify(data.user));
+      }
+      applyRoleFromEmailOrRoles(email, data.user?.role ? [data.user.role] : data.user?.roles);
       login();
 
       showToast('Authenticated successfully to Kapate OS', 'success');
@@ -168,7 +171,7 @@ export const DemoLogin: React.FC<DemoLoginProps> = ({ onLoginSuccess }) => {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 transition-colors"
-                  placeholder="name@kapateconsultancy.com"
+                  placeholder="name@kapateconsultancy.in"
                 />
               </div>
             </div>

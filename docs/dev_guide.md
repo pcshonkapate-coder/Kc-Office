@@ -72,8 +72,8 @@ Kapate_Consultancy/
 ---
 
 ## 4. Default Credentials (Development Seed)
-- **Superadmin Email**: `admin@kapateconsultancy.com`
-- **Initial Password**: `KapateOS@2026!`
+- **Superadmin Email**: `admin@kapateconsultancy.in`
+- **Initial Password**: `Admin@KC8421174957`
 *(Must be rotated upon initial production deployment)*
 
 ---

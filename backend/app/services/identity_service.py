@@ -83,7 +83,7 @@ class IdentityService:
         if base_handle in reserved:
             base_handle = f"{base_handle}.{cleaned_parts[-1]}" if len(cleaned_parts) > 1 else f"{base_handle}.staff"
 
-        candidate = f"{base_handle}@kapateconsultancy.com"
+        candidate = f"{base_handle}@kapateconsultancy.in"
         counter = 1
         while True:
             existing_user = self.db.query(User).filter(User.email == candidate).first()
@@ -91,7 +91,7 @@ class IdentityService:
             if not existing_user and not existing_profile:
                 return candidate
             counter += 1
-            candidate = f"{base_handle}{counter:02d}@kapateconsultancy.com"
+            candidate = f"{base_handle}{counter:02d}@kapateconsultancy.in"
 
     # =========================================================================
     # 3. PUBLIC REGISTRATION REQUESTS (NO ROLE SELECTION PERMITTED)

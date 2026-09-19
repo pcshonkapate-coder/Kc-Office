@@ -37,7 +37,7 @@ Stores personal and shared department identities.
 | :--- | :--- | :--- | :--- |
 | `id` | `VARCHAR(36)` | `PRIMARY KEY` | UUID |
 | `user_id` | `VARCHAR(36)` | `NULLABLE, FK -> users.id` | Associated employee/admin |
-| `email` | `VARCHAR(255)` | `UNIQUE, NOT NULL` | e.g. `shon@kapateconsultancy.com` |
+| `email` | `VARCHAR(255)` | `UNIQUE, NOT NULL` | e.g. `shon@kapateconsultancy.in` |
 | `display_name`| `VARCHAR(255)` | `NOT NULL` | Full employee or department title |
 | `department` | `VARCHAR(100)` | `NOT NULL` | `Engineering`, `HR`, `Executive`, etc. |
 | `is_shared` | `BOOLEAN` | `DEFAULT FALSE` | True for `hr@`, `finance@`, `sales@` |
