@@ -19,6 +19,7 @@ type AdminTab = 'overview' | 'users' | 'rbac' | 'security' | 'audit' | 'settings
 export const SuperAdminModule: React.FC = () => {
   const currentUser = useDemoStore((state) => state.currentUser);
   const usersList = useDemoStore((state) => state.usersList);
+  const fetchUsers = useDemoStore((state) => state.fetchUsers);
   const createUser = useDemoStore((state) => state.createUser);
   const updateUser = useDemoStore((state) => state.updateUser);
   const setUserStatus = useDemoStore((state) => state.setUserStatus);
@@ -45,6 +46,11 @@ export const SuperAdminModule: React.FC = () => {
     showToast(message, type || 'info');
   };
 
+  // Sync users from server database on mount
+  useEffect(() => {
+    fetchUsers().catch(() => {});
+  }, [fetchUsers]);
+
   // Active admin subtab
   const [activeSubtab, setActiveSubtab] = useState<AdminTab>('overview');
 
@@ -63,6 +69,12 @@ export const SuperAdminModule: React.FC = () => {
   const [newUserDept, setNewUserDept] = useState('Engineering');
   const [newUserDesignation, setNewUserDesignation] = useState('Software Consultant');
   const [newUserPassword, setNewUserPassword] = useState('Admin@KC8421174957');
+  const [isCreatingUser, setIsCreatingUser] = useState(false);
+
+  // Credential Handover Modal State
+  const [createdCredentials, setCreatedCredentials] = useState<any>(null);
+  const [isCredentialsModalOpen, setIsCredentialsModalOpen] = useState(false);
+  const [copiedCreds, setCopiedCreds] = useState(false);
 
   // Impersonation modal state
   const [isImpersonateModalOpen, setIsImpersonateModalOpen] = useState(false);
@@ -121,7 +133,7 @@ export const SuperAdminModule: React.FC = () => {
   }, [auditLogs, auditSearch, auditSeverity, auditResource]);
 
   // Handle Create User
-  const handleCreateUser = (e: React.FormEvent) => {
+  const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newUserName.trim() || !newUserEmail.trim()) {
       addToast({ title: 'Validation Error', message: 'Name and email are required.', type: 'error' });
@@ -135,26 +147,61 @@ export const SuperAdminModule: React.FC = () => {
       finalEmail = finalEmail.replace('@kapateconsultancy.com', '@kapateconsultancy.in');
     }
 
-    const res = createUser({
-      name: newUserName.trim(),
-      email: finalEmail,
-      role: newUserRole,
-      department: newUserDept,
-      designation: newUserDesignation,
-      status: 'ACTIVE',
-    });
-
-    if (res && res.success && res.user) {
-      addToast({
-        title: 'User Created',
-        message: `${res.user.name} (${res.user.kapateId || res.user.email}) added to Kapate OS.`,
-        type: 'success'
+    setIsCreatingUser(true);
+    try {
+      const res = await createUser({
+        name: newUserName.trim(),
+        email: finalEmail,
+        role: newUserRole,
+        department: newUserDept,
+        designation: newUserDesignation,
+        status: 'ACTIVE',
+        password: newUserPassword.trim() || 'Kapate@2026!Secured'
       });
-    }
 
-    setIsCreateModalOpen(false);
-    setNewUserName('');
-    setNewUserEmail('');
+      if (res && res.success && res.user) {
+        setIsCreateModalOpen(false);
+        setCreatedCredentials(res.credentials || {
+          name: res.user.name,
+          kapateId: res.user.kapateId,
+          email: res.user.email,
+          initialPassword: newUserPassword.trim() || 'Kapate@2026!Secured',
+          role: res.user.role,
+          department: res.user.department,
+          designation: res.user.designation
+        });
+        setIsCredentialsModalOpen(true);
+        setNewUserName('');
+        setNewUserEmail('');
+        setNewUserPassword('Admin@KC8421174957');
+      } else {
+        addToast({ title: 'Creation Failed', message: res?.error || 'Failed to create user account.', type: 'error' });
+      }
+    } finally {
+      setIsCreatingUser(false);
+    }
+  };
+
+  // Handle Copy Generated Credentials to Clipboard
+  const handleCopyCredentials = () => {
+    if (!createdCredentials) return;
+    const portalUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+    const text = `🏢 Kapate OS — Employee Login Credentials\n` +
+      `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+      `Employee Name   : ${createdCredentials.name}\n` +
+      `User ID         : ${createdCredentials.kapateId}\n` +
+      `Login Email     : ${createdCredentials.email}\n` +
+      `Initial Password: ${createdCredentials.initialPassword}\n` +
+      `Role            : ${createdCredentials.role}\n` +
+      `Department      : ${createdCredentials.department || 'Engineering'}\n` +
+      `Login Portal    : ${portalUrl}/\n` +
+      `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+      `Note: You can log in using either your Corporate Email or your User ID.`;
+
+    navigator.clipboard.writeText(text);
+    setCopiedCreds(true);
+    setTimeout(() => setCopiedCreds(false), 2500);
+    addToast({ title: 'Credentials Copied', message: 'Ready to share with employee.', type: 'success' });
   };
 
   // Handle Start Impersonation
@@ -182,12 +229,12 @@ export const SuperAdminModule: React.FC = () => {
   };
 
   // Handle Reset Password Submit
-  const handleResetPasswordSubmit = () => {
+  const handleResetPasswordSubmit = async () => {
     if (!resetPwdUser) return;
-    resetUserPassword(resetPwdUser.id, newPwdValue);
+    const res = await resetUserPassword(resetPwdUser.id, newPwdValue);
     addToast({
       title: 'Password Reset',
-      message: `New credentials set for ${resetPwdUser.email}`,
+      message: res?.message || `New credentials set for ${resetPwdUser.email}`,
       type: 'success'
     });
     setIsResetPwdModalOpen(false);
@@ -1514,9 +1561,10 @@ export const SuperAdminModule: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm"
+                  disabled={isCreatingUser}
+                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-400 text-white text-xs font-semibold shadow-sm disabled:cursor-not-allowed flex items-center gap-1.5"
                 >
-                  Provision User
+                  {isCreatingUser ? 'Provisioning...' : 'Provision User'}
                 </button>
               </div>
             </form>
@@ -1640,6 +1688,102 @@ export const SuperAdminModule: React.FC = () => {
                   Apply Password
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* EMPLOYEE CREDENTIALS HANDOVER MODAL */}
+      {isCredentialsModalOpen && createdCredentials && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center border border-emerald-500/20">
+                  <CheckCircle2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-slate-900">Employee Credentials Ready</h3>
+                  <p className="text-xs text-slate-500">Account provisioned and active on server database</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsCredentialsModalOpen(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-900 flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>Account is immediately active. The employee can sign in right away.</span>
+              </div>
+
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-200 text-xs">
+                  <span className="text-slate-500 font-medium">Employee Name:</span>
+                  <span className="font-bold text-slate-900">{createdCredentials.name}</span>
+                </div>
+
+                <div className="flex items-center justify-between pb-2 border-b border-slate-200 text-xs">
+                  <span className="text-slate-500 font-medium">User ID (Kapate ID):</span>
+                  <span className="font-mono font-bold text-blue-600 bg-white px-2 py-0.5 rounded border border-slate-200">
+                    {createdCredentials.kapateId}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between pb-2 border-b border-slate-200 text-xs">
+                  <span className="text-slate-500 font-medium">Corporate Login Email:</span>
+                  <span className="font-mono font-bold text-slate-900">{createdCredentials.email}</span>
+                </div>
+
+                <div className="flex items-center justify-between pb-2 border-b border-slate-200 text-xs">
+                  <span className="text-slate-500 font-medium">Initial Password:</span>
+                  <span className="font-mono font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded border border-emerald-200">
+                    {createdCredentials.initialPassword}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-500 font-medium">Role & Department:</span>
+                  <span className="font-semibold text-slate-700">
+                    {createdCredentials.role} • {createdCredentials.department || 'Engineering'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-3 bg-blue-50/70 border border-blue-200/80 rounded-2xl text-[11px] text-blue-800 leading-relaxed">
+                💡 <strong>Login Identifier Support:</strong> The employee can enter <strong>either</strong> their Corporate Email or their Kapate ID ({createdCredentials.kapateId}) on the sign-in page with this password.
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-5 mt-5 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={handleCopyCredentials}
+                className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-2 cursor-pointer"
+              >
+                {copiedCreds ? (
+                  <>
+                    <Check className="w-4 h-4 text-emerald-400" />
+                    <span>Copied Credentials!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-4 h-4" />
+                    <span>Copy Credentials</span>
+                  </>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsCredentialsModalOpen(false)}
+                className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+              >
+                Done
+              </button>
             </div>
           </div>
         </div>

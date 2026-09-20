@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { Employee, Intern, Freelancer, User, SecuritySession, AuditLogEntry, UserRole } from '@/types';
+import { Employee, Intern, Freelancer, User, SecuritySession, AuditLogEntry, UserRole, RegistrationRequest, OnboardingInvitation } from '@/types';
 import { hashPassword } from '@/lib/auth';
 import { getDatabase } from '@/lib/mongodb';
 
@@ -13,6 +13,8 @@ export interface StoreSchema {
   freelancers: Freelancer[];
   sessions: SecuritySession[];
   audit_logs: AuditLogEntry[];
+  registration_requests: RegistrationRequest[];
+  onboarding_invitations: OnboardingInvitation[];
 }
 
 const DEFAULT_STORE: StoreSchema = {
@@ -93,7 +95,9 @@ const DEFAULT_STORE: StoreSchema = {
       requestId: 'req-sys-boot',
       reason: 'Standardizing Kapate OS production database persistence'
     }
-  ]
+  ],
+  registration_requests: [],
+  onboarding_invitations: []
 };
 
 class DataStore {
@@ -151,6 +155,12 @@ class DataStore {
         const raw = fs.readFileSync(this.filePath, 'utf-8');
         const parsed: StoreSchema = JSON.parse(raw);
         if (parsed && Array.isArray(parsed.employees) && Array.isArray(parsed.users)) {
+          if (!Array.isArray(parsed.registration_requests)) {
+            parsed.registration_requests = [];
+          }
+          if (!Array.isArray(parsed.onboarding_invitations)) {
+            parsed.onboarding_invitations = [];
+          }
           // Ensure master admin always exists
           this.ensureMasterAdmin(parsed);
           this.inMemoryStore = parsed;
@@ -240,6 +250,28 @@ class DataStore {
           { $set: usr },
           { upsert: true }
         );
+      }
+
+      // Upsert registration requests
+      if (Array.isArray(this.inMemoryStore.registration_requests)) {
+        for (const req of this.inMemoryStore.registration_requests) {
+          await db.collection('registration_requests').updateOne(
+            { id: req.id },
+            { $set: req },
+            { upsert: true }
+          );
+        }
+      }
+
+      // Upsert onboarding invitations
+      if (Array.isArray(this.inMemoryStore.onboarding_invitations)) {
+        for (const inv of this.inMemoryStore.onboarding_invitations) {
+          await db.collection('onboarding_invitations').updateOne(
+            { id: inv.id },
+            { $set: inv },
+            { upsert: true }
+          );
+        }
       }
     } catch {
       // Cloud cluster offline or unreachable, local durable storage is active
@@ -398,22 +430,42 @@ class DataStore {
     return user || null;
   }
 
-  public getUserByEmail(email: string): (User & { passwordHash?: string }) | null {
+  public getUserByEmail(emailOrId: string): (User & { passwordHash?: string }) | null {
     const store = this.loadStore();
-    const clean = email.toLowerCase().trim();
-    const user = store.users.find(u => u.email.toLowerCase() === clean || (u.internalEmail && u.internalEmail.toLowerCase() === clean));
+    const clean = (emailOrId || '').toLowerCase().trim();
+    if (!clean) return null;
+    const user = store.users.find(u => 
+      u.email.toLowerCase() === clean || 
+      (u.internalEmail && u.internalEmail.toLowerCase() === clean) ||
+      (u.kapateId && u.kapateId.toLowerCase() === clean)
+    );
     return user || null;
   }
 
-  public addUser(userData: Partial<User & { passwordHash?: string }>): User & { passwordHash?: string } {
+  public addUser(userData: Partial<User & { passwordHash?: string; password?: string }>): User & { passwordHash?: string } {
     const store = this.loadStore();
     const cleanEmail = (userData.email || '').toLowerCase().trim();
     if (!cleanEmail) throw new Error('Email is required to create a user account.');
 
     const existing = this.getUserByEmail(cleanEmail);
     if (existing) {
+      if (userData.password) {
+        existing.passwordHash = hashPassword(userData.password);
+        this.saveStore();
+      } else if (userData.passwordHash) {
+        existing.passwordHash = userData.passwordHash;
+        this.saveStore();
+      }
       return existing;
     }
+
+    const assignedKapateId = userData.kapateId || this.generateNextKapateId(
+      userData.role === 'INTERN' ? 'INT' : 'EMP'
+    );
+
+    const initialPasswordHash = userData.password
+      ? hashPassword(userData.password)
+      : (userData.passwordHash || hashPassword('KapateOS@2026'));
 
     const newUser: User & { passwordHash?: string } = {
       id: userData.id || `usr-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`,
@@ -422,7 +474,7 @@ class DataStore {
       role: userData.role || 'EMPLOYEE',
       designation: userData.designation || 'Software Consultant',
       department: userData.department || 'Engineering',
-      kapateId: userData.kapateId || this.generateNextKapateId('EMP'),
+      kapateId: assignedKapateId,
       internalEmail: userData.internalEmail || cleanEmail,
       status: userData.status || 'ACTIVE',
       phone: userData.phone || '+91 98230 00000',
@@ -434,10 +486,36 @@ class DataStore {
       lastLoginAt: new Date().toISOString(),
       mfaEnabled: userData.mfaEnabled ?? false,
       created: new Date().toISOString().split('T')[0],
-      passwordHash: userData.passwordHash || hashPassword('KapateOS@2026')
+      passwordHash: initialPasswordHash
     };
 
     store.users.push(newUser);
+
+    // Synchronize into store.employees if employee/staff role and not already present
+    if (newUser.role !== 'CLIENT') {
+      const existingEmp = store.employees.find(
+        e => e.email.toLowerCase() === cleanEmail || (e.kapateId && e.kapateId.toLowerCase() === assignedKapateId.toLowerCase())
+      );
+      if (!existingEmp) {
+        store.employees.unshift({
+          id: `EMP-${store.employees.length + 101}`,
+          name: newUser.name,
+          email: newUser.email,
+          role: newUser.designation || 'Software Engineer',
+          department: newUser.department || 'Engineering',
+          phone: newUser.phone || '',
+          manager: newUser.manager || 'Shon Kapate',
+          skills: newUser.skills || [],
+          joinDate: new Date().toISOString().split('T')[0],
+          status: 'Active',
+          projectsCount: 0,
+          utilization: 100,
+          kapateId: assignedKapateId,
+          internalEmail: newUser.internalEmail
+        });
+      }
+    }
+
     this.saveStore();
 
     this.addAuditLog({
@@ -446,7 +524,7 @@ class DataStore {
       module: 'security',
       targetResource: `users/${newUser.id}`,
       targetUser: newUser.email,
-      newValue: JSON.stringify({ name: newUser.name, role: newUser.role }),
+      newValue: JSON.stringify({ name: newUser.name, role: newUser.role, kapateId: newUser.kapateId }),
       result: 'SUCCESS',
       reason: 'Created enterprise user login account'
     });
@@ -527,6 +605,93 @@ class DataStore {
       store.audit_logs = store.audit_logs.slice(0, 500);
     }
     this.saveStore();
+  }
+
+  // ==========================================
+  // REGISTRATION REQUESTS METHODS
+  // ==========================================
+
+  public getRegistrationRequests(): RegistrationRequest[] {
+    const store = this.loadStore();
+    return [...(store.registration_requests || [])];
+  }
+
+  public getRegistrationRequestById(id: string): RegistrationRequest | null {
+    const store = this.loadStore();
+    return (store.registration_requests || []).find(r => r.id === id || r.applicationId === id) || null;
+  }
+
+  public addRegistrationRequest(requestData: RegistrationRequest): RegistrationRequest {
+    const store = this.loadStore();
+    store.registration_requests = store.registration_requests || [];
+    
+    // Check if duplicate email already pending
+    const existingIndex = store.registration_requests.findIndex(
+      r => r.email.toLowerCase() === requestData.email.toLowerCase() && r.status === 'PENDING'
+    );
+    if (existingIndex !== -1) {
+      store.registration_requests[existingIndex] = {
+        ...store.registration_requests[existingIndex],
+        ...requestData,
+        id: store.registration_requests[existingIndex].id
+      };
+      this.saveStore();
+      return store.registration_requests[existingIndex];
+    }
+
+    store.registration_requests.unshift(requestData);
+    this.saveStore();
+    return requestData;
+  }
+
+  public updateRegistrationRequest(id: string, patch: Partial<RegistrationRequest>): RegistrationRequest | null {
+    const store = this.loadStore();
+    store.registration_requests = store.registration_requests || [];
+    const index = store.registration_requests.findIndex(r => r.id === id || r.applicationId === id);
+    if (index === -1) return null;
+
+    store.registration_requests[index] = {
+      ...store.registration_requests[index],
+      ...patch
+    };
+    this.saveStore();
+    return store.registration_requests[index];
+  }
+
+  // ==========================================
+  // ONBOARDING INVITATIONS METHODS
+  // ==========================================
+
+  public getOnboardingInvitations(): OnboardingInvitation[] {
+    const store = this.loadStore();
+    return [...(store.onboarding_invitations || [])];
+  }
+
+  public getInvitationByToken(token: string): OnboardingInvitation | null {
+    const store = this.loadStore();
+    return (store.onboarding_invitations || []).find(i => i.token === token) || null;
+  }
+
+  public addInvitation(inv: OnboardingInvitation): OnboardingInvitation {
+    const store = this.loadStore();
+    store.onboarding_invitations = store.onboarding_invitations || [];
+    store.onboarding_invitations.unshift(inv);
+    this.saveStore();
+    return inv;
+  }
+
+  public updateInvitation(tokenOrId: string, patch: Partial<OnboardingInvitation>): OnboardingInvitation | null {
+    const store = this.loadStore();
+    store.onboarding_invitations = store.onboarding_invitations || [];
+    const index = store.onboarding_invitations.findIndex(i => i.token === tokenOrId || i.id === tokenOrId);
+    if (index === -1) return null;
+
+    store.onboarding_invitations[index] = {
+      ...store.onboarding_invitations[index],
+      ...patch
+    };
+    this.saveStore();
+    return store.onboarding_invitations[index];
   }
 }
 

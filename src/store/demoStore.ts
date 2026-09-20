@@ -41,8 +41,8 @@ interface DemoStore {
   logout: () => Promise<void>;
   switchRole: (roleKey: string) => void;
   fetchEmployees: () => Promise<Employee[]>;
-
-  // Active view tab navigation
+  fetchUsers: () => Promise<User[]>;
+  fetchRegistrationRequests: () => Promise<{ requests: RegistrationRequest[]; invitations: OnboardingInvitation[] }>;
   activeTab: string;
   setActiveTab: (tab: string) => void;
 
@@ -188,7 +188,7 @@ interface DemoStore {
   setSecurityDashboardOpen: (open: boolean) => void;
   setOnboardModalOpen: (open: boolean) => void;
   submitRegistrationRequest: (data: { fullName: string; email: string; phone?: string; applicationId?: string; requestedType?: 'EMPLOYEE' | 'INTERN' | 'FREELANCER'; notes?: string }) => { success: boolean; request: RegistrationRequest };
-  approveRegistrationRequest: (requestId: string, role: UserRole, department: string, manager: string, designation: string, employmentType: 'EMPLOYEE' | 'INTERN' | 'FREELANCER') => { success: boolean; invitation: OnboardingInvitation };
+  approveRegistrationRequest: (requestId: string, role: UserRole, department: string, manager: string, designation: string, employmentType: 'EMPLOYEE' | 'INTERN' | 'FREELANCER', temporaryPassword?: string) => Promise<{ success: boolean; invitation?: OnboardingInvitation; credentials?: any; error?: string }>;
   rejectRegistrationRequest: (requestId: string, reason?: string) => void;
   onboardPersonnel: (data: { fullName: string; email: string; phone?: string; designation: string; department: string; employmentType: 'EMPLOYEE' | 'INTERN' | 'FREELANCER'; role: UserRole; manager: string; skills?: string[] }) => { success: boolean; invitation: OnboardingInvitation };
   acceptInvitation: (token: string, password?: string) => { success: boolean; user?: User; error?: string };
@@ -199,10 +199,10 @@ interface DemoStore {
 
   // ==================== SUPER ADMIN CONTROL CENTER ====================
   usersList: User[];
-  createUser: (userData: Partial<User>) => { success: boolean; user?: User; error?: string };
+  createUser: (userData: Partial<User> & { password?: string }) => Promise<{ success: boolean; user?: User; credentials?: any; error?: string }>;
   updateUser: (id: string, updates: Partial<User>) => void;
   setUserStatus: (id: string, status: AccountStatus, reason?: string) => void;
-  resetUserPassword: (id: string, newPass?: string) => { success: boolean; message: string };
+  resetUserPassword: (id: string, newPass?: string) => Promise<{ success: boolean; message: string }>;
   lockUserAccount: (id: string, minutes?: number) => void;
   unlockUserAccount: (id: string) => void;
   deleteUser: (id: string) => { success: boolean; error?: string };
@@ -254,8 +254,10 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
           const json = await res.json();
           if (json.success && json.user) {
             set({ currentUser: json.user, isAuthenticated: true });
-            // Also fetch employees from database once authenticated
+            // Fetch live employees, users, and registration requests once authenticated
             get().fetchEmployees().catch(() => {});
+            get().fetchUsers().catch(() => {});
+            get().fetchRegistrationRequests().catch(() => {});
             return;
           }
         }
@@ -269,6 +271,9 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
         if (cached) {
           try {
             set({ currentUser: JSON.parse(cached), isAuthenticated: true });
+            get().fetchEmployees().catch(() => {});
+            get().fetchUsers().catch(() => {});
+            get().fetchRegistrationRequests().catch(() => {});
           } catch {
             set({ isAuthenticated: false });
           }
@@ -288,8 +293,10 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
     } else {
       set({ isAuthenticated: true });
     }
-    // Fetch live employee data on login
+    // Fetch live workforce, user accounts, and onboarding requests on login
     get().fetchEmployees().catch(() => {});
+    get().fetchUsers().catch(() => {});
+    get().fetchRegistrationRequests().catch(() => {});
   },
   logout: async () => {
     if (typeof window !== 'undefined') {
@@ -325,6 +332,46 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
       console.warn('[demoStore] fetchEmployees notice:', err);
     }
     return get().employees;
+  },
+  fetchUsers: async () => {
+    try {
+      const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch('/api/v1/admin/users', { headers });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data && Array.isArray(json.data)) {
+          set({ usersList: json.data });
+          return json.data;
+        }
+      }
+    } catch (err) {
+      console.warn('[demoStore] fetchUsers notice:', err);
+    }
+    return get().usersList;
+  },
+  fetchRegistrationRequests: async () => {
+    try {
+      const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch('/api/v1/security/onboarding', { headers });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data) {
+          const { requests, invitations } = json.data;
+          set((state) => ({
+            registrationRequests: Array.isArray(requests) ? requests : state.registrationRequests,
+            onboardingInvitations: Array.isArray(invitations) ? invitations : state.onboardingInvitations,
+          }));
+          return json.data;
+        }
+      }
+    } catch (err) {
+      console.warn('[demoStore] fetchRegistrationRequests notice:', err);
+    }
+    return { requests: get().registrationRequests, invitations: get().onboardingInvitations };
   },
   switchRole: (roleKey: string) => {
     const user = DEMO_USERS[roleKey] || DEMO_USERS.ADMIN;
@@ -1174,19 +1221,49 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
     return { success: true, request: newReq };
   },
 
-  approveRegistrationRequest: (requestId, role, department, manager, designation, employmentType) => {
+  approveRegistrationRequest: async (requestId, role, department, manager, designation, employmentType, temporaryPassword) => {
     const req = get().registrationRequests.find(r => r.id === requestId);
-    if (!req) return { success: false, invitation: null as any };
+
+    try {
+      const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch('/api/v1/security/onboarding', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          action: 'approve_and_provision',
+          requestId,
+          role,
+          department,
+          manager,
+          designation,
+          employmentType,
+          temporaryPassword
+        })
+      });
+
+      const json = await res.json();
+      if (res.ok && json.success) {
+        get().fetchRegistrationRequests().catch(() => {});
+        get().fetchEmployees().catch(() => {});
+        get().fetchUsers().catch(() => {});
+        get().showToast(`Approved ${json.credentials?.name || req?.fullName}! Assigned Kapate ID ${json.credentials?.kapateId}`, 'success');
+        return { success: true, credentials: json.credentials, user: json.data };
+      }
+    } catch (apiErr) {
+      console.warn('[demoStore] approveRegistrationRequest API notice:', apiErr);
+    }
+
+    if (!req) return { success: false, error: 'Registration request not found' };
 
     const isIntern = employmentType === 'INTERN' || role === 'INTERN';
     const isFreelancer = employmentType === 'FREELANCER';
     const prefix = isIntern ? 'INT' : isFreelancer ? 'FRL' : 'EMP';
     
-    // Count existing to generate atomic-style ID
     const count = (isIntern ? get().interns.length : get().employees.length) + 1;
     const kapateId = `KAP-${prefix}-${String(count).padStart(6, '0')}`;
-    
-    // Provision internal company email
     const baseName = req.fullName.split(' ')[0].toLowerCase();
     const internalEmail = `${baseName}@kapateconsultancy.in`;
 
@@ -1211,7 +1288,6 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
       created: new Date().toISOString().split('T')[0]
     };
 
-    // Add to workforce list in 'Inactive' / invited state
     if (isIntern) {
       const newIntern: Intern = {
         id: `INT-${count}`,
@@ -1259,9 +1335,7 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
         internalEmail
       };
       set((state) => ({ employees: [newEmployee, ...state.employees] }));
-      get().addEmployee(newEmployee).catch((err) => {
-        console.warn('[approveRegistrationRequest] Database persistence notice:', err);
-      });
+      get().addEmployee(newEmployee).catch(() => {});
     }
 
     const newEvent: SecurityEvent = {
@@ -1269,7 +1343,7 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
       action: 'REGISTRATION_APPROVED',
       actor: get().currentUser.name,
       target: `${req.fullName} (${kapateId})`,
-      details: `Approved application. Assigned role: ${role}. Provisioned ${internalEmail}. Generated invitation token.`,
+      details: `Approved application. Assigned role: ${role}. Provisioned ${internalEmail}. Generated credentials.`,
       severity: 'success',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
@@ -1286,12 +1360,37 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
     }));
 
     get().showToast(`Approved ${req.fullName}! Assigned Kapate ID ${kapateId}`, 'success');
-    return { success: true, invitation: newInv };
+    return {
+      success: true,
+      invitation: newInv,
+      credentials: {
+        name: req.fullName,
+        kapateId,
+        email: internalEmail,
+        initialPassword: temporaryPassword || 'KapateOS@2026'
+      }
+    };
   },
 
-  rejectRegistrationRequest: (requestId, reason) => {
+  rejectRegistrationRequest: async (requestId, reason) => {
     const req = get().registrationRequests.find(r => r.id === requestId);
     if (!req) return;
+
+    try {
+      const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      await fetch('/api/v1/security/onboarding', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          action: 'reject_request',
+          requestId,
+          reason
+        })
+      });
+    } catch (e) {}
 
     const newEvent: SecurityEvent = {
       id: `SEC-${Date.now()}`,
@@ -1674,60 +1773,116 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
   systemSettings: DEFAULT_SYSTEM_SETTINGS,
   systemHealth: INITIAL_SYSTEM_HEALTH,
 
-  createUser: (userData) => {
+  createUser: async (userData) => {
     if (!userData.email || !userData.name) {
       return { success: false, error: 'Name and email are required.' };
     }
-    const count = get().usersList.length + 1;
-    const prefix = userData.role === 'INTERN' ? 'INT' : userData.role === 'CLIENT' ? 'CLI' : 'EMP';
-    const kapateId = userData.kapateId || `KAP-${prefix}-${String(count).padStart(6, '0')}`;
-    const baseEmail = userData.email.toLowerCase().trim();
-    const internalEmail = baseEmail.includes('@') ? baseEmail : `${baseEmail}@kapateconsultancy.in`;
 
-    const newUser: User = {
-      id: `usr-${Date.now()}`,
-      name: userData.name,
-      email: internalEmail,
-      role: userData.role || 'EMPLOYEE',
-      department: userData.department || 'Engineering',
-      designation: userData.designation || 'Software Engineer',
-      kapateId,
-      internalEmail,
-      status: 'ACTIVE',
-      phone: userData.phone || '+91 98230 00000',
-      manager: userData.manager || 'Shon Kapate',
-      skills: userData.skills || ['TypeScript', 'Full Stack'],
-      assignedProjects: userData.assignedProjects || [],
-      failedLogins: 0,
-      lockedUntil: null,
-      lastLoginAt: 'Never',
-      mfaEnabled: false,
-      created: new Date().toISOString().split('T')[0]
-    };
+    try {
+      const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
 
-    set((state) => ({
-      usersList: [newUser, ...state.usersList]
-    }));
+      const res = await fetch('/api/v1/admin/users', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          name: userData.name,
+          email: userData.email,
+          role: userData.role || 'EMPLOYEE',
+          department: userData.department || 'Engineering',
+          designation: userData.designation || 'Software Consultant',
+          phone: userData.phone || '+91 98230 00000',
+          password: userData.password
+        })
+      });
 
-    get().logAuditEvent({
-      actor: get().currentUser.name,
-      actorKapateId: get().currentUser.kapateId,
-      action: 'USER_CREATED',
-      module: 'users',
-      targetResource: `users/${newUser.id}`,
-      targetUser: newUser.email,
-      newValue: JSON.stringify({ name: newUser.name, role: newUser.role, kapateId: newUser.kapateId }),
-      result: 'SUCCESS',
-      reason: 'Admin provisioned new personnel profile'
-    });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'Failed to create user account on server.');
+      }
 
-    get().showToast(`User ${newUser.name} provisioned successfully with Kapate ID ${newUser.kapateId}`, 'success');
-    return { success: true, user: newUser };
+      const createdUser: User = json.data;
+      set((state) => ({
+        usersList: [createdUser, ...state.usersList.filter(u => u.id !== createdUser.id)]
+      }));
+
+      // Refresh workforce directory
+      get().fetchEmployees().catch(() => {});
+
+      get().logAuditEvent({
+        actor: get().currentUser.name,
+        actorKapateId: get().currentUser.kapateId,
+        action: 'USER_CREATED',
+        module: 'users',
+        targetResource: `users/${createdUser.id}`,
+        targetUser: createdUser.email,
+        newValue: JSON.stringify({ name: createdUser.name, role: createdUser.role, kapateId: createdUser.kapateId }),
+        result: 'SUCCESS',
+        reason: 'Admin provisioned new personnel profile with server credentials'
+      });
+
+      get().showToast(`User ${createdUser.name} provisioned successfully with Kapate ID ${createdUser.kapateId}`, 'success');
+      return { success: true, user: createdUser, credentials: json.credentials };
+    } catch (err: any) {
+      console.warn('[demoStore] createUser API notice, falling back:', err);
+      const count = get().usersList.length + 1;
+      const prefix = userData.role === 'INTERN' ? 'INT' : userData.role === 'CLIENT' ? 'CLI' : 'EMP';
+      const kapateId = userData.kapateId || `KAP-${prefix}-${String(count).padStart(6, '0')}`;
+      const baseEmail = userData.email.toLowerCase().trim();
+      const internalEmail = baseEmail.includes('@') ? baseEmail : `${baseEmail}@kapateconsultancy.in`;
+
+      const newUser: User = {
+        id: `usr-${Date.now()}`,
+        name: userData.name,
+        email: internalEmail,
+        role: userData.role || 'EMPLOYEE',
+        department: userData.department || 'Engineering',
+        designation: userData.designation || 'Software Engineer',
+        kapateId,
+        internalEmail,
+        status: 'ACTIVE',
+        phone: userData.phone || '+91 98230 00000',
+        manager: userData.manager || 'Shon Kapate',
+        skills: userData.skills || ['TypeScript', 'Full Stack'],
+        assignedProjects: userData.assignedProjects || [],
+        failedLogins: 0,
+        lockedUntil: null,
+        lastLoginAt: 'Never',
+        mfaEnabled: false,
+        created: new Date().toISOString().split('T')[0]
+      };
+
+      set((state) => ({
+        usersList: [newUser, ...state.usersList]
+      }));
+
+      return {
+        success: true,
+        user: newUser,
+        credentials: {
+          name: newUser.name,
+          kapateId: newUser.kapateId,
+          email: newUser.email,
+          initialPassword: userData.password || 'KapateOS@2026'
+        }
+      };
+    }
   },
 
   updateUser: (id, updates) => {
     const existing = get().usersList.find(u => u.id === id);
     if (!existing) return;
+
+    // Sync to backend
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    fetch('/api/v1/admin/users', {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({ userId: id, updates })
+    }).catch(() => {});
 
     set((state) => ({
       usersList: state.usersList.map(u => u.id === id ? { ...u, ...updates, updatedAt: new Date().toISOString() } : u)
@@ -1756,6 +1911,15 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
       return;
     }
 
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    fetch('/api/v1/admin/users', {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({ userId: id, action: 'toggle_status', status })
+    }).catch(() => {});
+
     set((state) => ({
       usersList: state.usersList.map(u => u.id === id ? { ...u, status, updatedAt: new Date().toISOString() } : u)
     }));
@@ -1776,11 +1940,29 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
     get().showToast(`User ${target.name} status updated to ${status}`, 'info');
   },
 
-  resetUserPassword: (id, newPass) => {
+  resetUserPassword: async (id, newPass) => {
     const target = get().usersList.find(u => u.id === id);
     if (!target) return { success: false, message: 'User not found' };
 
     const generatedPass = newPass || `Kapate@${Math.floor(100000 + Math.random() * 900000)}`;
+
+    try {
+      const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      await fetch('/api/v1/admin/users', {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({
+          userId: id,
+          action: 'reset_password',
+          newPassword: generatedPass
+        })
+      });
+    } catch (e) {
+      console.warn('[demoStore] resetUserPassword API notice:', e);
+    }
 
     get().logAuditEvent({
       actor: get().currentUser.name,

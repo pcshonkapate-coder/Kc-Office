@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "lastUpdated": "2026-09-19T12:10:18.621Z",
+  "lastUpdated": "2026-09-20T11:18:27.298Z",
   "users": [
     {
       "id": "usr-admin",
@@ -95,9 +95,91 @@
       "mfaEnabled": false,
       "created": "2026-09-19",
       "passwordHash": "113e6501a4c30e1ca185b02fcb557ea9:04bf6feaa17d210a16be0f5b34a6e4a1a8c1e3ddb3560e8fd619c15ac5c390fa451bdd1c536f0b9bf6745287a380e8f34363f5186f84849e1808e3b313868848"
+    },
+    {
+      "id": "usr-1789902794716-974",
+      "name": "Aarav Verma",
+      "email": "aarav.verma@example.com",
+      "role": "EMPLOYEE",
+      "designation": "Backend Developer",
+      "department": "Engineering",
+      "kapateId": "KAP-EMP-000005",
+      "internalEmail": "aarav.verma@kapateconsultancy.in",
+      "status": "ACTIVE",
+      "phone": "+91 98765 43210",
+      "manager": "Shon Kapate",
+      "skills": [
+        "Enterprise Solutions"
+      ],
+      "assignedProjects": [],
+      "failedLogins": 0,
+      "lockedUntil": null,
+      "lastLoginAt": "2026-09-20T11:13:14.716Z",
+      "mfaEnabled": false,
+      "created": "2026-09-20",
+      "passwordHash": "fed959d847e41ceaaa7b49622d997387:f2caa2fdbe618e1354b62ec8470eefecce8b2364553d433dd0952ce5bd31b9201d4fcfe600a0106746917de57baff311206d7a64062bdf8bcc2da3322eb1404a"
+    },
+    {
+      "id": "usr-1789902952673-732",
+      "name": "Priya Mehta",
+      "email": "priya.mehta@kapateconsultancy.in",
+      "role": "EMPLOYEE",
+      "designation": "Software Consultant",
+      "department": "Engineering",
+      "kapateId": "KAP-EMP-000006",
+      "internalEmail": "priya.mehta@kapateconsultancy.in",
+      "status": "ACTIVE",
+      "phone": "+91 98230 00000",
+      "manager": "Shon Kapate",
+      "skills": [
+        "Enterprise Solutions"
+      ],
+      "assignedProjects": [],
+      "failedLogins": 0,
+      "lockedUntil": null,
+      "lastLoginAt": "2026-09-20T11:18:27.274Z",
+      "mfaEnabled": true,
+      "created": "2026-09-20",
+      "passwordHash": "517541258dbd4897dfab9ee734269531:06b5f6f89b44ab91ef0e29f3effffa745f5e22988b775408f6b05903344443977bd678edbe785b4d26b30e1ddacc820436b83ffa6d32e766365b97e42e058379"
     }
   ],
   "employees": [
+    {
+      "id": "EMP-106",
+      "name": "Priya Mehta",
+      "email": "priya.mehta@kapateconsultancy.in",
+      "role": "Software Consultant",
+      "department": "Engineering",
+      "phone": "+91 98230 00000",
+      "manager": "Shon Kapate",
+      "skills": [
+        "Enterprise Solutions"
+      ],
+      "joinDate": "2026-09-20",
+      "status": "Active",
+      "projectsCount": 0,
+      "utilization": 100,
+      "kapateId": "KAP-EMP-000006",
+      "internalEmail": "priya.mehta@kapateconsultancy.in"
+    },
+    {
+      "id": "EMP-105",
+      "name": "Aarav Verma",
+      "email": "aarav.verma@example.com",
+      "role": "Backend Developer",
+      "department": "Engineering",
+      "phone": "+91 98765 43210",
+      "manager": "Shon Kapate",
+      "skills": [
+        "Enterprise Solutions"
+      ],
+      "joinDate": "2026-09-20",
+      "status": "Active",
+      "projectsCount": 0,
+      "utilization": 100,
+      "kapateId": "KAP-EMP-000005",
+      "internalEmail": "aarav.verma@kapateconsultancy.in"
+    },
     {
       "id": "emp-1789819509859-371",
       "name": "Temporary User 404",
@@ -186,6 +268,19 @@
   "freelancers": [],
   "sessions": [
     {
+      "id": "sess-mu9q3gm1-q5fw",
+      "userId": "usr-1789902952673-732",
+      "userName": "Priya Mehta",
+      "email": "priya.mehta@kapateconsultancy.in",
+      "role": "EMPLOYEE",
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36",
+      "loginAt": "2026-09-20T11:18:27.289Z",
+      "lastActiveAt": "Just now",
+      "isImpersonated": false,
+      "status": "ACTIVE"
+    },
+    {
       "id": "sess-mu8cbodz-wxv3",
       "userId": "usr-admin",
       "userName": "Shon Kapate",
@@ -252,6 +347,118 @@
     }
   ],
   "audit_logs": [
+    {
+      "id": "aud-1789903107297-493",
+      "timestamp": "2026-09-20 11:18:27",
+      "actor": "Priya Mehta",
+      "actorKapateId": "KAP-EMP-000006",
+      "action": "USER_LOGIN",
+      "module": "auth",
+      "targetResource": "sessions/sess-mu9q3gm1-q5fw",
+      "targetUser": "priya.mehta@kapateconsultancy.in",
+      "previousValue": "",
+      "newValue": "",
+      "ipAddress": "127.0.0.1",
+      "result": "SUCCESS",
+      "requestId": "req-mu9q3gm9",
+      "reason": "Successful enterprise password authentication"
+    },
+    {
+      "id": "aud-1789903057135-281",
+      "timestamp": "2026-09-20 11:17:37",
+      "actor": "Shon Kapate",
+      "actorKapateId": "KAP-EMP-000001",
+      "action": "USER_LOGOUT",
+      "module": "auth",
+      "targetResource": "users/usr-admin",
+      "targetUser": "admin@kapateconsultancy.in",
+      "previousValue": "",
+      "newValue": "",
+      "ipAddress": "127.0.0.1",
+      "result": "SUCCESS",
+      "requestId": "req-mu9q2dwv",
+      "reason": "User initiated secure logout"
+    },
+    {
+      "id": "aud-1789902952684-529",
+      "timestamp": "2026-09-20 11:15:52",
+      "actor": "Shon Kapate",
+      "actorKapateId": "KAP-EMP-000001",
+      "action": "USER_CREATE",
+      "module": "security",
+      "targetResource": "users/usr-1789902952673-732",
+      "targetUser": "priya.mehta@kapateconsultancy.in",
+      "previousValue": "",
+      "newValue": "{\"name\":\"Priya Mehta\",\"role\":\"EMPLOYEE\"}",
+      "ipAddress": "127.0.0.1",
+      "result": "SUCCESS",
+      "requestId": "req-mu9q05bg",
+      "reason": "Created enterprise user with role EMPLOYEE"
+    },
+    {
+      "id": "aud-1789902952677-566",
+      "timestamp": "2026-09-20 11:15:52",
+      "actor": "Admin",
+      "actorKapateId": "KAP-EMP-000001",
+      "action": "USER_CREATED",
+      "module": "security",
+      "targetResource": "users/usr-1789902952673-732",
+      "targetUser": "priya.mehta@kapateconsultancy.in",
+      "previousValue": "",
+      "newValue": "{\"name\":\"Priya Mehta\",\"role\":\"EMPLOYEE\",\"kapateId\":\"KAP-EMP-000006\"}",
+      "ipAddress": "127.0.0.1",
+      "result": "SUCCESS",
+      "requestId": "req-mu9q05b9",
+      "reason": "Created enterprise user login account"
+    },
+    {
+      "id": "aud-1789902794732-635",
+      "timestamp": "2026-09-20 11:13:14",
+      "actor": "Shon Kapate",
+      "actorKapateId": "KAP-EMP-000001",
+      "action": "REGISTRATION_APPROVED_AND_PROVISIONED",
+      "module": "security",
+      "targetResource": "requests/REQ-001-rlvc",
+      "targetUser": "aarav.verma@example.com",
+      "previousValue": "",
+      "newValue": "",
+      "ipAddress": "127.0.0.1",
+      "result": "SUCCESS",
+      "requestId": "req-mu9pwrfw",
+      "reason": "Admin approved registration and provisioned credentials for Aarav Verma (KAP-EMP-000005)."
+    },
+    {
+      "id": "aud-1789902794721-279",
+      "timestamp": "2026-09-20 11:13:14",
+      "actor": "Admin",
+      "actorKapateId": "KAP-EMP-000001",
+      "action": "USER_CREATED",
+      "module": "security",
+      "targetResource": "users/usr-1789902794716-974",
+      "targetUser": "aarav.verma@example.com",
+      "previousValue": "",
+      "newValue": "{\"name\":\"Aarav Verma\",\"role\":\"EMPLOYEE\",\"kapateId\":\"KAP-EMP-000005\"}",
+      "ipAddress": "127.0.0.1",
+      "result": "SUCCESS",
+      "requestId": "req-mu9pwrfl",
+      "reason": "Created enterprise user login account"
+    },
+    {
+      "id": "aud-1789902554249-479",
+      "timestamp": "2026-09-20 11:09:14",
+      "actor": "Aarav Verma",
+      "actorKapateId": "KAP-EMP-000001",
+      "action": "REGISTRATION_REQUEST_CREATED",
+      "module": "security",
+      "targetResource": "requests/REQ-001-rlvc",
+      "targetUser": "aarav.verma@example.com",
+      "previousValue": "",
+      "newValue": "",
+      "ipAddress": "127.0.0.1",
+      "result": "SUCCESS",
+      "requestId": "req-mu9prlvt",
+      "reason": "New registration request queued for Aarav Verma (aarav.verma@example.com). Status: PENDING."
+    },
     {
       "id": "aud-1789819818620-849",
       "timestamp": "2026-09-19 12:10:18",
@@ -508,5 +715,22 @@
       "requestId": "req-sys-boot",
       "reason": "Standardizing Kapate OS production database persistence"
     }
-  ]
+  ],
+  "registration_requests": [
+    {
+      "id": "REQ-001-rlvc",
+      "fullName": "Aarav Verma",
+      "email": "aarav.verma@example.com",
+      "phone": "+91 98765 43210",
+      "applicationId": "APP-2026-101",
+      "requestedType": "EMPLOYEE",
+      "status": "APPROVED",
+      "notes": "Engineering / Developer - Excited to build software at Kapate Consultancy.",
+      "created": "2026-09-20",
+      "passwordHash": "7d8746e0efaf7bdf63ac6023be8be64a:a3c5c25335a7233234bfa045000cbf94b1b915cb94a379fbac7f57320ed0a1698b0137f34038ca369fa22ab5009965966893e31f45ed70a235033852ea075390",
+      "reviewedAt": "2026-09-20",
+      "reviewedBy": "Shon Kapate"
+    }
+  ],
+  "onboarding_invitations": []
 }

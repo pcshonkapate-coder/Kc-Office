@@ -108,7 +108,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       message: `User ${newUser.name} created successfully.`,
-      data: safeUser
+      data: safeUser,
+      credentials: {
+        name: newUser.name,
+        kapateId: newUser.kapateId,
+        email: newUser.email,
+        initialPassword: password || 'Kapate@2026!Secured',
+        role: newUser.role,
+        department: newUser.department,
+        designation: newUser.designation
+      }
     }, { status: 201 });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });

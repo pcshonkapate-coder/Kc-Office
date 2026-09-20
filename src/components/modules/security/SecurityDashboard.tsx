@@ -6,7 +6,8 @@ import { UserRole, AccountStatus } from '../../../types';
 import {
   Shield, ShieldCheck, ShieldAlert, KeyRound, UserCheck, UserX,
   Users2, UserPlus, Copy, CheckCircle2, Clock, AlertTriangle,
-  RotateCcw, Lock, ArrowUpRight, Search, Filter, Ban, Check, Sparkles
+  RotateCcw, Lock, ArrowUpRight, Search, Filter, Ban, Check, Sparkles,
+  RefreshCw, X
 } from 'lucide-react';
 
 export const SecurityDashboard: React.FC = () => {
@@ -18,6 +19,7 @@ export const SecurityDashboard: React.FC = () => {
   const interns = useDemoStore((state) => state.interns);
   const setOnboardModalOpen = useDemoStore((state) => state.setOnboardModalOpen);
 
+  const fetchRegistrationRequests = useDemoStore((state) => state.fetchRegistrationRequests);
   const approveRegistrationRequest = useDemoStore((state) => state.approveRegistrationRequest);
   const rejectRegistrationRequest = useDemoStore((state) => state.rejectRegistrationRequest);
   const revokeInvitation = useDemoStore((state) => state.revokeInvitation);
@@ -26,6 +28,17 @@ export const SecurityDashboard: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState<'requests' | 'invitations' | 'access' | 'audit'>('requests');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Sync registration requests from server on mount
+  React.useEffect(() => {
+    fetchRegistrationRequests().catch(() => {});
+  }, [fetchRegistrationRequests]);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchRegistrationRequests().finally(() => setIsRefreshing(false));
+  };
 
   // Approval modal state
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
@@ -34,6 +47,13 @@ export const SecurityDashboard: React.FC = () => {
   const [approvalManager, setApprovalManager] = useState(employees[0]?.name || 'Shon Kapate');
   const [approvalDesignation, setApprovalDesignation] = useState('Software Engineer');
   const [approvalEmpType, setApprovalEmpType] = useState<'EMPLOYEE' | 'INTERN' | 'FREELANCER'>('EMPLOYEE');
+  const [approvalPassword, setApprovalPassword] = useState('Kapate@2026!Secured');
+  const [isApproving, setIsApproving] = useState(false);
+
+  // Credential handover state
+  const [approvedCredentials, setApprovedCredentials] = useState<any>(null);
+  const [isApprovedModalOpen, setIsApprovedModalOpen] = useState(false);
+  const [copiedApproved, setCopiedApproved] = useState(false);
 
   // Role edit modal state
   const [selectedUserToEdit, setSelectedUserToEdit] = useState<any>(null);
@@ -68,18 +88,47 @@ export const SecurityDashboard: React.FC = () => {
     setApprovalManager(employees[0]?.name || 'Shon Kapate');
   };
 
-  const handleConfirmApproval = (e: React.FormEvent) => {
+  const handleConfirmApproval = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedRequest) return;
-    approveRegistrationRequest(
-      selectedRequest.id,
-      approvalRole,
-      approvalDept,
-      approvalManager,
-      approvalDesignation,
-      approvalEmpType
-    );
-    setSelectedRequest(null);
+    setIsApproving(true);
+    try {
+      const res = await approveRegistrationRequest(
+        selectedRequest.id,
+        approvalRole,
+        approvalDept,
+        approvalManager,
+        approvalDesignation,
+        approvalEmpType,
+        approvalPassword
+      );
+      setSelectedRequest(null);
+      if (res && res.credentials) {
+        setApprovedCredentials(res.credentials);
+        setIsApprovedModalOpen(true);
+      }
+    } finally {
+      setIsApproving(false);
+    }
+  };
+
+  const handleCopyApprovedCredentials = () => {
+    if (!approvedCredentials) return;
+    const portalUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+    const text = `🏢 Kapate OS — Personnel Access Credentials\n` +
+      `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+      `Employee Name   : ${approvedCredentials.name}\n` +
+      `User ID         : ${approvedCredentials.kapateId}\n` +
+      `Login Email     : ${approvedCredentials.email}\n` +
+      `Initial Password: ${approvedCredentials.initialPassword}\n` +
+      `Role / Dept     : ${approvedCredentials.role || approvalRole} (${approvedCredentials.department || approvalDept})\n` +
+      `Login Portal    : ${portalUrl}/\n` +
+      `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+      `Note: You can log in using either your Corporate Email or your User ID.`;
+
+    navigator.clipboard.writeText(text);
+    setCopiedApproved(true);
+    setTimeout(() => setCopiedApproved(false), 2500);
   };
 
   const handleConfirmRoleChange = (e: React.FormEvent) => {
@@ -119,6 +168,14 @@ export const SecurityDashboard: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-all cursor-pointer disabled:opacity-50"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span>{isRefreshing ? 'Refreshing...' : 'Refresh Requests'}</span>
+          </button>
           <button
             onClick={() => setOnboardModalOpen(true)}
             className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-all shadow-md shadow-blue-500/20 cursor-pointer"
@@ -552,6 +609,19 @@ export const SecurityDashboard: React.FC = () => {
                 </select>
               </div>
 
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Set Account Password</label>
+                <input
+                  type="text"
+                  value={approvalPassword}
+                  onChange={(e) => setApprovalPassword(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 font-mono text-xs"
+                />
+                <span className="text-[10px] text-slate-400 mt-1 block">
+                  Employee can sign in immediately with this password (or their registration password).
+                </span>
+              </div>
+
               <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 text-[11px] space-y-1">
                 <div className="font-bold flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5 text-blue-600" /> Automated Credential Generation</div>
                 <div>System will generate an atomic Kapate ID and corporate email <strong className="font-mono">{selectedRequest.fullName.split(' ')[0].toLowerCase()}@kapateconsultancy.in</strong>.</div>
@@ -567,9 +637,11 @@ export const SecurityDashboard: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-colors"
+                  disabled={isApproving}
+                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white font-bold transition-colors cursor-pointer disabled:cursor-not-allowed flex items-center gap-1.5"
                 >
-                  Approve & Issue Invitation
+                  <ShieldCheck className="w-4 h-4" />
+                  {isApproving ? 'Provisioning...' : 'Approve & Issue Credentials'}
                 </button>
               </div>
             </form>
@@ -638,6 +710,102 @@ export const SecurityDashboard: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* APPROVED CREDENTIALS MODAL */}
+      {isApprovedModalOpen && approvedCredentials && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center border border-emerald-500/20">
+                  <CheckCircle2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-slate-900">Personnel Provisioned Successfully</h3>
+                  <p className="text-xs text-slate-500">Corporate credentials generated & saved to database</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsApprovedModalOpen(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-900 flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>Account is active immediately. Give these credentials to the personnel to sign in.</span>
+              </div>
+
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-200 text-xs">
+                  <span className="text-slate-500 font-medium">Full Name:</span>
+                  <span className="font-bold text-slate-900">{approvedCredentials.name}</span>
+                </div>
+
+                <div className="flex items-center justify-between pb-2 border-b border-slate-200 text-xs">
+                  <span className="text-slate-500 font-medium">User ID (Kapate ID):</span>
+                  <span className="font-mono font-bold text-blue-600 bg-white px-2 py-0.5 rounded border border-slate-200">
+                    {approvedCredentials.kapateId}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between pb-2 border-b border-slate-200 text-xs">
+                  <span className="text-slate-500 font-medium">Login Corporate Email:</span>
+                  <span className="font-mono font-bold text-slate-900">{approvedCredentials.email}</span>
+                </div>
+
+                <div className="flex items-center justify-between pb-2 border-b border-slate-200 text-xs">
+                  <span className="text-slate-500 font-medium">Initial Password:</span>
+                  <span className="font-mono font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded border border-emerald-200">
+                    {approvedCredentials.initialPassword}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-500 font-medium">Role & Department:</span>
+                  <span className="font-semibold text-slate-700">
+                    {approvedCredentials.role || approvalRole} • {approvedCredentials.department || approvalDept}
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-3 bg-blue-50/70 border border-blue-200/80 rounded-2xl text-[11px] text-blue-800 leading-relaxed">
+                💡 <strong>Dual Login Support:</strong> Personnel can log in on the main portal using <strong>either</strong> their Corporate Email or their User ID ({approvedCredentials.kapateId}) with this password.
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-5 mt-5 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={handleCopyApprovedCredentials}
+                className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-2 cursor-pointer"
+              >
+                {copiedApproved ? (
+                  <>
+                    <Check className="w-4 h-4 text-emerald-400" />
+                    <span>Copied Credentials!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-4 h-4" />
+                    <span>Copy Full Credentials</span>
+                  </>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsApprovedModalOpen(false)}
+                className="px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all cursor-pointer"
+              >
+                Done
+              </button>
+            </div>
           </div>
         </div>
       )}

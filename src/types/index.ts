@@ -499,6 +499,7 @@ export interface RegistrationRequest {
   created: string;
   reviewedAt?: string;
   reviewedBy?: string;
+  passwordHash?: string;
 }
 
 export interface OnboardingInvitation {

@@ -18,9 +18,11 @@ function InviteContent() {
   const acceptInvitation = useDemoStore((state) => state.acceptInvitation);
 
   const [token, setToken] = useState(tokenParam);
+  const [fetchedInvitation, setFetchedInvitation] = useState<any>(null);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [activatedUser, setActivatedUser] = useState<any>(null);
 
@@ -31,10 +33,25 @@ function InviteContent() {
     }
   }, [tokenParam]);
 
-  // Lookup invitation details
-  const matchedInvitation = onboardingInvitations.find(i => i.token === token);
+  // Lookup invitation details in store, or fetch from server API if not found locally
+  const storeInvitation = onboardingInvitations.find(i => i.token === token);
+  const matchedInvitation = storeInvitation || fetchedInvitation;
 
-  const handleAccept = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (!token) return;
+    if (!storeInvitation) {
+      fetch(`/api/v1/security/onboarding?token=${encodeURIComponent(token)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.invitation) {
+            setFetchedInvitation(data.invitation);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [token, storeInvitation]);
+
+  const handleAccept = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
 
@@ -53,12 +70,25 @@ function InviteContent() {
       return;
     }
 
-    const res = acceptInvitation(token, password);
-    if (!res.success) {
-      setErrorMessage(res.error || 'Failed to activate invitation.');
-    } else {
-      setActivatedUser(res.user);
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/v1/security/onboarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'accept_invitation', token, password })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setErrorMessage(data.error || 'Failed to activate invitation.');
+        return;
+      }
+      acceptInvitation(token, password);
+      setActivatedUser(data.user);
       setIsSuccess(true);
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Network error occurred while activating invitation.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -87,7 +117,7 @@ function InviteContent() {
               <div className="flex items-center justify-between pb-3 border-b border-slate-200">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center font-bold text-white text-sm shadow-md shadow-blue-500/20">
-                    {matchedInvitation.fullName.split(' ').map(n => n[0]).join('')}
+                    {matchedInvitation.fullName.split(' ').map((n: string) => n[0]).join('')}
                   </div>
                   <div>
                     <h3 className="font-extrabold text-slate-900 text-sm">{matchedInvitation.fullName}</h3>
@@ -173,9 +203,10 @@ function InviteContent() {
 
             <button
               type="submit"
-              className="w-full mt-4 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 cursor-pointer"
+              disabled={isSubmitting}
+              className="w-full mt-4 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-xs font-bold transition-all shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
             >
-              <BadgeCheck className="w-4 h-4" /> Activate Account & Provision Identity
+              <BadgeCheck className="w-4 h-4" /> {isSubmitting ? 'Activating Account...' : 'Activate Account & Provision Identity'}
             </button>
           </form>
         </div>

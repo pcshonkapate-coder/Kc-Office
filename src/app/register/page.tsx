@@ -23,12 +23,13 @@ export default function RegisterPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submittedRequest, setSubmittedRequest] = useState<any>(null);
   const [errorMessage, setErrorMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
 
-    if (!fullName || !email || !password) {
+    if (!fullName.trim() || !email.trim() || !password) {
       setErrorMessage('Please fill in all required fields.');
       return;
     }
@@ -43,18 +44,44 @@ export default function RegisterPage() {
       return;
     }
 
-    const res = submitRegistrationRequest({
-      fullName,
-      email,
-      phone,
-      applicationId,
-      requestedType,
-      notes
-    });
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/v1/security/onboarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'submit_request',
+          fullName: fullName.trim(),
+          email: email.trim(),
+          phone: phone.trim(),
+          applicationId: applicationId.trim(),
+          requestedType,
+          password,
+          notes: notes.trim()
+        })
+      });
 
-    if (res.success) {
-      setSubmittedRequest(res.request);
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'Failed to submit registration request.');
+      }
+
+      // Also sync to local Zustand store
+      submitRegistrationRequest({
+        fullName: fullName.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+        applicationId: json.data?.applicationId || applicationId,
+        requestedType,
+        notes: notes.trim()
+      });
+
+      setSubmittedRequest(json.data);
       setIsSubmitted(true);
+    } catch (err: any) {
+      setErrorMessage(err.message || 'An error occurred while submitting your registration.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -278,9 +305,11 @@ export default function RegisterPage() {
 
                 <button
                   type="submit"
-                  className="w-full mt-4 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 cursor-pointer"
+                  disabled={isSubmitting}
+                  className="w-full mt-4 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-xs font-bold transition-all shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
                 >
-                  <UserCheck className="w-4 h-4" /> Submit Registration Request
+                  <UserCheck className="w-4 h-4" />
+                  {isSubmitting ? 'Submitting to Registry...' : 'Submit Registration Request'}
                 </button>
               </form>
             </div>
