@@ -25,7 +25,7 @@ export default function KapateOSPage() {
   }
 
   if (!isAuthenticated) {
-    return <DemoLogin onLoginSuccess={() => login()} />;
+    return <DemoLogin onLoginSuccess={() => checkAuth()} />;
   }
 
   return <AppShell />;

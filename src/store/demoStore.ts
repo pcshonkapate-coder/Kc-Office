@@ -236,14 +236,14 @@ interface DemoStore {
 }
 
 export const useDemoStore = create<DemoStore>((set, get) => ({
-  currentUser: DEMO_USERS.ADMIN,
+  currentUser: DEMO_USERS.EMPLOYEE,
   isAuthenticated: false,
   setIsAuthenticated: (auth: boolean) => set({ isAuthenticated: auth }),
   checkAuth: async () => {
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token');
       if (!token) {
-        set({ isAuthenticated: false });
+        set({ isAuthenticated: false, currentUser: DEMO_USERS.EMPLOYEE, activeTab: 'dashboard' });
         return;
       }
       try {
@@ -253,11 +253,21 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
         if (res.ok) {
           const json = await res.json();
           if (json.success && json.user) {
-            set({ currentUser: json.user, isAuthenticated: true });
-            // Fetch live employees, users, and registration requests once authenticated
+            const isSuperOrAdmin = json.user.role === 'SUPER_ADMIN' || json.user.role === 'ADMIN';
+            const currentTab = get().activeTab;
+            let targetTab = currentTab;
+
+            // Enforce RBAC on current active tab
+            if ((currentTab === 'super-admin' || currentTab === 'security') && !isSuperOrAdmin) {
+              targetTab = json.user.role === 'CLIENT' ? 'client-portal' : json.user.role === 'INTERN' ? 'intern-dashboard' : 'dashboard';
+            }
+
+            set({ currentUser: json.user, isAuthenticated: true, activeTab: targetTab });
             get().fetchEmployees().catch(() => {});
-            get().fetchUsers().catch(() => {});
-            get().fetchRegistrationRequests().catch(() => {});
+            if (isSuperOrAdmin) {
+              get().fetchUsers().catch(() => {});
+              get().fetchRegistrationRequests().catch(() => {});
+            }
             return;
           }
         }
@@ -265,17 +275,26 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
         localStorage.removeItem('kapate_token');
         localStorage.removeItem('kapate_access_token');
         localStorage.removeItem('kapate_user');
-        set({ isAuthenticated: false });
+        set({ isAuthenticated: false, currentUser: DEMO_USERS.EMPLOYEE, activeTab: 'dashboard' });
       } catch {
         const cached = localStorage.getItem('kapate_user');
         if (cached) {
           try {
-            set({ currentUser: JSON.parse(cached), isAuthenticated: true });
+            const u = JSON.parse(cached);
+            const isSuperOrAdmin = u.role === 'SUPER_ADMIN' || u.role === 'ADMIN';
+            const currentTab = get().activeTab;
+            let targetTab = currentTab;
+            if ((currentTab === 'super-admin' || currentTab === 'security') && !isSuperOrAdmin) {
+              targetTab = u.role === 'CLIENT' ? 'client-portal' : u.role === 'INTERN' ? 'intern-dashboard' : 'dashboard';
+            }
+            set({ currentUser: u, isAuthenticated: true, activeTab: targetTab });
             get().fetchEmployees().catch(() => {});
-            get().fetchUsers().catch(() => {});
-            get().fetchRegistrationRequests().catch(() => {});
+            if (isSuperOrAdmin) {
+              get().fetchUsers().catch(() => {});
+              get().fetchRegistrationRequests().catch(() => {});
+            }
           } catch {
-            set({ isAuthenticated: false });
+            set({ isAuthenticated: false, currentUser: DEMO_USERS.EMPLOYEE, activeTab: 'dashboard' });
           }
         }
       }
@@ -283,7 +302,16 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
   },
   login: (userOrRoleKey?: User | string) => {
     if (userOrRoleKey && typeof userOrRoleKey === 'object') {
-      set({ currentUser: userOrRoleKey, isAuthenticated: true });
+      const defaultTab =
+        userOrRoleKey.role === 'CLIENT' ? 'client-portal' :
+        userOrRoleKey.role === 'INTERN' ? 'intern-dashboard' :
+        userOrRoleKey.role === 'FINANCE' || userOrRoleKey.role === 'FINANCE_ADMIN' ? 'finance' : 'dashboard';
+
+      set({
+        currentUser: userOrRoleKey,
+        isAuthenticated: true,
+        activeTab: defaultTab
+      });
       if (typeof window !== 'undefined') {
         localStorage.setItem('kapate_user', JSON.stringify(userOrRoleKey));
       }
@@ -291,12 +319,31 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
       get().switchRole(userOrRoleKey);
       set({ isAuthenticated: true });
     } else {
-      set({ isAuthenticated: true });
+      const cached = typeof window !== 'undefined' ? localStorage.getItem('kapate_user') : null;
+      if (cached) {
+        try {
+          const u = JSON.parse(cached);
+          const defaultTab =
+            u.role === 'CLIENT' ? 'client-portal' :
+            u.role === 'INTERN' ? 'intern-dashboard' :
+            u.role === 'FINANCE' || u.role === 'FINANCE_ADMIN' ? 'finance' : 'dashboard';
+          set({ currentUser: u, isAuthenticated: true, activeTab: defaultTab });
+        } catch {
+          set({ isAuthenticated: true, activeTab: 'dashboard' });
+        }
+      } else {
+        set({ isAuthenticated: true, activeTab: 'dashboard' });
+      }
     }
-    // Fetch live workforce, user accounts, and onboarding requests on login
+    // Fetch live workforce for all roles
     get().fetchEmployees().catch(() => {});
-    get().fetchUsers().catch(() => {});
-    get().fetchRegistrationRequests().catch(() => {});
+
+    // Only fetch sensitive user accounts and onboarding requests if privileged
+    const role = get().currentUser.role;
+    if (role === 'SUPER_ADMIN' || role === 'ADMIN') {
+      get().fetchUsers().catch(() => {});
+      get().fetchRegistrationRequests().catch(() => {});
+    }
   },
   logout: async () => {
     if (typeof window !== 'undefined') {
@@ -312,7 +359,11 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
       localStorage.removeItem('kapate_user');
       localStorage.removeItem('kapate_user_role');
     }
-    set({ isAuthenticated: false });
+    set({
+      isAuthenticated: false,
+      currentUser: DEMO_USERS.EMPLOYEE,
+      activeTab: 'dashboard'
+    });
     get().showToast('Signed out of Kapate OS', 'info');
   },
   fetchEmployees: async () => {

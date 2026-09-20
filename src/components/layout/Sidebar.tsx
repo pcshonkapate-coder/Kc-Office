@@ -38,6 +38,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => 
   const isClient = currentUser.role === 'CLIENT';
   const isIntern = currentUser.role === 'INTERN';
   const isAdmin = currentUser.role === 'ADMIN' || currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'HR_ADMIN';
+  const isFinance = currentUser.role === 'FINANCE' || currentUser.role === 'FINANCE_ADMIN' || currentUser.role === 'ADMIN' || currentUser.role === 'SUPER_ADMIN';
+  const isManager = currentUser.role === 'PROJECT_MANAGER' || currentUser.role === 'ADMIN' || currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'HR_ADMIN';
 
   return (
     <aside
@@ -316,21 +318,23 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => 
                     <Calendar className="w-4 h-4" />
                     {!collapsed && <span>Attendance & Leave</span>}
                   </button>
-                  <button
-                    onClick={() => setActiveTab('performance')}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
-                      activeTab === 'performance' ? 'bg-blue-50 text-blue-600 font-semibold border border-blue-200' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                    }`}
-                  >
-                    <TrendingUp className="w-4 h-4" />
-                    {!collapsed && <span>Performance Reviews</span>}
-                  </button>
+                  {isManager && (
+                    <button
+                      onClick={() => setActiveTab('performance')}
+                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
+                        activeTab === 'performance' ? 'bg-blue-50 text-blue-600 font-semibold border border-blue-200' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                      }`}
+                    >
+                      <TrendingUp className="w-4 h-4" />
+                      {!collapsed && <span>Performance Reviews</span>}
+                    </button>
+                  )}
                 </div>
               )}
             </div>
 
-            {/* Finance Section */}
-            {!isIntern && (
+            {/* Finance Section — Restricted to Finance & Executive Roles */}
+            {isFinance && (
               <div>
                 {!collapsed && (
                   <button

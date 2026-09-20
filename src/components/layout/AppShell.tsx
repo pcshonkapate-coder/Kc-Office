@@ -38,11 +38,82 @@ export const AppShell: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
 
   const renderModule = () => {
+    const isSuperOrAdmin = currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'ADMIN';
+    const isHrOrAdmin = isSuperOrAdmin || currentUser.role === 'HR_ADMIN';
+    const isFinanceOrAdmin = isSuperOrAdmin || currentUser.role === 'FINANCE' || currentUser.role === 'FINANCE_ADMIN';
+
     // Client role is strictly restricted to Client Portal unless explicitly navigating authorized documents
     if (currentUser.role === 'CLIENT') {
       if (activeTab === 'documents') return <DocumentsModule />;
       if (activeTab === 'finance') return <FinanceModule />;
       return <ClientPortalModule />;
+    }
+
+    // Role-based Access Control (RBAC) Guards for privileged modules
+    if ((activeTab === 'super-admin' || activeTab === 'admin-control') && !isSuperOrAdmin) {
+      return (
+        <div className="p-8 rounded-3xl bg-white border border-rose-200 shadow-sm text-center max-w-lg mx-auto my-12 space-y-4 animate-fade-in">
+          <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto border border-rose-200">
+            <ShieldAlert className="w-6 h-6" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">Access Restricted</h2>
+            <p className="text-xs text-slate-500 mt-1">
+              Super Admin Center requires elevated root credentials. Your current role is <strong className="font-mono text-slate-700">{currentUser.role}</strong>.
+            </p>
+          </div>
+          <button
+            onClick={() => useDemoStore.getState().setActiveTab('dashboard')}
+            className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            Return to Dashboard
+          </button>
+        </div>
+      );
+    }
+
+    if ((activeTab === 'security' || activeTab === 'identity') && !isHrOrAdmin) {
+      return (
+        <div className="p-8 rounded-3xl bg-white border border-rose-200 shadow-sm text-center max-w-lg mx-auto my-12 space-y-4 animate-fade-in">
+          <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto border border-rose-200">
+            <ShieldAlert className="w-6 h-6" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">Security Access Restricted</h2>
+            <p className="text-xs text-slate-500 mt-1">
+              Security audit ledger and personnel onboarding require Administrative privileges.
+            </p>
+          </div>
+          <button
+            onClick={() => useDemoStore.getState().setActiveTab('dashboard')}
+            className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            Return to Dashboard
+          </button>
+        </div>
+      );
+    }
+
+    if ((activeTab === 'finance' || activeTab === 'profitability') && !isFinanceOrAdmin) {
+      return (
+        <div className="p-8 rounded-3xl bg-white border border-rose-200 shadow-sm text-center max-w-lg mx-auto my-12 space-y-4 animate-fade-in">
+          <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto border border-rose-200">
+            <ShieldAlert className="w-6 h-6" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">Finance Access Restricted</h2>
+            <p className="text-xs text-slate-500 mt-1">
+              Invoices, expenses, and financial ledgers are restricted to Finance and Executive personnel.
+            </p>
+          </div>
+          <button
+            onClick={() => useDemoStore.getState().setActiveTab('dashboard')}
+            className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            Return to Dashboard
+          </button>
+        </div>
+      );
     }
 
     switch (activeTab) {

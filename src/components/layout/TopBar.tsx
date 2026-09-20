@@ -14,6 +14,7 @@ export const TopBar: React.FC = () => {
   const setGlobalSearchOpen = useDemoStore((state) => state.setGlobalSearchOpen);
   const switchRole = useDemoStore((state) => state.switchRole);
   const showToast = useDemoStore((state) => state.showToast);
+  const impersonatedOriginalUser = useDemoStore((state) => state.impersonatedOriginalUser);
 
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifMenu, setShowNotifMenu] = useState(false);
@@ -159,56 +160,58 @@ export const TopBar: React.FC = () => {
                 </div>
               </div>
 
-              {/* Quick Persona Switcher */}
-              <div className="py-1 border-b border-slate-100">
-                <div className="text-[10px] uppercase font-bold text-slate-400 px-3 mb-1.5 tracking-wider">
-                  Switch Persona / View
+              {/* Quick Persona Switcher — Strictly Restricted to SUPER_ADMIN / Root Admins */}
+              {(currentUser.role === 'SUPER_ADMIN' || impersonatedOriginalUser?.role === 'SUPER_ADMIN') && (
+                <div className="py-1 border-b border-slate-100">
+                  <div className="text-[10px] uppercase font-bold text-slate-400 px-3 mb-1.5 tracking-wider flex items-center gap-1">
+                    <Shield className="w-3 h-3 text-purple-600" /> Switch Persona View
+                  </div>
+                  <button
+                    onClick={() => handleSwitchRole('ADMIN')}
+                    className={`w-full text-left px-3 py-1.5 rounded-xl text-xs flex items-center justify-between transition-colors ${
+                      (currentUser.role as string) === 'ADMIN' ? 'bg-slate-100 font-bold text-slate-900' : 'text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <Shield className="w-3.5 h-3.5 text-purple-600" /> Admin / Manager
+                    </span>
+                    {(currentUser.role as string) === 'ADMIN' && <span className="w-1.5 h-1.5 rounded-full bg-purple-600" />}
+                  </button>
+                  <button
+                    onClick={() => handleSwitchRole('PROJECT_MANAGER')}
+                    className={`w-full text-left px-3 py-1.5 rounded-xl text-xs flex items-center justify-between transition-colors ${
+                      (currentUser.role as string) === 'PROJECT_MANAGER' ? 'bg-purple-50 font-bold text-purple-700' : 'text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <Shield className="w-3.5 h-3.5 text-indigo-600" /> Delivery PM
+                    </span>
+                    {(currentUser.role as string) === 'PROJECT_MANAGER' && <span className="w-1.5 h-1.5 rounded-full bg-indigo-600" />}
+                  </button>
+                  <button
+                    onClick={() => handleSwitchRole('CLIENT')}
+                    className={`w-full text-left px-3 py-1.5 rounded-xl text-xs flex items-center justify-between transition-colors ${
+                      (currentUser.role as string) === 'CLIENT' ? 'bg-amber-50 font-bold text-amber-800' : 'text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <Eye className="w-3.5 h-3.5 text-amber-600" /> Client Portal
+                    </span>
+                    {(currentUser.role as string) === 'CLIENT' && <span className="w-1.5 h-1.5 rounded-full bg-amber-600" />}
+                  </button>
+                  <button
+                    onClick={() => handleSwitchRole('EMPLOYEE')}
+                    className={`w-full text-left px-3 py-1.5 rounded-xl text-xs flex items-center justify-between transition-colors ${
+                      (currentUser.role as string) === 'EMPLOYEE' ? 'bg-blue-50 font-bold text-blue-700' : 'text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <Briefcase className="w-3.5 h-3.5 text-blue-600" /> Solutions Engineer
+                    </span>
+                    {(currentUser.role as string) === 'EMPLOYEE' && <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />}
+                  </button>
                 </div>
-                <button
-                  onClick={() => handleSwitchRole('ADMIN')}
-                  className={`w-full text-left px-3 py-1.5 rounded-xl text-xs flex items-center justify-between transition-colors ${
-                    currentUser.role === 'ADMIN' ? 'bg-slate-100 font-bold text-slate-900' : 'text-slate-600 hover:bg-slate-50'
-                  }`}
-                >
-                  <span className="flex items-center gap-2">
-                    <Shield className="w-3.5 h-3.5 text-purple-600" /> Admin / Manager
-                  </span>
-                  {currentUser.role === 'ADMIN' && <span className="w-1.5 h-1.5 rounded-full bg-purple-600" />}
-                </button>
-                <button
-                  onClick={() => handleSwitchRole('PROJECT_MANAGER')}
-                  className={`w-full text-left px-3 py-1.5 rounded-xl text-xs flex items-center justify-between transition-colors ${
-                    currentUser.role === 'PROJECT_MANAGER' ? 'bg-purple-50 font-bold text-purple-700' : 'text-slate-600 hover:bg-slate-50'
-                  }`}
-                >
-                  <span className="flex items-center gap-2">
-                    <Shield className="w-3.5 h-3.5 text-indigo-600" /> Delivery PM
-                  </span>
-                  {currentUser.role === 'PROJECT_MANAGER' && <span className="w-1.5 h-1.5 rounded-full bg-indigo-600" />}
-                </button>
-                <button
-                  onClick={() => handleSwitchRole('CLIENT')}
-                  className={`w-full text-left px-3 py-1.5 rounded-xl text-xs flex items-center justify-between transition-colors ${
-                    currentUser.role === 'CLIENT' ? 'bg-amber-50 font-bold text-amber-800' : 'text-slate-600 hover:bg-slate-50'
-                  }`}
-                >
-                  <span className="flex items-center gap-2">
-                    <Eye className="w-3.5 h-3.5 text-amber-600" /> Client Portal
-                  </span>
-                  {currentUser.role === 'CLIENT' && <span className="w-1.5 h-1.5 rounded-full bg-amber-600" />}
-                </button>
-                <button
-                  onClick={() => handleSwitchRole('EMPLOYEE')}
-                  className={`w-full text-left px-3 py-1.5 rounded-xl text-xs flex items-center justify-between transition-colors ${
-                    currentUser.role === 'EMPLOYEE' ? 'bg-blue-50 font-bold text-blue-700' : 'text-slate-600 hover:bg-slate-50'
-                  }`}
-                >
-                  <span className="flex items-center gap-2">
-                    <Briefcase className="w-3.5 h-3.5 text-blue-600" /> Solutions Engineer
-                  </span>
-                  {currentUser.role === 'EMPLOYEE' && <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />}
-                </button>
-              </div>
+              )}
 
               {(currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'ADMIN') && (
                 <button
