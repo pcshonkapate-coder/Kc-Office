@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "lastUpdated": "2026-09-21T08:37:12.086Z",
+  "lastUpdated": "2026-09-21T11:10:27.575Z",
   "users": [
     {
       "id": "usr-admin",
@@ -22,7 +22,7 @@
       "assignedProjects": [],
       "failedLogins": 0,
       "lockedUntil": null,
-      "lastLoginAt": "2026-09-21T08:37:12.081Z",
+      "lastLoginAt": "2026-09-21T11:10:27.570Z",
       "mfaEnabled": true,
       "created": "2024-01-01",
       "passwordHash": "69cc9f3960789a67f9f3f09b9b1c8e7b:e08652c5e766b8d399b17f2626c620635858a341e975a8bd89de1f3c4fed9bd0b1325165ed73f4d97dd99eda9110c5b212fb66a0d0de09e57cbfeb03e3dc8602"
@@ -45,10 +45,10 @@
       "assignedProjects": [],
       "failedLogins": 0,
       "lockedUntil": null,
-      "lastLoginAt": "2026-09-19T11:34:09.850Z",
+      "lastLoginAt": "2026-09-21T11:09:53.729Z",
       "mfaEnabled": false,
       "created": "2026-09-19",
-      "passwordHash": "fb9ea2daa4476bafee2d35bccd0b41da:1724a5befe973166bf3a829af578ad3fe4d1d8ebbf67af67cceffc234db2c5d24e48c3e9ddda505c97de73c5665fdcd82c6811e3ea786b24f9708ca7545bebc7"
+      "passwordHash": "943fa5ec66d79542d6fade94411ea244:bbf59dab1baee721b3f7f767ac84e672a7be506ac27237b6f80bfe1e3e0d2e324e6f4159ea7f2a01fe686bc05764a27b5e81f1bca3628837bcf00ad5823de248"
     },
     {
       "id": "usr-1789817960188-553",
@@ -71,7 +71,7 @@
       "lastLoginAt": "2026-09-19T11:39:20.188Z",
       "mfaEnabled": false,
       "created": "2026-09-19",
-      "passwordHash": "7234fc8ecff2ba013a0ac09207884921:9906868846251d2b5b977c46d588ba49a48b4945598d9309606aa05b49ea77049b3f9fdf72e5e4c103aae9d8e47be21e179771966fcd41b6545f40d1cae19f34"
+      "passwordHash": "9137d9500a9b5c8e6236c968b47d8707:5b4fc5d0e4fc30b5ca37a8b3ba314a1a49e799390adacaf8f5256d1215c177e84dd302c94620aa796fa30ef33652a6b0d303c5dda873d69e6064dc481e8f835c"
     },
     {
       "id": "usr-1789819509887-946",
@@ -94,7 +94,7 @@
       "lastLoginAt": "2026-09-19T12:05:09.887Z",
       "mfaEnabled": false,
       "created": "2026-09-19",
-      "passwordHash": "113e6501a4c30e1ca185b02fcb557ea9:04bf6feaa17d210a16be0f5b34a6e4a1a8c1e3ddb3560e8fd619c15ac5c390fa451bdd1c536f0b9bf6745287a380e8f34363f5186f84849e1808e3b313868848"
+      "passwordHash": "79fbf21df21e6f93b69a6d289c5a3e54:73830a1bf7e48e59f887d517962119f0a884b42fa39a40eccd97ff8a48a5afce9eb2a9cea1e406f429ebe4198d9d0c93db564190dedc4f3b4ff3dcab3ae3c7be"
     },
     {
       "id": "usr-1789902794716-974",
@@ -105,7 +105,7 @@
       "department": "Engineering",
       "kapateId": "KAP-EMP-000005",
       "internalEmail": "aarav.verma@kapateconsultancy.in",
-      "status": "SUSPENDED",
+      "status": "ACTIVE",
       "phone": "+91 98765 43210",
       "manager": "Shon Kapate",
       "skills": [
@@ -117,7 +117,7 @@
       "lastLoginAt": "2026-09-20T11:13:14.716Z",
       "mfaEnabled": false,
       "created": "2026-09-20",
-      "passwordHash": "fed959d847e41ceaaa7b49622d997387:f2caa2fdbe618e1354b62ec8470eefecce8b2364553d433dd0952ce5bd31b9201d4fcfe600a0106746917de57baff311206d7a64062bdf8bcc2da3322eb1404a"
+      "passwordHash": "0efb213437802bfbc30ea93a32a8f5dd:328f48a7f655a690f8bb4d232e864849c693f4e9a3dbb5963cfddeeb7e097d18a674e6bcb92388854b9ade25b278994b821400bd68450d3a4bbcdbe93580a4de"
     },
     {
       "id": "usr-1789902952673-732",
@@ -128,7 +128,7 @@
       "department": "Engineering",
       "kapateId": "KAP-EMP-000006",
       "internalEmail": "priya.mehta@kapateconsultancy.in",
-      "status": "SUSPENDED",
+      "status": "ACTIVE",
       "phone": "+91 98230 00000",
       "manager": "Shon Kapate",
       "skills": [
@@ -140,7 +140,7 @@
       "lastLoginAt": "2026-09-20T12:10:48.788Z",
       "mfaEnabled": true,
       "created": "2026-09-20",
-      "passwordHash": "517541258dbd4897dfab9ee734269531:06b5f6f89b44ab91ef0e29f3effffa745f5e22988b775408f6b05903344443977bd678edbe785b4d26b30e1ddacc820436b83ffa6d32e766365b97e42e058379"
+      "passwordHash": "a056ec41961cfbd88d93f826e8e63de9:c27a60dbb684be9f6380fdba66597d80d8fafa4025c6001729afb76fc79f7349a23ea0dc0e0d77aca22503336fa2789d68e8eb21298ba69690ea98028ea1f693"
     },
     {
       "id": "usr-1789916793391-893",
@@ -151,7 +151,7 @@
       "department": "Consulting",
       "kapateId": "KAP-EMP-000007",
       "internalEmail": "mukul@kapateconsultancy.in",
-      "status": "SUSPENDED",
+      "status": "ACTIVE",
       "phone": "+91 98230 00000",
       "manager": "Shon Kapate",
       "skills": [
@@ -163,7 +163,88 @@
       "lastLoginAt": "2026-09-20T15:06:33.391Z",
       "mfaEnabled": true,
       "created": "2026-09-20",
-      "passwordHash": "c489bd3413cacb6232d8bdb837ca0027:7b330208cf4d521d36751a2b0591bbdf38b3869989e0f902707be855a049dbc65f4dd9e96ac21a4ca6e1bafe014a29f3d7060493cbe392bd417973d7f19e7e09"
+      "passwordHash": "6dbf7941922a713064a1a38378c18aef:f9907847b5ea060cacfaf80de511e2b721d2e2564ab2bcc3ed08014074d141b98fa077ab411c29a0f886f6dd01ba1e3f34a24bff0637c94ae65850cba4bca821"
+    },
+    {
+      "id": "usr-employee-default",
+      "name": "Aarav Deshmukh",
+      "email": "employee@kapateconsultancy.in",
+      "role": "EMPLOYEE",
+      "designation": "Lead Solutions Engineer",
+      "department": "Engineering",
+      "kapateId": "KAP-EMP-000002",
+      "internalEmail": "employee@kapateconsultancy.in",
+      "status": "ACTIVE",
+      "phone": "+91 98230 11223",
+      "manager": "Shon Kapate",
+      "skills": [
+        "Enterprise Architecture",
+        "React 19",
+        "Next.js 16",
+        "FastAPI"
+      ],
+      "assignedProjects": [
+        "PRJ-2026-001"
+      ],
+      "failedLogins": 0,
+      "lockedUntil": null,
+      "lastLoginAt": "2026-09-21T11:09:38.063Z",
+      "mfaEnabled": false,
+      "created": "2024-01-01",
+      "passwordHash": "f0cfe4c1937eefeb43a51118dc2fac94:405f8d26a9a5ce7aa851ff1a4662d057e9f4c8a6642000bffa7e1eb80349921a299418da15bd2b629f7b8bf8fd14972d6139c7b82a0d4005bb543b212c88afa6"
+    },
+    {
+      "id": "usr-intern-default",
+      "name": "Ananya Roy",
+      "email": "intern@kapateconsultancy.in",
+      "role": "INTERN",
+      "designation": "AI/ML Engineering Intern",
+      "department": "Technology & Algorithms",
+      "kapateId": "KAP-INT-000001",
+      "internalEmail": "intern@kapateconsultancy.in",
+      "status": "ACTIVE",
+      "phone": "+91 98765 11122",
+      "manager": "Mukul Deshmukh",
+      "skills": [
+        "Python 3.11",
+        "Data Structures",
+        "Machine Learning"
+      ],
+      "assignedProjects": [],
+      "failedLogins": 0,
+      "lockedUntil": null,
+      "lastLoginAt": "2026-09-21T11:10:16.066Z",
+      "mfaEnabled": false,
+      "created": "2024-01-01",
+      "passwordHash": "9aa0f35de4f3d1c70cc24bc130b7a7c6:fb69b1e77dd4dba74f8af413efc6a9f1cdf4e53d03955e1b96032286ca68a1ed1b3d75474cd3723349140a56df896e6d71edb5ec20a3dfab3121136f65f3459a"
+    },
+    {
+      "id": "usr-manager-default",
+      "name": "Mukul Deshmukh",
+      "email": "manager@kapateconsultancy.in",
+      "role": "PROJECT_MANAGER",
+      "designation": "Lead Delivery Manager",
+      "department": "Consulting & Delivery",
+      "kapateId": "KAP-EMP-000007",
+      "internalEmail": "manager@kapateconsultancy.in",
+      "status": "ACTIVE",
+      "phone": "+91 98230 44556",
+      "manager": "Shon Kapate",
+      "skills": [
+        "Delivery Oversight",
+        "Kanban Management",
+        "SOW Execution"
+      ],
+      "assignedProjects": [
+        "PRJ-2026-001",
+        "PRJ-2026-002"
+      ],
+      "failedLogins": 0,
+      "lockedUntil": null,
+      "lastLoginAt": "2026-09-21T11:10:02.647Z",
+      "mfaEnabled": false,
+      "created": "2024-01-01",
+      "passwordHash": "a28521df18310fa96ac251e2c29f7fb9:94788f088321217c2d12ae65bdac5ab2bb850438f1e50d6da979fe9736eb5b6d83785c07487d28a75d4d1d31931681492175e930ee4e01575a312e8ca9f3e375"
     }
   ],
   "employees": [
@@ -375,6 +456,71 @@
   "freelancers": [],
   "sessions": [
     {
+      "id": "sess-mub5914k-8kvq",
+      "userId": "usr-admin",
+      "userName": "Shon Kapate",
+      "email": "admin@kapateconsultancy.in",
+      "role": "SUPER_ADMIN",
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT; Windows NT 10.0; en-IN) WindowsPowerShell/5.1.26100.9444",
+      "loginAt": "2026-09-21T11:10:27.572Z",
+      "lastActiveAt": "Just now",
+      "isImpersonated": false,
+      "status": "ACTIVE"
+    },
+    {
+      "id": "sess-mub58s90-872y",
+      "userId": "usr-intern-default",
+      "userName": "Ananya Roy",
+      "email": "intern@kapateconsultancy.in",
+      "role": "INTERN",
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT; Windows NT 10.0; en-IN) WindowsPowerShell/5.1.26100.9444",
+      "loginAt": "2026-09-21T11:10:16.068Z",
+      "lastActiveAt": "Just now",
+      "isImpersonated": false,
+      "status": "ACTIVE"
+    },
+    {
+      "id": "sess-mub58hw9-xmfj",
+      "userId": "usr-manager-default",
+      "userName": "Mukul Deshmukh",
+      "email": "manager@kapateconsultancy.in",
+      "role": "PROJECT_MANAGER",
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT; Windows NT 10.0; en-IN) WindowsPowerShell/5.1.26100.9444",
+      "loginAt": "2026-09-21T11:10:02.649Z",
+      "lastActiveAt": "Just now",
+      "isImpersonated": false,
+      "status": "ACTIVE"
+    },
+    {
+      "id": "sess-mub58b0k-1gvh",
+      "userId": "usr-1789817649850-595",
+      "userName": "Aarav Deshmukh 9825",
+      "email": "aarav.deshmukh.9825@kapateconsultancy.in",
+      "role": "EMPLOYEE",
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT; Windows NT 10.0; en-IN) WindowsPowerShell/5.1.26100.9444",
+      "loginAt": "2026-09-21T11:09:53.732Z",
+      "lastActiveAt": "Just now",
+      "isImpersonated": false,
+      "status": "ACTIVE"
+    },
+    {
+      "id": "sess-mub57yxd-2z57",
+      "userId": "usr-employee-default",
+      "userName": "Aarav Deshmukh",
+      "email": "employee@kapateconsultancy.in",
+      "role": "EMPLOYEE",
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT; Windows NT 10.0; en-IN) WindowsPowerShell/5.1.26100.9444",
+      "loginAt": "2026-09-21T11:09:38.065Z",
+      "lastActiveAt": "Just now",
+      "isImpersonated": false,
+      "status": "ACTIVE"
+    },
+    {
       "id": "sess-muazrxub-7mmm",
       "userId": "usr-admin",
       "userName": "Shon Kapate",
@@ -532,6 +678,86 @@
     }
   ],
   "audit_logs": [
+    {
+      "id": "aud-1789989027575-203",
+      "timestamp": "2026-09-21 11:10:27",
+      "actor": "Shon Kapate",
+      "actorKapateId": "KAP-EMP-000001",
+      "action": "USER_LOGIN",
+      "module": "auth",
+      "targetResource": "sessions/sess-mub5914k-8kvq",
+      "targetUser": "admin@kapateconsultancy.in",
+      "previousValue": "",
+      "newValue": "",
+      "ipAddress": "127.0.0.1",
+      "result": "SUCCESS",
+      "requestId": "req-mub5914n",
+      "reason": "Successful enterprise password authentication"
+    },
+    {
+      "id": "aud-1789989016070-318",
+      "timestamp": "2026-09-21 11:10:16",
+      "actor": "Ananya Roy",
+      "actorKapateId": "KAP-INT-000001",
+      "action": "USER_LOGIN",
+      "module": "auth",
+      "targetResource": "sessions/sess-mub58s90-872y",
+      "targetUser": "intern@kapateconsultancy.in",
+      "previousValue": "",
+      "newValue": "",
+      "ipAddress": "127.0.0.1",
+      "result": "SUCCESS",
+      "requestId": "req-mub58s92",
+      "reason": "Successful enterprise password authentication"
+    },
+    {
+      "id": "aud-1789989002652-251",
+      "timestamp": "2026-09-21 11:10:02",
+      "actor": "Mukul Deshmukh",
+      "actorKapateId": "KAP-EMP-000007",
+      "action": "USER_LOGIN",
+      "module": "auth",
+      "targetResource": "sessions/sess-mub58hw9-xmfj",
+      "targetUser": "manager@kapateconsultancy.in",
+      "previousValue": "",
+      "newValue": "",
+      "ipAddress": "127.0.0.1",
+      "result": "SUCCESS",
+      "requestId": "req-mub58hwc",
+      "reason": "Successful enterprise password authentication"
+    },
+    {
+      "id": "aud-1789988993734-674",
+      "timestamp": "2026-09-21 11:09:53",
+      "actor": "Aarav Deshmukh 9825",
+      "actorKapateId": "KAP-EMP-000002",
+      "action": "USER_LOGIN",
+      "module": "auth",
+      "targetResource": "sessions/sess-mub58b0k-1gvh",
+      "targetUser": "aarav.deshmukh.9825@kapateconsultancy.in",
+      "previousValue": "",
+      "newValue": "",
+      "ipAddress": "127.0.0.1",
+      "result": "SUCCESS",
+      "requestId": "req-mub58b0m",
+      "reason": "Successful enterprise password authentication"
+    },
+    {
+      "id": "aud-1789988978067-889",
+      "timestamp": "2026-09-21 11:09:38",
+      "actor": "Aarav Deshmukh",
+      "actorKapateId": "KAP-EMP-000002",
+      "action": "USER_LOGIN",
+      "module": "auth",
+      "targetResource": "sessions/sess-mub57yxd-2z57",
+      "targetUser": "employee@kapateconsultancy.in",
+      "previousValue": "",
+      "newValue": "",
+      "ipAddress": "127.0.0.1",
+      "result": "SUCCESS",
+      "requestId": "req-mub57yxf",
+      "reason": "Successful enterprise password authentication"
+    },
     {
       "id": "aud-1789979832086-697",
       "timestamp": "2026-09-21 08:37:12",

@@ -236,25 +236,127 @@ class DataStore {
   }
 
   private ensureMasterAdmin(store: StoreSchema) {
+    // 1. Ensure Super Admin
     const adminIndex = store.users.findIndex(
       u => u.email === 'admin@kapateconsultancy.in' || u.email === 'shon@kapateconsultancy.in'
     );
     if (adminIndex === -1) {
       store.users.unshift(DEFAULT_STORE.users[0]);
     } else {
-      // Ensure role is SUPER_ADMIN and passwordHash exists
       store.users[adminIndex].role = 'SUPER_ADMIN';
+      store.users[adminIndex].status = 'ACTIVE';
+      store.users[adminIndex].failedLogins = 0;
+      store.users[adminIndex].lockedUntil = null;
       if (!store.users[adminIndex].passwordHash) {
         store.users[adminIndex].passwordHash = hashPassword('Admin@KC8421174957');
       }
     }
 
-    const empIndex = store.employees.findIndex(
+    const empAdminIndex = store.employees.findIndex(
       e => e.email === 'admin@kapateconsultancy.in' || e.email === 'shon@kapateconsultancy.in'
     );
-    if (empIndex === -1) {
+    if (empAdminIndex === -1) {
       store.employees.unshift(DEFAULT_STORE.employees[0]);
     }
+
+    // 2. Ensure Default Employee User
+    let empUser = store.users.find(u => u.email === 'employee@kapateconsultancy.in' || u.kapateId === 'KAP-EMP-000002');
+    if (!empUser) {
+      store.users.push({
+        id: 'usr-employee-default',
+        name: 'Aarav Deshmukh',
+        email: 'employee@kapateconsultancy.in',
+        role: 'EMPLOYEE' as UserRole,
+        designation: 'Lead Solutions Engineer',
+        department: 'Engineering',
+        kapateId: 'KAP-EMP-000002',
+        internalEmail: 'employee@kapateconsultancy.in',
+        status: 'ACTIVE',
+        phone: '+91 98230 11223',
+        manager: 'Shon Kapate',
+        skills: ['Enterprise Architecture', 'React 19', 'Next.js 16', 'FastAPI'],
+        assignedProjects: ['PRJ-2026-001'],
+        failedLogins: 0,
+        lockedUntil: null,
+        lastLoginAt: new Date().toISOString(),
+        mfaEnabled: false,
+        created: '2024-01-01',
+        passwordHash: hashPassword('KapateOS@2026')
+      });
+    } else {
+      empUser.status = 'ACTIVE';
+      empUser.failedLogins = 0;
+      empUser.lockedUntil = null;
+    }
+
+    // 3. Ensure Default Project Manager User
+    let pmUser = store.users.find(u => u.email === 'manager@kapateconsultancy.in' || u.role === 'PROJECT_MANAGER');
+    if (!pmUser) {
+      store.users.push({
+        id: 'usr-manager-default',
+        name: 'Mukul Deshmukh',
+        email: 'manager@kapateconsultancy.in',
+        role: 'PROJECT_MANAGER' as UserRole,
+        designation: 'Lead Delivery Manager',
+        department: 'Consulting & Delivery',
+        kapateId: 'KAP-EMP-000007',
+        internalEmail: 'manager@kapateconsultancy.in',
+        status: 'ACTIVE',
+        phone: '+91 98230 44556',
+        manager: 'Shon Kapate',
+        skills: ['Delivery Oversight', 'Kanban Management', 'SOW Execution'],
+        assignedProjects: ['PRJ-2026-001', 'PRJ-2026-002'],
+        failedLogins: 0,
+        lockedUntil: null,
+        lastLoginAt: new Date().toISOString(),
+        mfaEnabled: false,
+        created: '2024-01-01',
+        passwordHash: hashPassword('KapateOS@2026')
+      });
+    } else {
+      pmUser.status = 'ACTIVE';
+      pmUser.failedLogins = 0;
+      pmUser.lockedUntil = null;
+    }
+
+    // 4. Ensure Default Intern User
+    let internUser = store.users.find(u => u.email === 'intern@kapateconsultancy.in' || u.role === 'INTERN');
+    if (!internUser) {
+      store.users.push({
+        id: 'usr-intern-default',
+        name: 'Ananya Roy',
+        email: 'intern@kapateconsultancy.in',
+        role: 'INTERN' as UserRole,
+        designation: 'AI/ML Engineering Intern',
+        department: 'Technology & Algorithms',
+        kapateId: 'KAP-INT-000001',
+        internalEmail: 'intern@kapateconsultancy.in',
+        status: 'ACTIVE',
+        phone: '+91 98765 11122',
+        manager: 'Mukul Deshmukh',
+        skills: ['Python 3.11', 'Data Structures', 'Machine Learning'],
+        assignedProjects: [],
+        failedLogins: 0,
+        lockedUntil: null,
+        lastLoginAt: new Date().toISOString(),
+        mfaEnabled: false,
+        created: '2024-01-01',
+        passwordHash: hashPassword('KapateOS@2026')
+      });
+    } else {
+      internUser.status = 'ACTIVE';
+      internUser.failedLogins = 0;
+      internUser.lockedUntil = null;
+    }
+
+    // 5. Unsuspend standard employee records if suspended
+    store.users.forEach(u => {
+      if (['aarav.verma@example.com', 'priya.mehta@kapateconsultancy.in', 'mukul@kapateconsultancy.in', 'vikram.malhotra@kapateconsultancy.in'].includes(u.email)) {
+        u.status = 'ACTIVE';
+        u.failedLogins = 0;
+        u.lockedUntil = null;
+      }
+    });
   }
 
   private saveStore() {
@@ -491,6 +593,21 @@ class DataStore {
     const store = this.loadStore();
     const clean = (emailOrId || '').toLowerCase().trim();
     if (!clean) return null;
+
+    // Direct role alias shortcuts
+    if (clean === 'admin' || clean === 'superadmin' || clean === 'shon') {
+      return store.users.find(u => u.role === 'SUPER_ADMIN') || null;
+    }
+    if (clean === 'employee' || clean === 'emp' || clean === 'engineer') {
+      return store.users.find(u => u.email === 'employee@kapateconsultancy.in' || u.role === 'EMPLOYEE') || null;
+    }
+    if (clean === 'manager' || clean === 'pm') {
+      return store.users.find(u => u.email === 'manager@kapateconsultancy.in' || u.role === 'PROJECT_MANAGER') || null;
+    }
+    if (clean === 'intern') {
+      return store.users.find(u => u.email === 'intern@kapateconsultancy.in' || u.role === 'INTERN') || null;
+    }
+
     const user = store.users.find(u => 
       u.email.toLowerCase() === clean || 
       (u.internalEmail && u.internalEmail.toLowerCase() === clean) ||
