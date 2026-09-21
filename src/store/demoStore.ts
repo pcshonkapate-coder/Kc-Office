@@ -167,11 +167,13 @@ interface DemoStore {
   addProject: (project: Omit<Project, 'id' | 'spentBudget' | 'progress' | 'status' | 'milestones' | 'profitability'>) => void;
   addTask: (task: Omit<Task, 'id' | 'loggedHours'>) => void;
   updateTaskStatus: (id: string, status: TaskStatus) => void;
+  updateTask: (id: string, updates: Partial<Task>) => void;
   addEmployee: (employee: Partial<Employee>) => Promise<Employee>;
   deleteEmployee: (id: string, permanent?: boolean) => Promise<boolean>;
   addIntern: (intern: Omit<Intern, 'id' | 'tasksCompleted' | 'tasksPending' | 'loggedHours' | 'attendancePct' | 'trainingProgress' | 'status' | 'evaluations'>) => void;
   addTimesheet: (ts: Omit<TimesheetEntry, 'id' | 'status' | 'employeeName'>) => void;
   approveTimesheet: (id: string) => void;
+  rejectTimesheet: (id: string) => void;
   addLeave: (leave: Omit<LeaveRequest, 'id' | 'status'>) => void;
   approveLeave: (id: string, approve: boolean) => void;
   addInvoice: (inv: Omit<Invoice, 'id' | 'status' | 'amount' | 'tax' | 'total'>) => void;
@@ -1504,6 +1506,13 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
     get().showToast(`Task status updated to ${status}`, 'info');
   },
 
+  updateTask: (id, updates) => {
+    set((state) => ({
+      tasks: state.tasks.map((t) => (t.id === id ? { ...t, ...updates } : t)),
+    }));
+    get().showToast('Task updated successfully', 'info');
+  },
+
   addEmployee: async (empData) => {
     const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -1631,6 +1640,25 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
       timesheets: state.timesheets.map(t => t.id === id ? { ...t, status: 'Approved' } : t)
     }));
     get().showToast('Timesheet approved!', 'success');
+  },
+
+  rejectTimesheet: async (id) => {
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    try {
+      fetch('/api/v1/workforce/timesheets', {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ id, status: 'Rejected' })
+      }).catch(() => {});
+    } catch {}
+
+    set((state) => ({
+      timesheets: state.timesheets.map(t => t.id === id ? { ...t, status: 'Rejected' } : t)
+    }));
+    get().showToast('Timesheet marked as rejected', 'info');
   },
 
   addLeave: async (leaveData) => {

@@ -26,6 +26,9 @@ import { SettingsModule } from '../modules/settings/SettingsModule';
 import { MailModule } from '../modules/mail/MailModule';
 import { SecurityDashboard } from '../modules/security/SecurityDashboard';
 import { SuperAdminModule } from '../modules/super-admin/SuperAdminModule';
+import { ManagerCommandCenter } from '../modules/manager/ManagerCommandCenter';
+import { EmployeeWorkspace } from '../modules/employee/EmployeeWorkspace';
+import { InternLearningHub } from '../modules/intern/InternLearningHub';
 import { OnboardPersonnelModal } from '../modals/OnboardPersonnelModal';
 import { ShieldAlert, LogOut, Shield } from 'lucide-react';
 
@@ -119,6 +122,15 @@ export const AppShell: React.FC = () => {
     switch (activeTab) {
       case 'dashboard':
       case 'intern-dashboard':
+        if (currentUser.role === 'PROJECT_MANAGER') {
+          return <ManagerCommandCenter />;
+        }
+        if (currentUser.role === 'EMPLOYEE') {
+          return <EmployeeWorkspace />;
+        }
+        if (currentUser.role === 'INTERN' || activeTab === 'intern-dashboard') {
+          return <InternLearningHub />;
+        }
         return <ExecutiveDashboard />;
       case 'crm':
       case 'leads':

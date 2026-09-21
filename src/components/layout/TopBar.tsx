@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useDemoStore } from '../../store/demoStore';
 import {
-  Search, Plus, Bell, Globe, LogOut, ChevronDown, Shield, Eye, Briefcase
+  Search, Plus, Bell, Globe, LogOut, ChevronDown, Shield, Eye, Briefcase, Clock, Square, GraduationCap
 } from 'lucide-react';
 
 export const TopBar: React.FC = () => {
@@ -18,6 +18,75 @@ export const TopBar: React.FC = () => {
 
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifMenu, setShowNotifMenu] = useState(false);
+
+  // Persistent Clock-In / Clock-Out Timer
+  const [isClockedIn, setIsClockedIn] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const savedStart = localStorage.getItem(`kapate_clock_in_${currentUser.id}`);
+    if (savedStart) {
+      const startTime = parseInt(savedStart, 10);
+      if (!isNaN(startTime)) {
+        setIsClockedIn(true);
+        setElapsedSeconds(Math.max(0, Math.floor((Date.now() - startTime) / 1000)));
+      }
+    } else {
+      setIsClockedIn(false);
+      setElapsedSeconds(0);
+    }
+  }, [currentUser.id]);
+
+  React.useEffect(() => {
+    if (!isClockedIn) return;
+    const interval = setInterval(() => {
+      const savedStart = localStorage.getItem(`kapate_clock_in_${currentUser.id}`);
+      if (savedStart) {
+        const startTime = parseInt(savedStart, 10);
+        setElapsedSeconds(Math.max(0, Math.floor((Date.now() - startTime) / 1000)));
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isClockedIn, currentUser.id]);
+
+  const handleToggleClock = () => {
+    if (!isClockedIn) {
+      const now = Date.now();
+      localStorage.setItem(`kapate_clock_in_${currentUser.id}`, now.toString());
+      setIsClockedIn(true);
+      setElapsedSeconds(0);
+      showToast('Clocked in successfully. Active session started.', 'success');
+    } else {
+      const savedStart = localStorage.getItem(`kapate_clock_in_${currentUser.id}`);
+      const startTime = savedStart ? parseInt(savedStart, 10) : Date.now();
+      const diffHrs = Math.max(0.1, Number(((Date.now() - startTime) / 3600000).toFixed(2)));
+      
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const today = new Date();
+      useDemoStore.getState().addTimesheet({
+        date: today.toISOString().split('T')[0],
+        day: days[today.getDay()],
+        projectName: 'General Delivery & Platform Operations',
+        taskName: 'Engineering & Sprint Execution',
+        hours: diffHrs,
+        isBillable: true,
+        description: `Logged via TopBar Clock-in timer (${Math.floor(elapsedSeconds / 60)}m active session)`
+      });
+
+      localStorage.removeItem(`kapate_clock_in_${currentUser.id}`);
+      setIsClockedIn(false);
+      setElapsedSeconds(0);
+      showToast(`Clocked out. ${diffHrs} hrs logged to daily timesheet.`, 'success');
+    }
+  };
+
+  const formatTimer = (totalSeconds: number) => {
+    const hrs = Math.floor(totalSeconds / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+    return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -82,6 +151,40 @@ export const TopBar: React.FC = () => {
             <Shield className="w-3.5 h-3.5 text-indigo-600" />
             <span>Super Admin</span>
           </button>
+        )}
+
+        {/* ONE-CLICK CLOCK-IN / CLOCK-OUT WIDGET (For internal team) */}
+        {currentUser.role !== 'CLIENT' && (
+          <div className="flex items-center gap-2 px-2.5 py-1 rounded-xl border border-slate-200 bg-slate-50 shadow-2xs">
+            {isClockedIn ? (
+              <>
+                <div className="flex items-center gap-1.5 px-1">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                  </span>
+                  <span className="font-mono text-xs font-bold text-emerald-700">{formatTimer(elapsedSeconds)}</span>
+                </div>
+                <button
+                  onClick={handleToggleClock}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-[11px] transition-all shadow-xs cursor-pointer"
+                  title="Clock out and record hours"
+                >
+                  <Square className="w-3 h-3 fill-current" />
+                  <span>Clock Out</span>
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={handleToggleClock}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] transition-all shadow-xs cursor-pointer"
+                title="Clock in to track active working hours"
+              >
+                <Clock className="w-3.5 h-3.5" />
+                <span>Clock In</span>
+              </button>
+            )}
+          </div>
         )}
 
         {/* QUICK CREATE (+) BUTTON */}
@@ -209,6 +312,17 @@ export const TopBar: React.FC = () => {
                       <Briefcase className="w-3.5 h-3.5 text-blue-600" /> Solutions Engineer
                     </span>
                     {(currentUser.role as string) === 'EMPLOYEE' && <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />}
+                  </button>
+                  <button
+                    onClick={() => handleSwitchRole('INTERN')}
+                    className={`w-full text-left px-3 py-1.5 rounded-xl text-xs flex items-center justify-between transition-colors ${
+                      (currentUser.role as string) === 'INTERN' ? 'bg-emerald-50 font-bold text-emerald-700' : 'text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <GraduationCap className="w-3.5 h-3.5 text-emerald-600" /> Technical Intern
+                    </span>
+                    {(currentUser.role as string) === 'INTERN' && <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />}
                   </button>
                 </div>
               )}
