@@ -155,64 +155,6 @@ export const DemoLogin: React.FC<DemoLoginProps> = ({ onLoginSuccess }) => {
             </div>
           )}
 
-          {/* Quick-Fill Persona Buttons for Instant Testing */}
-          <div className="mb-4 p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center justify-between">
-              <span>Quick Fill Persona Credentials</span>
-              <span className="text-[9px] text-blue-600 font-mono font-bold">1-Click Auto-Fill</span>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-              <button
-                type="button"
-                onClick={() => {
-                  setEmail('admin@kapateconsultancy.in');
-                  setPassword('Admin@KC8421174957');
-                  setError('');
-                }}
-                className="px-2 py-2 rounded-xl bg-white border border-purple-200 hover:border-purple-500 hover:bg-purple-50/60 text-[11px] font-bold text-purple-700 text-center transition-all shadow-2xs cursor-pointer"
-                title="Super Admin: admin@kapateconsultancy.in / Admin@KC8421174957"
-              >
-                👑 Super Admin
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setEmail('manager@kapateconsultancy.in');
-                  setPassword('KapateOS@2026');
-                  setError('');
-                }}
-                className="px-2 py-2 rounded-xl bg-white border border-indigo-200 hover:border-indigo-500 hover:bg-indigo-50/60 text-[11px] font-bold text-indigo-700 text-center transition-all shadow-2xs cursor-pointer"
-                title="Delivery PM: manager@kapateconsultancy.in / KapateOS@2026"
-              >
-                💼 Delivery PM
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setEmail('employee@kapateconsultancy.in');
-                  setPassword('KapateOS@2026');
-                  setError('');
-                }}
-                className="px-2 py-2 rounded-xl bg-white border border-blue-200 hover:border-blue-500 hover:bg-blue-50/60 text-[11px] font-bold text-blue-700 text-center transition-all shadow-2xs cursor-pointer"
-                title="Employee: employee@kapateconsultancy.in or KAP-EMP-000002 / KapateOS@2026"
-              >
-                🛠️ Employee
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setEmail('intern@kapateconsultancy.in');
-                  setPassword('KapateOS@2026');
-                  setError('');
-                }}
-                className="px-2 py-2 rounded-xl bg-white border border-emerald-200 hover:border-emerald-500 hover:bg-emerald-50/60 text-[11px] font-bold text-emerald-700 text-center transition-all shadow-2xs cursor-pointer"
-                title="Intern: intern@kapateconsultancy.in or KAP-INT-000001 / KapateOS@2026"
-              >
-                🎓 Intern
-              </button>
-            </div>
-          </div>
-
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1.5">
@@ -226,7 +168,7 @@ export const DemoLogin: React.FC<DemoLoginProps> = ({ onLoginSuccess }) => {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 transition-colors"
-                  placeholder="employee@kapateconsultancy.in or KAP-EMP-000002"
+                  placeholder="name@kapateconsultancy.in or KAP-EMP-..."
                 />
               </div>
             </div>
