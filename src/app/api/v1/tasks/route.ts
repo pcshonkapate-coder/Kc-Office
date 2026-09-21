@@ -1,34 +1,33 @@
 import { NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
+import { dataStore } from '@/lib/dataStore';
 import { getCloudCollection } from '@/lib/mongodb';
 import { Task } from '@/types';
 
 export async function GET(req: Request) {
   const auth = requireAuth(req);
-  if ('errorResponse' in auth) return auth.errorResponse;
+  if ('errorResponse' in auth && auth.errorResponse) return auth.errorResponse;
 
   try {
     const url = new URL(req.url);
     const projectId = url.searchParams.get('projectId');
     const assignedTo = url.searchParams.get('assignedTo');
 
-    const tasksColl = await getCloudCollection<Task>('tasks');
-    const filter: Record<string, any> = {};
-
-    if (projectId) filter.projectId = projectId;
-    if (assignedTo) filter.assignedTo = { $regex: assignedTo, $options: 'i' };
+    let tasks = dataStore.getTasks({
+      projectId: projectId || undefined,
+      assignedTo: assignedTo || undefined
+    });
 
     // If client role, only return client-visible tasks
-    if (auth.user.role === 'CLIENT') {
-      filter.$or = [
-        { clientVisible: true },
-        { assigneeRole: 'CLIENT' },
-        { assignedTo: { $regex: 'client', $options: 'i' } }
-      ];
+    if (auth.user && auth.user.role === 'CLIENT') {
+      tasks = tasks.filter(t =>
+        t.clientVisible ||
+        t.assigneeRole === 'CLIENT' ||
+        (t.assignedTo && t.assignedTo.toLowerCase().includes('client'))
+      );
     }
 
-    const tasks = await tasksColl.find(filter).sort({ createdAt: -1 }).toArray();
-    return NextResponse.json({ success: true, tasks });
+    return NextResponse.json({ success: true, data: tasks, tasks });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
@@ -36,7 +35,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   const auth = requireAuth(req);
-  if ('errorResponse' in auth) return auth.errorResponse;
+  if ('errorResponse' in auth && auth.errorResponse) return auth.errorResponse;
 
   try {
     const body = await req.json();
@@ -50,35 +49,36 @@ export async function POST(req: Request) {
       status = 'TODO',
       dueDate,
       estimatedHours = 8,
-      sourceEmailId,
-      clientVisible = false
+      clientVisible = false,
+      assigneeRole
     } = body;
 
     if (!title) {
       return NextResponse.json({ success: false, error: 'Task title is required.' }, { status: 400 });
     }
 
-    const tasksColl = await getCloudCollection<Task>('tasks');
-    const taskCount = await tasksColl.countDocuments();
-    const taskId = `TSK-${String(taskCount + 101).padStart(3, '0')}`;
-
-    const newTask: Task = {
-      id: taskId,
+    const authorName = auth.user ? auth.user.name : 'Shon Kapate';
+    const newTask = dataStore.addTask({
       title,
       description: description || '',
       projectId,
       projectName,
-      assignedTo: assignedTo || auth.user.name,
+      assignedTo: assignedTo || authorName,
+      assigneeRole: assigneeRole || (authorName.includes('Manager') ? 'MANAGER' : 'ENGINEER'),
       priority,
       status,
       dueDate: dueDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       estimatedHours: typeof estimatedHours === 'number' ? estimatedHours : 8,
       loggedHours: 0,
       clientVisible
-    };
+    });
 
-    await tasksColl.insertOne(newTask as any);
-    return NextResponse.json({ success: true, task: newTask });
+    // Best-effort cloud replication
+    getCloudCollection<Task>('tasks')
+      .then(coll => coll.insertOne(newTask as any))
+      .catch(() => {});
+
+    return NextResponse.json({ success: true, data: newTask, task: newTask }, { status: 201 });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
@@ -86,7 +86,7 @@ export async function POST(req: Request) {
 
 export async function PUT(req: Request) {
   const auth = requireAuth(req);
-  if ('errorResponse' in auth) return auth.errorResponse;
+  if ('errorResponse' in auth && auth.errorResponse) return auth.errorResponse;
 
   try {
     const body = await req.json();
@@ -96,14 +96,20 @@ export async function PUT(req: Request) {
       return NextResponse.json({ success: false, error: 'Task ID is required.' }, { status: 400 });
     }
 
-    const tasksColl = await getCloudCollection<Task>('tasks');
     const updatePayload: Record<string, any> = { ...updates };
     if (status) updatePayload.status = status;
 
-    await tasksColl.updateOne({ id }, { $set: updatePayload });
-    const updated = await tasksColl.findOne({ id });
+    const updated = dataStore.updateTask(id, updatePayload);
+    if (!updated) {
+      return NextResponse.json({ success: false, error: 'Task not found.' }, { status: 404 });
+    }
 
-    return NextResponse.json({ success: true, task: updated });
+    // Best-effort cloud replication
+    getCloudCollection<Task>('tasks')
+      .then(coll => coll.updateOne({ id }, { $set: updatePayload }))
+      .catch(() => {});
+
+    return NextResponse.json({ success: true, data: updated, task: updated });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
@@ -111,7 +117,7 @@ export async function PUT(req: Request) {
 
 export async function DELETE(req: Request) {
   const auth = requireAuth(req, ['SUPER_ADMIN', 'ADMIN', 'PROJECT_MANAGER']);
-  if ('errorResponse' in auth) return auth.errorResponse;
+  if ('errorResponse' in auth && auth.errorResponse) return auth.errorResponse;
 
   try {
     const { searchParams } = new URL(req.url);
@@ -121,8 +127,12 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ success: false, error: 'Task ID is required.' }, { status: 400 });
     }
 
-    const tasksColl = await getCloudCollection<Task>('tasks');
-    await tasksColl.deleteOne({ id });
+    dataStore.deleteTask(id);
+
+    // Best-effort cloud deletion
+    getCloudCollection<Task>('tasks')
+      .then(coll => coll.deleteOne({ id }))
+      .catch(() => {});
 
     return NextResponse.json({ success: true, message: `Task ${id} deleted.` });
   } catch (err: any) {

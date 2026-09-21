@@ -1,26 +1,27 @@
 import { NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
+import { dataStore } from '@/lib/dataStore';
 import { getCloudCollection } from '@/lib/mongodb';
 import { Project } from '@/types';
 
 export async function GET(req: Request) {
   const auth = requireAuth(req);
-  if ('errorResponse' in auth) return auth.errorResponse;
+  if ('errorResponse' in auth && auth.errorResponse) return auth.errorResponse;
 
   try {
-    const projectsColl = await getCloudCollection<Project>('projects');
-    const filter: Record<string, any> = {};
+    let projects = dataStore.getProjects();
 
     // If client role, only return projects where this client is assigned
-    if (auth.user.role === 'CLIENT') {
-      filter.$or = [
-        { client: { $regex: auth.user.name, $options: 'i' } },
-        { clientEmail: auth.user.email.toLowerCase() }
-      ];
+    if (auth.user && auth.user.role === 'CLIENT') {
+      const clientName = auth.user.name.toLowerCase();
+      const clientEmail = auth.user.email.toLowerCase();
+      projects = projects.filter(p =>
+        (p.client && p.client.toLowerCase().includes(clientName)) ||
+        ((p as any).clientEmail && (p as any).clientEmail.toLowerCase() === clientEmail)
+      );
     }
 
-    const projects = await projectsColl.find(filter).sort({ createdAt: -1 }).toArray();
-    return NextResponse.json({ success: true, projects });
+    return NextResponse.json({ success: true, data: projects, projects });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
@@ -28,7 +29,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   const auth = requireAuth(req, ['SUPER_ADMIN', 'ADMIN', 'PROJECT_MANAGER']);
-  if ('errorResponse' in auth) return auth.errorResponse;
+  if ('errorResponse' in auth && auth.errorResponse) return auth.errorResponse;
 
   try {
     const body = await req.json();
@@ -38,13 +39,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: 'Project name and client are required.' }, { status: 400 });
     }
 
-    const projectsColl = await getCloudCollection<Project>('projects');
-    const prjCount = await projectsColl.countDocuments();
-    const projectId = `PRJ-${String(prjCount + 101).padStart(3, '0')}`;
     const budgetNum = typeof budget === 'number' ? budget : parseFloat(budget) || 1000000;
+    const authorName = auth.user ? auth.user.name : 'Shon Kapate';
 
-    const newProject: Project = {
-      id: projectId,
+    const newProject = dataStore.addProject({
       name,
       client,
       budget: budgetNum,
@@ -52,8 +50,8 @@ export async function POST(req: Request) {
       progress: 0,
       status: 'Planning',
       deadline: deadline || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      team: team.length > 0 ? team : [auth.user.name],
-      manager: manager || auth.user.name,
+      team: team.length > 0 ? team : [authorName],
+      manager: manager || authorName,
       description: description || 'Enterprise engineering and consultancy delivery engagement.',
       milestones: [
         { id: `m-${Date.now()}-1`, name: 'Discovery & Requirements Lock', progress: 100, dueDate: new Date().toISOString().split('T')[0], status: 'Completed' },
@@ -61,17 +59,21 @@ export async function POST(req: Request) {
       ],
       profitability: {
         revenue: budgetNum,
-        employeeCost: 0,
-        cloudCost: 0,
-        aiApiCost: 0,
-        otherCost: 0,
-        grossProfit: budgetNum,
-        grossMargin: 100.0
+        employeeCost: Math.round(budgetNum * 0.45),
+        cloudCost: Math.round(budgetNum * 0.08),
+        aiApiCost: Math.round(budgetNum * 0.05),
+        otherCost: 10000,
+        grossProfit: Math.round(budgetNum * 0.42),
+        grossMargin: 42.0
       }
-    };
+    });
 
-    await projectsColl.insertOne(newProject as any);
-    return NextResponse.json({ success: true, project: newProject });
+    // Best-effort replication to cloud MongoDB
+    getCloudCollection<Project>('projects')
+      .then(coll => coll.insertOne({ ...newProject, clientEmail } as any))
+      .catch(() => {});
+
+    return NextResponse.json({ success: true, data: newProject, project: newProject }, { status: 201 });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
@@ -79,7 +81,7 @@ export async function POST(req: Request) {
 
 export async function PUT(req: Request) {
   const auth = requireAuth(req, ['SUPER_ADMIN', 'ADMIN', 'PROJECT_MANAGER']);
-  if ('errorResponse' in auth) return auth.errorResponse;
+  if ('errorResponse' in auth && auth.errorResponse) return auth.errorResponse;
 
   try {
     const body = await req.json();
@@ -89,11 +91,41 @@ export async function PUT(req: Request) {
       return NextResponse.json({ success: false, error: 'Project ID is required.' }, { status: 400 });
     }
 
-    const projectsColl = await getCloudCollection<Project>('projects');
-    await projectsColl.updateOne({ id }, { $set: updates });
-    const updated = await projectsColl.findOne({ id });
+    const updated = dataStore.updateProject(id, updates);
+    if (!updated) {
+      return NextResponse.json({ success: false, error: 'Project not found.' }, { status: 404 });
+    }
 
-    return NextResponse.json({ success: true, project: updated });
+    // Best-effort replication to cloud MongoDB
+    getCloudCollection<Project>('projects')
+      .then(coll => coll.updateOne({ id }, { $set: updates }))
+      .catch(() => {});
+
+    return NextResponse.json({ success: true, data: updated, project: updated });
+  } catch (err: any) {
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: Request) {
+  const auth = requireAuth(req, ['SUPER_ADMIN', 'ADMIN']);
+  if ('errorResponse' in auth && auth.errorResponse) return auth.errorResponse;
+
+  try {
+    const url = new URL(req.url);
+    const id = url.searchParams.get('id');
+    if (!id) {
+      return NextResponse.json({ success: false, error: 'Project ID is required.' }, { status: 400 });
+    }
+
+    dataStore.deleteProject(id);
+
+    // Best-effort cloud deletion
+    getCloudCollection<Project>('projects')
+      .then(coll => coll.deleteOne({ id }))
+      .catch(() => {});
+
+    return NextResponse.json({ success: true, message: 'Project deleted successfully.' });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }

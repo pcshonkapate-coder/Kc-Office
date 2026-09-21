@@ -1,57 +1,74 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDatabase } from '@/lib/mongodb';
 import { requireAuth } from '@/lib/auth';
+import { dataStore } from '@/lib/dataStore';
+import { getDatabase } from '@/lib/mongodb';
 import { Contact } from '@/types';
 
 export async function GET(req: NextRequest) {
   const auth = await requireAuth(req);
   if (!auth.authenticated || !auth.user) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+    return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
   }
 
-  const { db } = await getDatabase();
-  const contacts = await db.collection<Contact>('contacts').find({}).toArray();
-  return NextResponse.json({ data: contacts });
+  const { searchParams } = new URL(req.url);
+  const companyId = searchParams.get('companyId') || undefined;
+
+  const contacts = dataStore.getContacts(companyId);
+  return NextResponse.json({ success: true, data: contacts, contacts });
 }
 
 export async function POST(req: NextRequest) {
   const auth = await requireAuth(req, ['SUPER_ADMIN', 'ADMIN', 'PROJECT_MANAGER']);
   if (!auth.authenticated || !auth.user) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+    return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
   }
 
-  const body = await req.json();
-  const { db } = await getDatabase();
+  try {
+    const body = await req.json();
+    const newContact = dataStore.addContact({
+      name: body.name || 'Executive Stakeholder',
+      designation: body.designation || body.role || 'VP of Engineering',
+      company: body.company || body.companyName || 'Enterprise Partner',
+      email: body.email || '',
+      phone: body.phone || '',
+      lastContacted: body.lastContacted || new Date().toISOString().split('T')[0],
+      relationship: body.relationship || 'Key Decision Maker',
+      owner: body.owner || auth.user.name || 'Shon Kapate'
+    });
 
-  const newContact: Contact = {
-    id: `cont-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
-    name: body.name || 'Executive Stakeholder',
-    designation: body.designation || body.role || 'VP of Engineering',
-    company: body.company || 'Enterprise Partner',
-    email: body.email || '',
-    phone: body.phone || '',
-    relationship: body.relationship || 'Key Decision Maker',
-    lastContacted: body.lastContacted || new Date().toISOString().split('T')[0],
-    owner: body.owner || auth.user.name || 'Executive Lead',
-  };
+    // Best-effort replication
+    getDatabase()
+      .then(({ db }) => db.collection<Contact>('contacts').insertOne(newContact as any))
+      .catch(() => {});
 
-  await db.collection<Contact>('contacts').insertOne(newContact as any);
-  return NextResponse.json({ data: newContact }, { status: 201 });
+    return NextResponse.json({ success: true, data: newContact, contact: newContact }, { status: 201 });
+  } catch (err: any) {
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  }
 }
 
 export async function DELETE(req: NextRequest) {
   const auth = await requireAuth(req, ['SUPER_ADMIN', 'ADMIN']);
   if (!auth.authenticated || !auth.user) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+    return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
   }
 
-  const { searchParams } = new URL(req.url);
-  const id = searchParams.get('id');
-  if (!id) {
-    return NextResponse.json({ error: 'Contact ID is required' }, { status: 400 });
-  }
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+    if (!id) {
+      return NextResponse.json({ success: false, error: 'Contact ID is required' }, { status: 400 });
+    }
 
-  const { db } = await getDatabase();
-  await db.collection('contacts').deleteOne({ id });
-  return NextResponse.json({ success: true, message: 'Contact deleted successfully' });
+    dataStore.deleteContact(id);
+
+    // Best-effort replication
+    getDatabase()
+      .then(({ db }) => db.collection('contacts').deleteOne({ id }))
+      .catch(() => {});
+
+    return NextResponse.json({ success: true, message: 'Contact deleted successfully' });
+  } catch (err: any) {
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  }
 }

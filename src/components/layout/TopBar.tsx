@@ -50,14 +50,14 @@ export const TopBar: React.FC = () => {
     <header className="h-16 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 lg:px-6 flex items-center justify-between sticky top-0 z-20 shadow-xs">
       
       {/* Global Search Bar */}
-      <div className="flex items-center gap-3 flex-1 max-w-md">
+      <div className="flex items-center gap-3 flex-1 max-w-md min-w-0">
         <button
           onClick={() => setGlobalSearchOpen(true)}
-          className="w-full flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-500 hover:text-slate-900 hover:border-slate-300 transition-all shadow-xs group"
+          className="w-full flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-500 hover:text-slate-900 hover:border-slate-300 transition-all shadow-xs group overflow-hidden min-w-0"
         >
-          <Search className="w-4 h-4 text-slate-400 group-hover:text-blue-600 transition-colors" />
-          <span className="flex-1 text-left">Search leads, deals, projects, tasks, invoices...</span>
-          <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] bg-white border border-slate-200 rounded text-slate-500 font-mono shadow-2xs">⌘K</kbd>
+          <Search className="w-4 h-4 shrink-0 text-slate-400 group-hover:text-blue-600 transition-colors" />
+          <span className="flex-1 text-left truncate whitespace-nowrap min-w-0">Search leads, deals, projects, tasks, invoices...</span>
+          <kbd className="hidden sm:inline-block shrink-0 px-1.5 py-0.5 text-[10px] bg-white border border-slate-200 rounded text-slate-500 font-mono shadow-2xs">⌘K</kbd>
         </button>
       </div>
 

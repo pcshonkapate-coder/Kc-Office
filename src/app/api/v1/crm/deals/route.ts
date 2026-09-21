@@ -1,82 +1,102 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDatabase } from '@/lib/mongodb';
 import { requireAuth } from '@/lib/auth';
+import { dataStore } from '@/lib/dataStore';
+import { getDatabase } from '@/lib/mongodb';
 import { Deal } from '@/types';
 
 export async function GET(req: NextRequest) {
   const auth = await requireAuth(req);
   if (!auth.authenticated || !auth.user) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+    return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
   }
 
-  const { db } = await getDatabase();
-  const deals = await db.collection<Deal>('deals').find({}).toArray();
-  return NextResponse.json({ data: deals });
+  const deals = dataStore.getDeals();
+  return NextResponse.json({ success: true, data: deals, deals });
 }
 
 export async function POST(req: NextRequest) {
   const auth = await requireAuth(req, ['SUPER_ADMIN', 'ADMIN', 'PROJECT_MANAGER']);
   if (!auth.authenticated || !auth.user) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+    return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
   }
 
-  const body = await req.json();
-  const { db } = await getDatabase();
+  try {
+    const body = await req.json();
+    const val = Number(body.value) || body.valueNum || 0;
+    const newDeal = dataStore.addDeal({
+      title: body.title || 'Enterprise Advisory & AI Pipeline',
+      company: body.company || 'Enterprise Partner',
+      value: val,
+      stage: body.stage || 'NEW LEAD',
+      owner: body.owner || auth.user.name || 'Executive Lead',
+      expectedClose: body.expectedClose || body.expectedCloseDate || new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
+      probability: Number(body.probability) || 50,
+      service: body.service || 'AI Solutions / Machine Learning',
+      created: new Date().toISOString().split('T')[0],
+    });
 
-  const newDeal: Deal = {
-    id: `deal-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
-    title: body.title || 'Enterprise Advisory & AI Pipeline',
-    company: body.company || 'Enterprise Partner',
-    contact: body.contact || 'Principal Sponsor',
-    value: Number(body.value) || 0,
-    stage: body.stage || 'NEW LEAD',
-    owner: body.owner || auth.user.name || 'Executive Lead',
-    expectedClose: body.expectedClose || body.expectedCloseDate || new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
-    probability: Number(body.probability) || 50,
-    service: body.service || 'AI Solutions / Machine Learning',
-    created: new Date().toISOString().split('T')[0],
-  };
+    // Best-effort replication
+    getDatabase()
+      .then(({ db }) => db.collection<Deal>('deals').insertOne(newDeal as any))
+      .catch(() => {});
 
-  await db.collection<Deal>('deals').insertOne(newDeal as any);
-  return NextResponse.json({ data: newDeal }, { status: 201 });
+    return NextResponse.json({ success: true, data: newDeal, deal: newDeal }, { status: 201 });
+  } catch (err: any) {
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  }
 }
 
 export async function PUT(req: NextRequest) {
   const auth = await requireAuth(req, ['SUPER_ADMIN', 'ADMIN', 'PROJECT_MANAGER']);
   if (!auth.authenticated || !auth.user) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+    return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
   }
 
-  const body = await req.json();
-  if (!body.id) {
-    return NextResponse.json({ error: 'Deal ID is required' }, { status: 400 });
+  try {
+    const body = await req.json();
+    if (!body.id) {
+      return NextResponse.json({ success: false, error: 'Deal ID is required' }, { status: 400 });
+    }
+
+    const { id, _id, ...updateData } = body;
+    const updated = dataStore.updateDeal(id, updateData);
+    if (!updated) {
+      return NextResponse.json({ success: false, error: 'Deal not found' }, { status: 404 });
+    }
+
+    // Best-effort replication
+    getDatabase()
+      .then(({ db }) => db.collection<Deal>('deals').updateOne({ id }, { $set: updateData }))
+      .catch(() => {});
+
+    return NextResponse.json({ success: true, data: updated, deal: updated });
+  } catch (err: any) {
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
-
-  const { db } = await getDatabase();
-  const { _id, ...updateData } = body;
-
-  const result = await db.collection<Deal>('deals').findOneAndUpdate(
-    { id: body.id },
-    { $set: updateData },
-    { returnDocument: 'after' }
-  );
-
-  return NextResponse.json({ data: result });
 }
 
 export async function DELETE(req: NextRequest) {
   const auth = await requireAuth(req, ['SUPER_ADMIN', 'ADMIN']);
   if (!auth.authenticated || !auth.user) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+    return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
   }
 
-  const { searchParams } = new URL(req.url);
-  const id = searchParams.get('id');
-  if (!id) {
-    return NextResponse.json({ error: 'Deal ID is required' }, { status: 400 });
-  }
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+    if (!id) {
+      return NextResponse.json({ success: false, error: 'Deal ID is required' }, { status: 400 });
+    }
 
-  const { db } = await getDatabase();
-  await db.collection('deals').deleteOne({ id });
-  return NextResponse.json({ success: true, message: 'Deal deleted successfully' });
+    dataStore.deleteDeal(id);
+
+    // Best-effort replication
+    getDatabase()
+      .then(({ db }) => db.collection('deals').deleteOne({ id }))
+      .catch(() => {});
+
+    return NextResponse.json({ success: true, message: 'Deal deleted successfully' });
+  } catch (err: any) {
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  }
 }

@@ -1,32 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
+import { dataStore } from '@/lib/dataStore';
 import { getDatabase } from '@/lib/mongodb';
-import { INITIAL_SESSIONS, INITIAL_ENTERPRISE_USERS } from '@/data/superAdminData';
 import { SecuritySession } from '@/types';
-
-let localSessionsCache: SecuritySession[] = [...INITIAL_SESSIONS];
 
 export async function GET(req: NextRequest) {
   const auth = await requireAuth(req, ['SUPER_ADMIN', 'ADMIN']);
   if (!auth.authenticated || !auth.user) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+    return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
   }
 
-  let sessions = [...localSessionsCache];
-
-  try {
-    const { db } = await getDatabase();
-    const dbSessions = await db.collection<SecuritySession>('security_sessions').find({}).toArray();
-    if (dbSessions && dbSessions.length > 0) {
-      sessions = dbSessions;
-      localSessionsCache = [...dbSessions];
-    }
-  } catch {
-    // Fallback
-  }
-
+  const sessions = dataStore.getSessions();
+  const users = dataStore.getUsers();
   const activeCount = sessions.filter(s => s.status === 'ACTIVE').length;
-  const lockedUsersCount = INITIAL_ENTERPRISE_USERS.filter(u => u.status === 'LOCKED').length;
+  const lockedUsersCount = users.filter(u => u.status === 'LOCKED').length;
 
   return NextResponse.json({
     success: true,
@@ -47,7 +34,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const auth = await requireAuth(req, ['SUPER_ADMIN', 'ADMIN']);
   if (!auth.authenticated || !auth.user) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+    return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
   }
 
   try {
@@ -56,35 +43,27 @@ export async function POST(req: NextRequest) {
 
     if (action === 'revoke_session') {
       if (!sessionId) {
-        return NextResponse.json({ error: 'Session ID is required.' }, { status: 400 });
+        return NextResponse.json({ success: false, error: 'Session ID is required.' }, { status: 400 });
       }
 
-      const session = localSessionsCache.find(s => s.id === sessionId);
-      if (session) {
-        session.status = 'REVOKED';
-      }
+      dataStore.revokeSession(sessionId);
 
-      try {
-        const { db } = await getDatabase();
-        await db.collection('security_sessions').updateOne({ id: sessionId }, { $set: { status: 'REVOKED' } });
-        await db.collection('audit_logs').insertOne({
-          id: `aud-${Date.now()}`,
-          timestamp: new Date().toISOString(),
-          actorId: auth.user.userId,
-          actorName: auth.user.name,
-          actorEmail: auth.user.email,
-          actorRole: auth.user.role,
-          action: 'SESSION_REVOKED',
-          resource: 'Security Center',
-          targetId: sessionId,
-          targetLabel: session ? `${session.userName} (${session.ipAddress})` : sessionId,
-          severity: 'warning',
-          details: `Security session revoked manually by admin.`,
-          ipAddress: req.headers.get('x-forwarded-for') || '127.0.0.1',
-        });
-      } catch {
-        // Fallback
-      }
+      dataStore.addAuditLog({
+        actor: auth.user.name || auth.user.email,
+        action: 'SESSION_REVOKED',
+        module: 'security',
+        targetResource: `sessions/${sessionId}`,
+        targetUser: auth.user.email,
+        result: 'SUCCESS',
+        reason: 'Security session revoked manually by administrator.'
+      });
+
+      // Best-effort replication
+      getDatabase()
+        .then(async ({ db }) => {
+          await db.collection('security_sessions').updateOne({ id: sessionId }, { $set: { status: 'REVOKED' } });
+        })
+        .catch(() => {});
 
       return NextResponse.json({
         success: true,
@@ -94,35 +73,27 @@ export async function POST(req: NextRequest) {
 
     if (action === 'force_logout_all') {
       if (!userId) {
-        return NextResponse.json({ error: 'User ID is required.' }, { status: 400 });
+        return NextResponse.json({ success: false, error: 'User ID is required.' }, { status: 400 });
       }
 
-      localSessionsCache.forEach(s => {
-        if (s.userId === userId) {
-          s.status = 'REVOKED';
-        }
+      dataStore.revokeAllUserSessions(userId);
+
+      dataStore.addAuditLog({
+        actor: auth.user.name || auth.user.email,
+        action: 'FORCE_LOGOUT_ALL',
+        module: 'security',
+        targetResource: `users/${userId}/sessions`,
+        targetUser: userId,
+        result: 'SUCCESS',
+        reason: `Terminated all active authentication sessions for user ID: ${userId}.`
       });
 
-      try {
-        const { db } = await getDatabase();
-        await db.collection('security_sessions').updateMany({ userId }, { $set: { status: 'REVOKED' } });
-        await db.collection('audit_logs').insertOne({
-          id: `aud-${Date.now()}`,
-          timestamp: new Date().toISOString(),
-          actorId: auth.user.userId,
-          actorName: auth.user.name,
-          actorEmail: auth.user.email,
-          actorRole: auth.user.role,
-          action: 'FORCE_LOGOUT_ALL',
-          resource: 'Security Center',
-          targetId: userId,
-          severity: 'warning',
-          details: `Terminated all active authentication sessions for user ID: ${userId}.`,
-          ipAddress: req.headers.get('x-forwarded-for') || '127.0.0.1',
-        });
-      } catch {
-        // Fallback
-      }
+      // Best-effort replication
+      getDatabase()
+        .then(async ({ db }) => {
+          await db.collection('security_sessions').updateMany({ userId }, { $set: { status: 'REVOKED' } });
+        })
+        .catch(() => {});
 
       return NextResponse.json({
         success: true,
@@ -130,8 +101,8 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    return NextResponse.json({ error: 'Invalid security action.' }, { status: 400 });
+    return NextResponse.json({ success: false, error: 'Invalid security action.' }, { status: 400 });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ success: false, error: err.message || 'Internal Server Error' }, { status: 500 });
   }
 }

@@ -1,27 +1,34 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDemoStore } from '../../../store/demoStore';
 import { Clock, Send } from 'lucide-react';
 
 export const TimesheetsModule: React.FC = () => {
   const timesheets = useDemoStore((state) => state.timesheets);
+  const projects = useDemoStore((state) => state.projects);
   const approveTimesheet = useDemoStore((state) => state.approveTimesheet);
   const addTimesheet = useDemoStore((state) => state.addTimesheet);
   const currentUser = useDemoStore((state) => state.currentUser);
 
-  const [project, setProject] = useState('AI Customer Support Platform');
+  const [project, setProject] = useState(projects[0]?.name || 'AI Customer Support Platform');
   const [task, setTask] = useState('Model Training & Evaluation');
   const [hours, setHours] = useState(7.5);
   const [isBillable, setIsBillable] = useState(true);
   const [description, setDescription] = useState('Finetuned Llama 3 model on support transcripts.');
+
+  useEffect(() => {
+    if ((!project || project === '') && projects.length > 0) {
+      setProject(projects[0].name);
+    }
+  }, [projects, project]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     addTimesheet({
       date: new Date().toISOString().split('T')[0],
       day: 'Today',
-      projectName: project,
+      projectName: project || (projects[0]?.name || 'General Project'),
       taskName: task,
       hours: Number(hours),
       isBillable,
@@ -58,9 +65,11 @@ export const TimesheetsModule: React.FC = () => {
                 onChange={(e) => setProject(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:border-blue-600"
               >
-                <option value="AI Customer Support Platform">AI Customer Support Platform</option>
-                <option value="Computer Vision Inspection System">Computer Vision Inspection System</option>
-                <option value="Enterprise Data Analytics Platform">Enterprise Data Analytics Platform</option>
+                {projects.map((p) => (
+                  <option key={p.id} value={p.name}>
+                    {p.name}
+                  </option>
+                ))}
               </select>
             </div>
 

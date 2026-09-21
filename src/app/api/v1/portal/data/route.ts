@@ -1,39 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDatabase } from '@/lib/mongodb';
 import { requireAuth } from '@/lib/auth';
-import { Project, Task, Invoice, AppDocument } from '@/types';
+import { dataStore } from '@/lib/dataStore';
+import { AppDocument } from '@/types';
 
 export async function GET(req: NextRequest) {
   const auth = await requireAuth(req);
   if (!auth.authenticated || !auth.user) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+    return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
   }
 
-  const { db } = await getDatabase();
-  const userName = auth.user.name;
+  const userName = auth.user.name || '';
   const isClient = auth.user.role === 'CLIENT';
+  const lowerName = userName.toLowerCase();
 
-  // For Client role: strictly fetch projects belonging to client, client visible tasks, and client invoices
-  const projectQuery = isClient ? { client: { $regex: new RegExp(userName, 'i') } } : {};
-  const projects = await db.collection<Project>('projects').find(projectQuery).toArray();
+  // Authoritative retrieval from dataStore
+  let projects = dataStore.getProjects();
+  let tasks = dataStore.getTasks();
+  let invoices = dataStore.getInvoices();
+  let documents = dataStore.getDocuments();
 
-  const taskQuery = isClient
-    ? {
-        $or: [
-          { clientVisible: true },
-          { assigneeRole: 'CLIENT' },
-          { assignedTo: { $regex: new RegExp(userName, 'i') } },
-        ]
-      }
-    : {};
-  const tasks = await db.collection<Task>('tasks').find(taskQuery).toArray();
-
-  const invoiceQuery = isClient ? { client: { $regex: new RegExp(userName, 'i') } } : {};
-  const invoices = await db.collection<Invoice>('invoices').find(invoiceQuery).toArray();
-
-  const documents = await db.collection<AppDocument>('documents').find({}).toArray();
+  // For Client role: strictly filter for client isolation
+  if (isClient) {
+    projects = projects.filter(p => (p.client || '').toLowerCase().includes(lowerName));
+    tasks = tasks.filter(t =>
+      t.clientVisible ||
+      t.assigneeRole === 'CLIENT' ||
+      (t.assignedTo && t.assignedTo.toLowerCase().includes(lowerName))
+    );
+    invoices = invoices.filter(i => (i.client || '').toLowerCase().includes(lowerName));
+    documents = documents.filter((d: AppDocument) =>
+      !d.category ||
+      d.category === 'Contracts' ||
+      d.category === 'Proposals' ||
+      d.category === 'Invoices' ||
+      d.category === 'Project Documents' ||
+      (d.relatedEntity && d.relatedEntity.toLowerCase().includes(lowerName))
+    );
+  }
 
   return NextResponse.json({
+    success: true,
     data: {
       projects,
       tasks,

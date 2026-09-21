@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.core.security import decode_token
 from app.core.exceptions import UnauthorizedException, PermissionDeniedException
+from app.core.config import settings
 from app.repositories.user_repository import UserRepository
 from app.models.auth import User
 
@@ -17,7 +18,7 @@ def get_current_user(
     token: str = Depends(oauth2_scheme)
 ) -> User:
     if token == "demo_token":
-        admin = db.query(User).filter(User.email == "admin@kapateconsultancy.in").first()
+        admin = db.query(User).filter(User.email.in_(["admin@kapateconsultancy.in", "admin@kapateconsultancy.com", settings.FIRST_SUPERADMIN_EMAIL])).first()
         if admin:
             return admin
 
@@ -44,14 +45,15 @@ def get_current_user_flexible(
     db: Session = Depends(get_db),
     token: Optional[str] = Depends(oauth2_scheme_optional)
 ) -> User:
+    admin_emails = ["admin@kapateconsultancy.in", "admin@kapateconsultancy.com", settings.FIRST_SUPERADMIN_EMAIL]
     if not token or token == "demo_token":
-        admin = db.query(User).filter(User.email == "admin@kapateconsultancy.in").first()
+        admin = db.query(User).filter(User.email.in_(admin_emails)).first()
         if admin:
             return admin
 
     payload = decode_token(token)
     if not payload:
-        admin = db.query(User).filter(User.email == "admin@kapateconsultancy.in").first()
+        admin = db.query(User).filter(User.email.in_(admin_emails)).first()
         if admin:
             return admin
         raise UnauthorizedException("Invalid session token.")
@@ -60,7 +62,7 @@ def get_current_user_flexible(
     user_repo = UserRepository(db)
     user = user_repo.get_by_id(user_id) if user_id else None
     if not user:
-        admin = db.query(User).filter(User.email == "admin@kapateconsultancy.in").first()
+        admin = db.query(User).filter(User.email.in_(admin_emails)).first()
         if admin:
             return admin
         raise UnauthorizedException("User not found.")

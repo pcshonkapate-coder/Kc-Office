@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCloudCollection } from "@/lib/mongodb";
+import { dataStore } from "@/lib/dataStore";
 
 export const dynamic = "force-dynamic";
 
@@ -59,9 +60,27 @@ export async function POST(request: Request) {
       user_agent: request.headers.get("user-agent") || "unknown"
     };
 
+    // Synchronously commit to authoritative internal dataStore so it appears immediately in the CRM
+    dataStore.addLead({
+      id: leadCode,
+      name: leadDocument.name,
+      email: leadDocument.email,
+      phone: leadDocument.phone || '',
+      company: leadDocument.company || 'Website Inquiry',
+      service: leadDocument.service,
+      budget: leadDocument.budget,
+      source: 'Website Form',
+      owner: 'Shon Kapate',
+      status: 'New Lead',
+      score: 90,
+      description: leadDocument.message,
+      created: createdAt.split('T')[0],
+      nextFollowUp: new Date(Date.now() + 2 * 86400000).toISOString().split('T')[0]
+    });
+
     let cloudSaved = false;
 
-    // 3. Direct persistence to Cloud MongoDB Atlas
+    // 3. Direct persistence to Cloud MongoDB Atlas (best-effort)
     try {
       const leadsCollection = await getCloudCollection("leads");
       await leadsCollection.insertOne(leadDocument);
@@ -95,9 +114,9 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         success: true,
-        message: "Thank you. Your consultation request has been received and logged to our cloud database. Our team will contact you shortly.",
+        message: "Thank you. Your consultation request has been received and logged to our system. Our team will contact you shortly.",
         lead_code: leadCode,
-        cloud_database: cloudSaved ? "MongoDB Atlas (Connected)" : "Synced",
+        cloud_database: cloudSaved ? "MongoDB Atlas (Connected)" : "Synced locally",
         created_at: createdAt,
       },
       { status: 201 }
@@ -112,18 +131,36 @@ export async function POST(request: Request) {
 
 export async function GET() {
   try {
-    const leadsCollection = await getCloudCollection("leads");
-    const leads = await leadsCollection.find({}).sort({ created_at: -1 }).limit(50).toArray();
+    let leads: any[] = [];
+    try {
+      const leadsCollection = await getCloudCollection("leads");
+      leads = await leadsCollection.find({}).sort({ created_at: -1 }).limit(50).toArray();
+    } catch {
+      // Fallback to dataStore
+      leads = dataStore.getLeads().map(l => ({
+        lead_code: l.id,
+        name: l.name,
+        email: l.email,
+        phone: l.phone,
+        company: l.company,
+        service: l.service,
+        budget: l.budget,
+        message: l.description,
+        status: l.status,
+        source: l.source,
+        created_at: l.created
+      }));
+    }
 
     return NextResponse.json({
       success: true,
       count: leads.length,
-      database: "MongoDB Atlas Cloud",
+      database: "Kapate OS Unified Store",
       leads
     });
   } catch (err: any) {
     return NextResponse.json(
-      { success: false, error: err?.message || "Failed to fetch cloud leads" },
+      { success: false, error: err?.message || "Failed to fetch leads" },
       { status: 500 }
     );
   }

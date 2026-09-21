@@ -232,8 +232,8 @@ def init_db():
             else:
                 service_map[code] = existing_service
 
-        # 8. Seed Initial Companies & Contacts if empty
-        if db.query(Company).count() == 0:
+        # 8. Seed Initial Companies, Contacts, Projects & Workforce if not present
+        if not db.query(Company).filter(Company.name == "InnovateTech Pvt Ltd").first():
             c1 = Company(
                 name="InnovateTech Pvt Ltd",
                 domain="innovatetech.in",
@@ -420,79 +420,91 @@ def init_db():
             db.add_all([hist1, hist2, hist3])
 
             # Initial Leads
-            l1 = Lead(
-                lead_code="LD-1001",
-                name="Ananya Verma",
-                contact_name="Ananya Verma",
-                company_name="Apex Logistics Tech",
-                email="ananya@apexlogistics.in",
-                phone="+91 99887 66554",
-                country="India",
-                city="Pune",
-                job_title="Director of Operations",
-                service_interest="Automation",
-                service_id=service_map.get("automation", svc_ai).id if service_map.get("automation") else None,
-                budget="₹30L - ₹50L",
-                budget_range="₹30L - ₹50L",
-                currency="INR",
-                project_description="Warehouse automation and automated OCR routing for shipping manifests.",
-                source="Website contact form",
-                priority="high",
-                lead_score=85,
-                assigned_salesperson_id=admin_user.id,
-                status="QUALIFICATION",
-                next_follow_up_at=datetime.now(timezone.utc) + timedelta(days=2),
-                notes="Responded within 30 minutes of web submission."
-            )
-            l2 = Lead(
-                lead_code="LD-1002",
-                name="Marcus Thorne",
-                contact_name="Marcus Thorne",
-                company_name="Nordic Energy Analytics",
-                email="marcus@nordicenergy.se",
-                phone="+46 8 123 4567",
-                country="Sweden",
-                city="Stockholm",
-                job_title="Head of Smart Grid Innovation",
-                service_interest="Machine Learning",
-                service_id=svc_ml.id if svc_ml else None,
-                budget="€50,000 - €100,000",
-                budget_range="€50,000 - €100,000",
-                currency="EUR",
-                project_description="Real-time wind turbine vibration anomaly prediction.",
-                source="LinkedIn",
-                priority="urgent",
-                lead_score=92,
-                assigned_salesperson_id=admin_user.id,
-                status="NEW LEAD",
-                notes="Inbound message via Kapate LinkedIn corporate page."
-            )
-            l3 = Lead(
-                lead_code="LD-1003",
-                name="Vikram Sethi",
-                contact_name="Vikram Sethi",
-                company_name="QuickMart Grocery",
-                email="vikram@quickmart.in",
-                phone="+91 91122 33445",
-                country="India",
-                city="Delhi",
-                job_title="Co-Founder & COO",
-                service_interest="Mobile Development",
-                service_id=service_map.get("mobile_development", svc_ai).id if service_map.get("mobile_development") else None,
-                budget="₹15L - ₹25L",
-                budget_range="₹15L - ₹25L",
-                currency="INR",
-                project_description="Quick commerce delivery partner app with real-time routing.",
-                source="Referral",
-                priority="medium",
-                lead_score=68,
-                assigned_salesperson_id=admin_user.id,
-                status="DISCOVERY BOOKED",
-                next_follow_up_at=datetime.now(timezone.utc) + timedelta(days=3),
-                notes="Referred by Arjun Mehta from InnovateTech."
-            )
-            db.add_all([l1, l2, l3])
-            db.flush()
+            l1 = db.query(Lead).filter(Lead.lead_code == "LD-1001").first()
+            if not l1:
+                l1 = Lead(
+                    lead_code="LD-1001",
+                    name="Ananya Verma",
+                    contact_name="Ananya Verma",
+                    company_name="Apex Logistics Tech",
+                    email="ananya@apexlogistics.in",
+                    phone="+91 99887 66554",
+                    country="India",
+                    city="Pune",
+                    job_title="Director of Operations",
+                    service_interest="Automation",
+                    service_id=service_map.get("automation", svc_ai).id if service_map.get("automation") else None,
+                    budget="₹30L - ₹50L",
+                    budget_range="₹30L - ₹50L",
+                    currency="INR",
+                    project_description="Warehouse automation and automated OCR routing for shipping manifests.",
+                    source="Website contact form",
+                    priority="high",
+                    lead_score=85,
+                    assigned_salesperson_id=admin_user.id,
+                    status="QUALIFICATION",
+                    next_follow_up_at=datetime.now(timezone.utc) + timedelta(days=2),
+                    notes="Responded within 30 minutes of web submission."
+                )
+                db.add(l1)
+                db.flush()
+
+            l2 = db.query(Lead).filter(Lead.lead_code == "LD-1002").first()
+            if not l2:
+                l2 = Lead(
+                    lead_code="LD-1002",
+                    name="Marcus Thorne",
+                    contact_name="Marcus Thorne",
+                    company_name="Nordic Energy Analytics",
+                    email="marcus@nordicenergy.se",
+                    phone="+46 8 123 4567",
+                    country="Sweden",
+                    city="Stockholm",
+                    job_title="Head of Smart Grid Innovation",
+                    service_interest="Machine Learning",
+                    service_id=svc_ml.id if svc_ml else None,
+                    budget="€50,000 - €100,000",
+                    budget_range="€50,000 - €100,000",
+                    currency="EUR",
+                    project_description="Real-time wind turbine vibration anomaly prediction.",
+                    source="LinkedIn",
+                    priority="urgent",
+                    lead_score=92,
+                    assigned_salesperson_id=admin_user.id,
+                    status="NEW LEAD",
+                    notes="Inbound message via Kapate LinkedIn corporate page."
+                )
+                db.add(l2)
+                db.flush()
+
+            l3 = db.query(Lead).filter(Lead.lead_code == "LD-1003").first()
+            if not l3:
+                l3 = Lead(
+                    lead_code="LD-1003",
+                    name="Vikram Sethi",
+                    contact_name="Vikram Sethi",
+                    company_name="QuickMart Grocery",
+                    email="vikram@quickmart.in",
+                    phone="+91 91122 33445",
+                    country="India",
+                    city="Delhi",
+                    job_title="Co-Founder & COO",
+                    service_interest="Mobile Development",
+                    service_id=service_map.get("mobile_development", svc_ai).id if service_map.get("mobile_development") else None,
+                    budget="₹15L - ₹25L",
+                    budget_range="₹15L - ₹25L",
+                    currency="INR",
+                    project_description="Quick commerce delivery partner app with real-time routing.",
+                    source="Referral",
+                    priority="medium",
+                    lead_score=68,
+                    assigned_salesperson_id=admin_user.id,
+                    status="DISCOVERY BOOKED",
+                    next_follow_up_at=datetime.now(timezone.utc) + timedelta(days=3),
+                    notes="Referred by Arjun Mehta from InnovateTech."
+                )
+                db.add(l3)
+                db.flush()
 
             # Activities
             act1 = Activity(
@@ -566,58 +578,51 @@ def init_db():
             u_aishwarya = create_staff_user("aishwarya.intern@kapateconsultancy.in", "Aishwarya", "Menon", "+91 77234 22222", "intern")
             u_alex = create_staff_user("alex.carter@freelance.com", "Alex", "Carter", "+1 555 123 4567", "freelancer")
 
-            if not db.query(Employee).first():
-                e1 = Employee(
-                    id=str(uuid.uuid4()), user_id=u_vikram.id, department_id=dept_del.id,
-                    name=u_vikram.full_name, email=u_vikram.email,
-                    phone=u_vikram.phone, employee_id="EMP-001", designation="Senior Project Manager",
-                    employment_type="full_time", joining_date=date(2024, 1, 15)
-                )
-                e2 = Employee(
-                    id=str(uuid.uuid4()), user_id=u_priya.id, department_id=dept_eng.id,
-                    name=u_priya.full_name, email=u_priya.email,
-                    phone=u_priya.phone, employee_id="EMP-002", designation="Full-Stack Engineer",
-                    employment_type="full_time", joining_date=date(2024, 3, 1)
-                )
-                e3 = Employee(
-                    id=str(uuid.uuid4()), user_id=u_karan.id, department_id=dept_eng.id,
-                    name=u_karan.full_name, email=u_karan.email,
-                    phone=u_karan.phone, employee_id="EMP-003", designation="DevOps Architect",
-                    employment_type="full_time", joining_date=date(2023, 11, 20)
-                )
-                e4 = Employee(
-                    id=str(uuid.uuid4()), user_id=u_divya.id, department_id=dept_cns.id,
-                    name=u_divya.full_name, email=u_divya.email,
-                    phone=u_divya.phone, employee_id="EMP-004", designation="Business Analyst",
-                    employment_type="full_time", joining_date=date(2024, 6, 1)
-                )
-                e5 = Employee(
-                    id=str(uuid.uuid4()), user_id=u_sneha.id, department_id=dept_dsn.id,
-                    name=u_sneha.full_name, email=u_sneha.email,
-                    phone=u_sneha.phone, employee_id="EMP-005", designation="UI/UX Designer",
-                    employment_type="full_time", joining_date=date(2025, 1, 10)
-                )
-                db.add_all([e1, e2, e3, e4, e5])
-                db.flush()
+            emp_records = [
+                (u_vikram, dept_del, "EMP-001", "Senior Project Manager", date(2024, 1, 15)),
+                (u_priya, dept_eng, "EMP-002", "Full-Stack Engineer", date(2024, 3, 1)),
+                (u_karan, dept_eng, "EMP-003", "DevOps Architect", date(2023, 11, 20)),
+                (u_divya, dept_cns, "EMP-004", "Business Analyst", date(2024, 6, 1)),
+                (u_sneha, dept_dsn, "EMP-005", "UI/UX Designer", date(2025, 1, 10)),
+            ]
+            for user_obj, dept_obj, target_code, desig, jdate in emp_records:
+                existing_emp = db.query(Employee).filter(Employee.user_id == user_obj.id).first()
+                if not existing_emp:
+                    code = target_code
+                    if db.query(Employee).filter(Employee.employee_id == code).first():
+                        code = f"EMP-{uuid.uuid4().hex[:4].upper()}"
+                    db.add(Employee(
+                        id=str(uuid.uuid4()), user_id=user_obj.id, department_id=dept_obj.id,
+                        name=user_obj.full_name, email=user_obj.email, phone=user_obj.phone,
+                        employee_id=code, designation=desig, employment_type="full_time",
+                        joining_date=jdate
+                    ))
+                    db.flush()
 
-                i1 = Intern(
-                    id=str(uuid.uuid4()), user_id=u_rohan.id, department_id=dept_eng.id,
-                    name=u_rohan.full_name, email=u_rohan.email,
-                    phone=u_rohan.phone, intern_id="INT-001", designation="Software Engineering Intern",
-                    start_date=date(2026, 7, 1), internship_status="ACTIVE"
-                )
-                i2 = Intern(
-                    id=str(uuid.uuid4()), user_id=u_aishwarya.id, department_id=dept_anl.id,
-                    name=u_aishwarya.full_name, email=u_aishwarya.email,
-                    phone=u_aishwarya.phone, intern_id="INT-002", designation="Data Analytics Intern",
-                    start_date=date(2026, 7, 1), internship_status="ACTIVE"
-                )
+            intern_records = [
+                (u_rohan, dept_eng, "INT-001", "Software Engineering Intern", date(2026, 7, 1)),
+                (u_aishwarya, dept_anl, "INT-002", "Data Analytics Intern", date(2026, 7, 1)),
+            ]
+            for user_obj, dept_obj, target_code, desig, sdate in intern_records:
+                existing_int = db.query(Intern).filter(Intern.user_id == user_obj.id).first()
+                if not existing_int:
+                    code = target_code
+                    if db.query(Intern).filter(Intern.intern_id == code).first():
+                        code = f"INT-{uuid.uuid4().hex[:4].upper()}"
+                    db.add(Intern(
+                        id=str(uuid.uuid4()), user_id=user_obj.id, department_id=dept_obj.id,
+                        name=user_obj.full_name, email=user_obj.email, phone=user_obj.phone,
+                        intern_id=code, designation=desig, start_date=sdate, internship_status="ACTIVE"
+                    ))
+                    db.flush()
+
+            if not db.query(Freelancer).filter(Freelancer.user_id == u_alex.id).first():
                 f1 = Freelancer(
                     id=str(uuid.uuid4()), user_id=u_alex.id,
                     name=u_alex.full_name, email=u_alex.email,
                     phone=u_alex.phone, designation="iOS Developer", rate=Decimal("3500.00"), currency="INR"
                 )
-                db.add_all([i1, i2, f1])
+                db.add(f1)
                 db.flush()
 
                 # Attendance for today
@@ -630,7 +635,7 @@ def init_db():
                 db.flush()
 
             # Projects
-            if not db.query(Project).first():
+            if not db.query(Project).filter(Project.project_code == "KAP-001").first():
                 p1 = Project(id=str(uuid.uuid4()), company_id=c1.id, project_code="KAP-001", name="Project Nexus", description="Enterprise AI & ERP Transformation", project_type="fixed_bid", status="active", budget=Decimal("8500000.00"), currency="INR", start_date=date(2026, 6, 1), end_date=date(2026, 10, 30), project_manager_id=u_vikram.id)
                 p2 = Project(id=str(uuid.uuid4()), company_id=c2.id, project_code="KAP-002", name="RetailOS Cloud", description="Cloud Migration & Scalable Store Architecture", project_type="time_and_materials", status="active", budget=Decimal("12000000.00"), currency="INR", start_date=date(2026, 7, 15), end_date=date(2026, 12, 31), project_manager_id=u_priya.id)
                 p3 = Project(id=str(uuid.uuid4()), company_id=c3.id, project_code="KAP-003", name="HealthTrack Analytics", description="Clinical Predictive Modeling & Analytics", project_type="retainer", status="on_hold", budget=Decimal("4500000.00"), currency="INR", start_date=date(2026, 5, 1), end_date=date(2026, 11, 30), project_manager_id=u_vikram.id)

@@ -66,61 +66,65 @@ export async function POST(req: Request) {
       attachments
     };
 
-    const threadsColl = await getCloudCollection<EmailThread>('email_threads');
-    const messagesColl = await getCloudCollection<EmailMessage>('email_messages');
+    try {
+      const threadsColl = await getCloudCollection<EmailThread>('email_threads');
+      const messagesColl = await getCloudCollection<EmailMessage>('email_messages');
 
-    // Save message record
-    await messagesColl.insertOne(newMessage as any);
+      // Save message record
+      await messagesColl.insertOne(newMessage as any);
 
-    // Find existing thread if replying
-    const existingThread = await threadsColl.findOne({ id: effectiveThreadId });
+      // Find existing thread if replying
+      const existingThread = await threadsColl.findOne({ id: effectiveThreadId });
 
-    if (existingThread) {
-      // Append message to existing thread
-      const updatedMessages = [...(existingThread.messages || []), newMessage];
-      const updatedParticipants = [
-        ...existingThread.participants,
-        ...allParticipants
-      ].filter((v, i, a) => a.findIndex(t => t.email.toLowerCase() === v.email.toLowerCase()) === i);
+      if (existingThread) {
+        // Append message to existing thread
+        const updatedMessages = [...(existingThread.messages || []), newMessage];
+        const updatedParticipants = [
+          ...existingThread.participants,
+          ...allParticipants
+        ].filter((v, i, a) => a.findIndex(t => t.email.toLowerCase() === v.email.toLowerCase()) === i);
 
-      await threadsColl.updateOne(
-        { id: effectiveThreadId },
-        {
-          $set: {
-            subject: subject || existingThread.subject,
-            snippet: (content || '').substring(0, 120),
-            lastMessageTimestamp: nowTimeStr,
-            lastSenderName: auth.user.name,
-            messageCount: updatedMessages.length,
-            messages: updatedMessages,
-            participants: updatedParticipants,
-            hasAttachments: existingThread.hasAttachments || attachments.length > 0,
-            isUnread: !isDraft, // Mark as unread for the receiving side
-            folder: isDraft ? 'DRAFTS' : 'INBOX' // If replied, show in INBOX for recipients
+        await threadsColl.updateOne(
+          { id: effectiveThreadId },
+          {
+            $set: {
+              subject: subject || existingThread.subject,
+              snippet: (content || '').substring(0, 120),
+              lastMessageTimestamp: nowTimeStr,
+              lastSenderName: auth.user.name,
+              messageCount: updatedMessages.length,
+              messages: updatedMessages,
+              participants: updatedParticipants,
+              hasAttachments: existingThread.hasAttachments || attachments.length > 0,
+              isUnread: !isDraft, // Mark as unread for the receiving side
+              folder: isDraft ? 'DRAFTS' : 'INBOX' // If replied, show in INBOX for recipients
+            }
           }
-        }
-      );
-    } else {
-      // Create fresh thread record in MongoDB
-      const newThread: EmailThread = {
-        id: effectiveThreadId,
-        subject: subject || '(No Subject)',
-        snippet: (content || '').substring(0, 120),
-        lastMessageTimestamp: nowTimeStr,
-        lastSenderName: auth.user.name,
-        isUnread: false,
-        isStarred: false,
-        isImportant: priority === 'Urgent' || priority === 'Important',
-        folder: isDraft ? 'DRAFTS' : 'SENT',
-        labels: ['Work'],
-        priority: priority as any,
-        messageCount: 1,
-        hasAttachments: attachments.length > 0,
-        participants: allParticipants,
-        messages: [newMessage]
-      };
+        );
+      } else {
+        // Create fresh thread record in MongoDB
+        const newThread: EmailThread = {
+          id: effectiveThreadId,
+          subject: subject || '(No Subject)',
+          snippet: (content || '').substring(0, 120),
+          lastMessageTimestamp: nowTimeStr,
+          lastSenderName: auth.user.name,
+          isUnread: false,
+          isStarred: false,
+          isImportant: priority === 'Urgent' || priority === 'Important',
+          folder: isDraft ? 'DRAFTS' : 'SENT',
+          labels: ['Work'],
+          priority: priority as any,
+          messageCount: 1,
+          hasAttachments: attachments.length > 0,
+          participants: allParticipants,
+          messages: [newMessage]
+        };
 
-      await threadsColl.insertOne(newThread as any);
+        await threadsColl.insertOne(newThread as any);
+      }
+    } catch (cloudErr: any) {
+      console.warn('[Mail Compose] MongoDB cloud replication skipped due to network/SSL:', cloudErr.message);
     }
 
     return NextResponse.json({

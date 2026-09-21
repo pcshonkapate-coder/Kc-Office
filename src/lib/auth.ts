@@ -1,5 +1,5 @@
 import { createHmac, randomBytes, pbkdf2Sync } from 'crypto';
-import { UserRole } from '../types';
+import type { UserRole } from '../types';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'kapate_os_super_secure_jwt_secret_key_2026_enterprise';
 const TOKEN_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days

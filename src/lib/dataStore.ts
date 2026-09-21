@@ -1,8 +1,14 @@
 import fs from 'fs';
 import path from 'path';
-import { Employee, Intern, Freelancer, User, SecuritySession, AuditLogEntry, UserRole, RegistrationRequest, OnboardingInvitation } from '@/types';
-import { hashPassword } from '@/lib/auth';
-import { getDatabase } from '@/lib/mongodb';
+import type {
+  Employee, Intern, Freelancer, User, SecuritySession, AuditLogEntry, UserRole,
+  RegistrationRequest, OnboardingInvitation, Project, Task, Lead, Company, Contact,
+  Deal, DealStage, Proposal, Contract, TimesheetEntry, AttendanceRecord, LeaveRequest, Invoice,
+  Payment, Expense, AppDocument, SystemSettings
+} from '../types';
+import { hashPassword } from './auth';
+import { getDatabase } from './mongodb';
+import { DEFAULT_SYSTEM_SETTINGS, DEFAULT_ROLE_PERMISSIONS } from '../data/superAdminData';
 
 export interface StoreSchema {
   version: number;
@@ -15,11 +21,45 @@ export interface StoreSchema {
   audit_logs: AuditLogEntry[];
   registration_requests: RegistrationRequest[];
   onboarding_invitations: OnboardingInvitation[];
+  projects: Project[];
+  tasks: Task[];
+  leads: Lead[];
+  companies: Company[];
+  contacts: Contact[];
+  deals: Deal[];
+  proposals: Proposal[];
+  contracts: Contract[];
+  timesheets: TimesheetEntry[];
+  attendance: AttendanceRecord[];
+  leaves: LeaveRequest[];
+  invoices: Invoice[];
+  payments: Payment[];
+  expenses: Expense[];
+  documents: AppDocument[];
+  systemSettings?: SystemSettings;
+  rolePermissions?: Record<UserRole, string[]>;
 }
 
 const DEFAULT_STORE: StoreSchema = {
   version: 1,
   lastUpdated: new Date().toISOString(),
+  systemSettings: DEFAULT_SYSTEM_SETTINGS,
+  rolePermissions: DEFAULT_ROLE_PERMISSIONS,
+  projects: [],
+  tasks: [],
+  leads: [],
+  companies: [],
+  contacts: [],
+  deals: [],
+  proposals: [],
+  contracts: [],
+  timesheets: [],
+  attendance: [],
+  leaves: [],
+  invoices: [],
+  payments: [],
+  expenses: [],
+  documents: [],
   users: [
     {
       id: 'usr-admin',
@@ -144,23 +184,36 @@ class DataStore {
     this.loadStore();
   }
 
-  private loadStore(): StoreSchema {
+  public loadStore(forceReload: boolean = false): StoreSchema {
     try {
       if (fs.existsSync(this.filePath)) {
         const stat = fs.statSync(this.filePath);
-        if (this.inMemoryStore && stat.mtimeMs <= this.lastLoadedMtime) {
+        if (!forceReload && this.inMemoryStore && stat.mtimeMs <= this.lastLoadedMtime) {
           return this.inMemoryStore;
         }
 
         const raw = fs.readFileSync(this.filePath, 'utf-8');
         const parsed: StoreSchema = JSON.parse(raw);
         if (parsed && Array.isArray(parsed.employees) && Array.isArray(parsed.users)) {
-          if (!Array.isArray(parsed.registration_requests)) {
-            parsed.registration_requests = [];
-          }
-          if (!Array.isArray(parsed.onboarding_invitations)) {
-            parsed.onboarding_invitations = [];
-          }
+          if (!Array.isArray(parsed.registration_requests)) parsed.registration_requests = [];
+          if (!Array.isArray(parsed.onboarding_invitations)) parsed.onboarding_invitations = [];
+          if (!Array.isArray(parsed.projects)) parsed.projects = [];
+          if (!Array.isArray(parsed.tasks)) parsed.tasks = [];
+          if (!Array.isArray(parsed.leads)) parsed.leads = [];
+          if (!Array.isArray(parsed.companies)) parsed.companies = [];
+          if (!Array.isArray(parsed.contacts)) parsed.contacts = [];
+          if (!Array.isArray(parsed.deals)) parsed.deals = [];
+          if (!Array.isArray(parsed.proposals)) parsed.proposals = [];
+          if (!Array.isArray(parsed.contracts)) parsed.contracts = [];
+          if (!Array.isArray(parsed.timesheets)) parsed.timesheets = [];
+          if (!Array.isArray(parsed.attendance)) parsed.attendance = [];
+          if (!Array.isArray(parsed.leaves)) parsed.leaves = [];
+          if (!Array.isArray(parsed.invoices)) parsed.invoices = [];
+          if (!Array.isArray(parsed.payments)) parsed.payments = [];
+          if (!Array.isArray(parsed.expenses)) parsed.expenses = [];
+          if (!Array.isArray(parsed.documents)) parsed.documents = [];
+          if (!parsed.systemSettings) parsed.systemSettings = { ...DEFAULT_SYSTEM_SETTINGS };
+          if (!parsed.rolePermissions) parsed.rolePermissions = { ...DEFAULT_ROLE_PERMISSIONS };
           // Ensure master admin always exists
           this.ensureMasterAdmin(parsed);
           this.inMemoryStore = parsed;
@@ -227,6 +280,10 @@ class DataStore {
 
     // Asynchronously synchronize with MongoDB Atlas if available
     this.syncToMongo().catch(() => {});
+  }
+
+  public getFilePath(): string {
+    return this.filePath;
   }
 
   private async syncToMongo() {
@@ -572,6 +629,28 @@ class DataStore {
     return true;
   }
 
+  public revokeAllUserSessions(userId: string): number {
+    const store = this.loadStore();
+    let count = 0;
+    store.sessions.forEach(s => {
+      if (s.userId === userId && s.status === 'ACTIVE') {
+        s.status = 'REVOKED';
+        count++;
+      }
+    });
+    if (count > 0) this.saveStore();
+    return count;
+  }
+
+  // ==========================================
+  // DOCUMENTS METHODS
+  // ==========================================
+
+  public getDocuments(): AppDocument[] {
+    const store = this.loadStore();
+    return [...(store.documents || [])];
+  }
+
   // ==========================================
   // AUDIT LOG METHODS
   // ==========================================
@@ -692,6 +771,892 @@ class DataStore {
     };
     this.saveStore();
     return store.onboarding_invitations[index];
+  }
+
+  // ==========================================
+  // PROJECTS METHODS
+  // ==========================================
+
+  public getProjects(filter?: { client?: string; manager?: string }): Project[] {
+    const store = this.loadStore();
+    let list = [...(store.projects || [])];
+    if (filter?.client) {
+      const q = filter.client.toLowerCase();
+      list = list.filter(p => p.client.toLowerCase().includes(q));
+    }
+    if (filter?.manager) {
+      const q = filter.manager.toLowerCase();
+      list = list.filter(p => p.manager?.toLowerCase().includes(q));
+    }
+    return list;
+  }
+
+  public getProjectById(id: string): Project | null {
+    const store = this.loadStore();
+    return (store.projects || []).find(p => p.id === id) || null;
+  }
+
+  public addProject(prjData: Partial<Project>): Project {
+    const store = this.loadStore();
+    store.projects = store.projects || [];
+    const count = store.projects.length + 1;
+    const newPrj: Project = {
+      id: prjData.id || `PRJ-${String(count).padStart(3, '0')}`,
+      name: prjData.name || 'New Client Engagement',
+      client: prjData.client || 'Enterprise Client',
+      budget: prjData.budget ?? 1000000,
+      spentBudget: prjData.spentBudget ?? 0,
+      progress: prjData.progress ?? 0,
+      status: prjData.status || 'Planning',
+      deadline: prjData.deadline || new Date(Date.now() + 90 * 86400000).toISOString().split('T')[0],
+      team: Array.isArray(prjData.team) && prjData.team.length > 0 ? prjData.team : ['Shon Kapate'],
+      manager: prjData.manager || 'Shon Kapate',
+      description: prjData.description || 'Enterprise project delivery engagement.',
+      milestones: prjData.milestones || [
+        { id: `m-${Date.now()}-1`, name: 'Discovery & Requirements Lock', progress: 100, dueDate: new Date().toISOString().split('T')[0], status: 'Completed' },
+        { id: `m-${Date.now()}-2`, name: 'Architecture & Staging Provisioning', progress: 20, dueDate: prjData.deadline || '2026-11-30', status: 'In Progress' }
+      ],
+      profitability: prjData.profitability || {
+        revenue: prjData.budget ?? 1000000,
+        employeeCost: Math.round((prjData.budget ?? 1000000) * 0.45),
+        cloudCost: Math.round((prjData.budget ?? 1000000) * 0.08),
+        aiApiCost: Math.round((prjData.budget ?? 1000000) * 0.05),
+        otherCost: 10000,
+        grossProfit: Math.round((prjData.budget ?? 1000000) * 0.42),
+        grossMargin: 42.0
+      }
+    };
+    store.projects.unshift(newPrj);
+    this.saveStore();
+
+    this.addAuditLog({
+      actor: newPrj.manager,
+      action: 'PROJECT_CREATED',
+      module: 'delivery',
+      targetResource: `projects/${newPrj.id}`,
+      targetUser: newPrj.client,
+      newValue: JSON.stringify({ name: newPrj.name, budget: newPrj.budget }),
+      result: 'SUCCESS',
+      reason: 'Created enterprise delivery project'
+    });
+
+    return newPrj;
+  }
+
+  public updateProject(id: string, patch: Partial<Project>): Project | null {
+    const store = this.loadStore();
+    store.projects = store.projects || [];
+    const index = store.projects.findIndex(p => p.id === id);
+    if (index === -1) return null;
+
+    store.projects[index] = {
+      ...store.projects[index],
+      ...patch
+    };
+    this.saveStore();
+    return store.projects[index];
+  }
+
+  public deleteProject(id: string): boolean {
+    const store = this.loadStore();
+    store.projects = store.projects || [];
+    const prev = store.projects.length;
+    store.projects = store.projects.filter(p => p.id !== id);
+    if (store.projects.length !== prev) {
+      this.saveStore();
+      return true;
+    }
+    return false;
+  }
+
+  // ==========================================
+  // TASKS METHODS
+  // ==========================================
+
+  public getTasks(filter?: { projectId?: string; assignedTo?: string; status?: string }): Task[] {
+    const store = this.loadStore();
+    let list = [...(store.tasks || [])];
+    if (filter?.projectId && filter.projectId !== 'ALL') {
+      list = list.filter(t => t.projectId === filter.projectId);
+    }
+    if (filter?.assignedTo) {
+      const q = filter.assignedTo.toLowerCase();
+      list = list.filter(t => t.assignedTo?.toLowerCase().includes(q));
+    }
+    if (filter?.status) {
+      list = list.filter(t => t.status === filter.status);
+    }
+    return list;
+  }
+
+  public getTaskById(id: string): Task | null {
+    const store = this.loadStore();
+    return (store.tasks || []).find(t => t.id === id) || null;
+  }
+
+  public addTask(taskData: Partial<Task>): Task {
+    const store = this.loadStore();
+    store.tasks = store.tasks || [];
+    const count = store.tasks.length + 101;
+    const newTask: Task = {
+      id: taskData.id || `TSK-${count}`,
+      title: taskData.title || 'Untitled Task',
+      projectId: taskData.projectId || 'PRJ-001',
+      projectName: taskData.projectName || 'Enterprise Core Platform',
+      assignedTo: taskData.assignedTo || 'Shon Kapate',
+      assigneeRole: taskData.assigneeRole || 'ENGINEER',
+      priority: taskData.priority || 'Medium',
+      status: taskData.status || 'TODO',
+      dueDate: taskData.dueDate || new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
+      estimatedHours: taskData.estimatedHours ?? 8,
+      loggedHours: taskData.loggedHours ?? 0,
+      description: taskData.description || '',
+      clientVisible: taskData.clientVisible ?? false
+    };
+
+    store.tasks.unshift(newTask);
+    this.saveStore();
+    return newTask;
+  }
+
+  public updateTask(id: string, patch: Partial<Task>): Task | null {
+    const store = this.loadStore();
+    store.tasks = store.tasks || [];
+    const index = store.tasks.findIndex(t => t.id === id);
+    if (index === -1) return null;
+
+    store.tasks[index] = {
+      ...store.tasks[index],
+      ...patch
+    };
+
+    if (patch.status && store.tasks[index].projectId) {
+      const pId = store.tasks[index].projectId;
+      const projTasks = store.tasks.filter(t => t.projectId === pId);
+      const done = projTasks.filter(t => t.status === 'COMPLETED').length;
+      const newProgress = Math.round((done / (projTasks.length || 1)) * 100);
+      this.updateProject(pId, { progress: newProgress });
+    }
+
+    this.saveStore();
+    return store.tasks[index];
+  }
+
+  public deleteTask(id: string): boolean {
+    const store = this.loadStore();
+    store.tasks = store.tasks || [];
+    const prevLen = store.tasks.length;
+    store.tasks = store.tasks.filter(t => t.id !== id);
+    if (store.tasks.length !== prevLen) {
+      this.saveStore();
+      return true;
+    }
+    return false;
+  }
+
+  // ==========================================
+  // CRM LEADS METHODS
+  // ==========================================
+
+  public getLeads(statusFilter?: string): Lead[] {
+    const store = this.loadStore();
+    let list = [...(store.leads || [])];
+    if (statusFilter && statusFilter !== 'ALL') {
+      list = list.filter(l => l.status === statusFilter);
+    }
+    return list;
+  }
+
+  public getLeadById(id: string): Lead | null {
+    const store = this.loadStore();
+    return (store.leads || []).find(l => l.id === id) || null;
+  }
+
+  public addLead(leadData: Partial<Lead>): Lead {
+    const store = this.loadStore();
+    store.leads = store.leads || [];
+    const count = store.leads.length + 1;
+    const newLead: Lead = {
+      id: leadData.id || `KAP-${String(count).padStart(3, '0')}`,
+      name: leadData.name || 'New Enterprise Lead',
+      email: leadData.email || '',
+      phone: leadData.phone || '',
+      company: leadData.company || 'Prospective Organization',
+      service: leadData.service || 'AI Solutions',
+      budget: leadData.budget || '₹10L - ₹25L',
+      source: leadData.source || 'Website',
+      owner: leadData.owner || 'Shon Kapate',
+      status: leadData.status || 'New Lead',
+      score: leadData.score ?? 85,
+      description: leadData.description || '',
+      created: leadData.created || new Date().toISOString().split('T')[0],
+      nextFollowUp: leadData.nextFollowUp || new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0]
+    };
+    store.leads.unshift(newLead);
+    this.saveStore();
+    return newLead;
+  }
+
+  public updateLead(id: string, patch: Partial<Lead>): Lead | null {
+    const store = this.loadStore();
+    store.leads = store.leads || [];
+    const index = store.leads.findIndex(l => l.id === id);
+    if (index === -1) return null;
+
+    store.leads[index] = {
+      ...store.leads[index],
+      ...patch
+    };
+    this.saveStore();
+    return store.leads[index];
+  }
+
+  public deleteLead(id: string): boolean {
+    const store = this.loadStore();
+    store.leads = store.leads || [];
+    const prev = store.leads.length;
+    store.leads = store.leads.filter(l => l.id !== id);
+    if (store.leads.length !== prev) {
+      this.saveStore();
+      return true;
+    }
+    return false;
+  }
+
+  // ==========================================
+  // CRM COMPANIES & CONTACTS
+  // ==========================================
+
+  public getCompanies(): Company[] {
+    const store = this.loadStore();
+    return [...(store.companies || [])];
+  }
+
+  public addCompany(compData: Partial<Company>): Company {
+    const store = this.loadStore();
+    store.companies = store.companies || [];
+    const newCompany: Company = {
+      id: compData.id || `comp-${store.companies.length + 1}`,
+      name: compData.name || 'Enterprise Client Co',
+      industry: compData.industry || 'Technology',
+      website: compData.website || '',
+      location: compData.location || 'India',
+      contactsCount: compData.contactsCount ?? 0,
+      dealsCount: compData.dealsCount ?? 0,
+      activeProjects: compData.activeProjects ?? 0,
+      totalRevenue: compData.totalRevenue || '₹0',
+      contacts: compData.contacts || []
+    };
+    store.companies.unshift(newCompany);
+    this.saveStore();
+    return newCompany;
+  }
+
+  public updateCompany(id: string, patch: Partial<Company>): Company | null {
+    const store = this.loadStore();
+    store.companies = store.companies || [];
+    const index = store.companies.findIndex(c => c.id === id);
+    if (index === -1) return null;
+    store.companies[index] = {
+      ...store.companies[index],
+      ...patch
+    };
+    this.saveStore();
+    return store.companies[index];
+  }
+
+  public deleteCompany(id: string): boolean {
+    const store = this.loadStore();
+    store.companies = store.companies || [];
+    const prev = store.companies.length;
+    store.companies = store.companies.filter(c => c.id !== id);
+    if (store.companies.length !== prev) {
+      this.saveStore();
+      return true;
+    }
+    return false;
+  }
+
+  public getContacts(companyIdOrName?: string): Contact[] {
+    const store = this.loadStore();
+    let list = [...(store.contacts || [])];
+    if (companyIdOrName) {
+      const q = companyIdOrName.toLowerCase();
+      list = list.filter(c => c.company.toLowerCase().includes(q));
+    }
+    return list;
+  }
+
+  public addContact(cntData: Partial<Contact>): Contact {
+    const store = this.loadStore();
+    store.contacts = store.contacts || [];
+    const newContact: Contact = {
+      id: cntData.id || `cnt-${store.contacts.length + 1}`,
+      name: cntData.name || 'Key Stakeholder',
+      designation: cntData.designation || 'Vice President of Technology',
+      company: cntData.company || 'Enterprise Partner',
+      email: cntData.email || 'contact@client.com',
+      phone: cntData.phone || '+91 98230 00000',
+      relationship: cntData.relationship || 'Key Decision Maker',
+      lastContacted: cntData.lastContacted || new Date().toISOString().split('T')[0],
+      owner: cntData.owner || 'Shon Kapate'
+    };
+    store.contacts.unshift(newContact);
+    this.saveStore();
+    return newContact;
+  }
+
+  public deleteContact(id: string): boolean {
+    const store = this.loadStore();
+    store.contacts = store.contacts || [];
+    const prev = store.contacts.length;
+    store.contacts = store.contacts.filter(c => c.id !== id);
+    if (store.contacts.length !== prev) {
+      this.saveStore();
+      return true;
+    }
+    return false;
+  }
+
+  // ==========================================
+  // DEALS METHODS
+  // ==========================================
+
+  public getDeals(): Deal[] {
+    const store = this.loadStore();
+    return [...(store.deals || [])];
+  }
+
+  public addDeal(dealData: Partial<Deal>): Deal {
+    const store = this.loadStore();
+    store.deals = store.deals || [];
+    const val = typeof dealData.value === 'number' ? dealData.value : parseFloat(dealData.value as any) || 2500000;
+    const newDeal: Deal = {
+      id: dealData.id || `DEAL-${store.deals.length + 101}`,
+      title: dealData.title || 'Enterprise Solutions Contract',
+      company: dealData.company || 'Enterprise Partner',
+      contact: dealData.contact || 'Executive Sponsor',
+      value: val,
+      stage: (dealData.stage as DealStage) || 'NEW LEAD',
+      probability: dealData.probability ?? 60,
+      owner: dealData.owner || 'Shon Kapate',
+      expectedClose: dealData.expectedClose || new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
+      service: dealData.service || 'AI Solutions',
+      created: dealData.created || new Date().toISOString().split('T')[0]
+    };
+    store.deals.unshift(newDeal);
+    this.saveStore();
+    return newDeal;
+  }
+
+  public updateDeal(id: string, patch: Partial<Deal>): Deal | null {
+    const store = this.loadStore();
+    store.deals = store.deals || [];
+    const index = store.deals.findIndex(d => d.id === id);
+    if (index === -1) return null;
+
+    store.deals[index] = {
+      ...store.deals[index],
+      ...patch
+    };
+    this.saveStore();
+    return store.deals[index];
+  }
+
+  public deleteDeal(id: string): boolean {
+    const store = this.loadStore();
+    store.deals = store.deals || [];
+    const prev = store.deals.length;
+    store.deals = store.deals.filter(d => d.id !== id);
+    if (store.deals.length !== prev) {
+      this.saveStore();
+      return true;
+    }
+    return false;
+  }
+
+  // ==========================================
+  // FINANCE & INVOICES
+  // ==========================================
+
+  public getInvoices(companyId?: string): Invoice[] {
+    const store = this.loadStore();
+    let list = [...(store.invoices || [])];
+    if (companyId) {
+      list = list.filter(i => (i as any).companyId === companyId || i.client.toLowerCase().includes(companyId.toLowerCase()));
+    }
+    return list;
+  }
+
+  public getInvoiceById(id: string): Invoice | undefined {
+    const store = this.loadStore();
+    return (store.invoices || []).find(i => i.id === id);
+  }
+
+  public addInvoice(invData: Partial<Invoice>): Invoice {
+    const store = this.loadStore();
+    store.invoices = store.invoices || [];
+    const count = store.invoices.length + 42;
+    const amt = invData.amount ?? 500000;
+    const tax = invData.tax ?? Math.round(amt * 0.18);
+    const newInvoice: Invoice = {
+      id: invData.id || `INV-${String(count).padStart(4, '0')}`,
+      client: invData.client || 'Enterprise Client',
+      projectName: invData.projectName || 'Enterprise AI Consulting',
+      amount: amt,
+      tax: tax,
+      total: invData.total ?? (amt + tax),
+      status: invData.status || 'Sent',
+      dueDate: invData.dueDate || new Date(Date.now() + 15 * 86400000).toISOString().split('T')[0],
+      billingAddress: invData.billingAddress || '742 Evergreen Terrace, Tech Park, BLR',
+      gstin: invData.gstin || '27AABCK1234F1Z5',
+      items: invData.items || [
+        { description: 'Milestone Delivery - Architecture & Staging Provisioning', qty: 1, rate: amt, amount: amt }
+      ],
+      paymentReference: invData.paymentReference,
+      paidDate: invData.paidDate
+    };
+    store.invoices.unshift(newInvoice);
+    this.saveStore();
+    return newInvoice;
+  }
+
+  public updateInvoice(id: string, patch: Partial<Invoice>): Invoice | null {
+    const store = this.loadStore();
+    store.invoices = store.invoices || [];
+    const index = store.invoices.findIndex(i => i.id === id);
+    if (index === -1) return null;
+
+    store.invoices[index] = {
+      ...store.invoices[index],
+      ...patch
+    };
+    this.saveStore();
+    return store.invoices[index];
+  }
+
+  public deleteInvoice(id: string): boolean {
+    const store = this.loadStore();
+    store.invoices = store.invoices || [];
+    const prev = store.invoices.length;
+    store.invoices = store.invoices.filter(i => i.id !== id);
+    if (store.invoices.length !== prev) {
+      this.saveStore();
+      return true;
+    }
+    return false;
+  }
+
+  // ==========================================
+  // TIMESHEETS, ATTENDANCE & LEAVES
+  // ==========================================
+
+  public getTimesheets(employeeNameOrId?: string): TimesheetEntry[] {
+    const store = this.loadStore();
+    let list = [...(store.timesheets || [])];
+    if (employeeNameOrId) {
+      const q = employeeNameOrId.toLowerCase();
+      list = list.filter(t => t.employeeName?.toLowerCase().includes(q));
+    }
+    return list;
+  }
+
+  public addTimesheet(tsData: Partial<TimesheetEntry>): TimesheetEntry {
+    const store = this.loadStore();
+    store.timesheets = store.timesheets || [];
+    const newTs: TimesheetEntry = {
+      id: tsData.id || `ts-${Date.now()}`,
+      employeeName: tsData.employeeName || 'Shon Kapate',
+      projectName: tsData.projectName || 'Enterprise Core Platform',
+      taskName: tsData.taskName || 'Core system development',
+      hours: tsData.hours ?? 8,
+      date: tsData.date || new Date().toISOString().split('T')[0],
+      day: tsData.day || new Date().toLocaleDateString('en-US', { weekday: 'short' }),
+      description: tsData.description || 'Feature implementation and tests',
+      status: tsData.status || 'Submitted',
+      isBillable: tsData.isBillable ?? true
+    };
+    store.timesheets.unshift(newTs);
+    this.saveStore();
+    return newTs;
+  }
+
+  public updateTimesheet(id: string, patch: Partial<TimesheetEntry>): TimesheetEntry | null {
+    const store = this.loadStore();
+    store.timesheets = store.timesheets || [];
+    const index = store.timesheets.findIndex(t => t.id === id);
+    if (index === -1) return null;
+
+    store.timesheets[index] = {
+      ...store.timesheets[index],
+      ...patch
+    };
+    this.saveStore();
+    return store.timesheets[index];
+  }
+
+  public deleteTimesheet(id: string): boolean {
+    const store = this.loadStore();
+    store.timesheets = store.timesheets || [];
+    const prev = store.timesheets.length;
+    store.timesheets = store.timesheets.filter(t => t.id !== id);
+    if (store.timesheets.length !== prev) {
+      this.saveStore();
+      return true;
+    }
+    return false;
+  }
+
+  public getAttendance(employeeName?: string): AttendanceRecord[] {
+    const store = this.loadStore();
+    let list = [...(store.attendance || [])];
+    if (employeeName) {
+      list = list.filter(a => a.employeeName.toLowerCase().includes(employeeName.toLowerCase()));
+    }
+    return list;
+  }
+
+  public addAttendance(record: Partial<AttendanceRecord>): AttendanceRecord {
+    const store = this.loadStore();
+    store.attendance = store.attendance || [];
+    const newRec: AttendanceRecord = {
+      id: record.id || `att-${Date.now()}`,
+      employeeName: record.employeeName || 'Shon Kapate',
+      date: record.date || new Date().toISOString().split('T')[0],
+      checkIn: record.checkIn || '09:00 AM',
+      checkOut: record.checkOut || '06:00 PM',
+      totalHours: record.totalHours ?? 8,
+      status: record.status || 'Present'
+    };
+    store.attendance.unshift(newRec);
+    this.saveStore();
+    return newRec;
+  }
+
+  public getLeaves(employeeName?: string): LeaveRequest[] {
+    const store = this.loadStore();
+    let list = [...(store.leaves || [])];
+    if (employeeName) {
+      list = list.filter(l => l.employeeName.toLowerCase().includes(employeeName.toLowerCase()));
+    }
+    return list;
+  }
+
+  public addLeave(leaveData: Partial<LeaveRequest>): LeaveRequest {
+    const store = this.loadStore();
+    store.leaves = store.leaves || [];
+    const newLeave: LeaveRequest = {
+      id: leaveData.id || `leave-${Date.now()}`,
+      employeeName: leaveData.employeeName || 'Shon Kapate',
+      leaveType: leaveData.leaveType || 'Casual Leave',
+      startDate: leaveData.startDate || new Date(Date.now() + 86400000).toISOString().split('T')[0],
+      endDate: leaveData.endDate || new Date(Date.now() + 2 * 86400000).toISOString().split('T')[0],
+      days: leaveData.days ?? 2,
+      reason: leaveData.reason || 'Personal time',
+      status: leaveData.status || 'Pending'
+    };
+    store.leaves.unshift(newLeave);
+    this.saveStore();
+    return newLeave;
+  }
+
+  public updateLeave(id: string, patch: Partial<LeaveRequest>): LeaveRequest | null {
+    const store = this.loadStore();
+    store.leaves = store.leaves || [];
+    const index = store.leaves.findIndex(l => l.id === id);
+    if (index === -1) return null;
+
+    store.leaves[index] = {
+      ...store.leaves[index],
+      ...patch
+    };
+    this.saveStore();
+    return store.leaves[index];
+  }
+
+  // ==========================================
+  // EXPENSES METHODS
+  // ==========================================
+
+  public getExpenses(category?: string, status?: string): Expense[] {
+    const store = this.loadStore();
+    let list = [...(store.expenses || [])];
+    if (category && category !== 'ALL') {
+      list = list.filter(e => e.category?.toLowerCase() === category.toLowerCase());
+    }
+    if (status && status !== 'ALL') {
+      list = list.filter(e => e.status?.toLowerCase() === status.toLowerCase());
+    }
+    return list;
+  }
+
+  public getExpenseById(id: string): Expense | undefined {
+    const store = this.loadStore();
+    return (store.expenses || []).find(e => e.id === id);
+  }
+
+  public addExpense(data: Partial<Expense>): Expense {
+    const store = this.loadStore();
+    store.expenses = store.expenses || [];
+    const newExpense: Expense = {
+      id: data.id || `exp-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      vendor: data.vendor || 'Vendor',
+      category: data.category || 'Cloud Infrastructure',
+      amount: Number(data.amount) || 0,
+      date: data.date || new Date().toISOString().split('T')[0],
+      projectName: data.projectName || undefined,
+      status: data.status || 'Paid',
+    };
+    store.expenses.unshift(newExpense);
+    this.saveStore();
+    return newExpense;
+  }
+
+  public updateExpense(id: string, patch: Partial<Expense>): Expense | null {
+    const store = this.loadStore();
+    store.expenses = store.expenses || [];
+    const index = store.expenses.findIndex(e => e.id === id);
+    if (index === -1) return null;
+    store.expenses[index] = { ...store.expenses[index], ...patch };
+    this.saveStore();
+    return store.expenses[index];
+  }
+
+  public deleteExpense(id: string): boolean {
+    const store = this.loadStore();
+    store.expenses = store.expenses || [];
+    const initialLen = store.expenses.length;
+    store.expenses = store.expenses.filter(e => e.id !== id);
+    if (store.expenses.length !== initialLen) {
+      this.saveStore();
+      return true;
+    }
+    return false;
+  }
+
+  // ==========================================
+  // PAYMENTS METHODS
+  // ==========================================
+
+  public getPayments(client?: string, invoiceId?: string): Payment[] {
+    const store = this.loadStore();
+    let list = [...(store.payments || [])];
+    if (client) {
+      list = list.filter(p => p.client?.toLowerCase().includes(client.toLowerCase()));
+    }
+    if (invoiceId) {
+      list = list.filter(p => p.invoiceId === invoiceId);
+    }
+    return list;
+  }
+
+  public getPaymentById(id: string): Payment | undefined {
+    const store = this.loadStore();
+    return (store.payments || []).find(p => p.id === id);
+  }
+
+  public addPayment(data: Partial<Payment>): Payment {
+    const store = this.loadStore();
+    store.payments = store.payments || [];
+    const newPayment: Payment = {
+      id: data.id || `pay-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      invoiceId: data.invoiceId || '',
+      client: data.client || 'Client',
+      amount: Number(data.amount) || 0,
+      date: data.date || new Date().toISOString().split('T')[0],
+      method: data.method || 'Bank Transfer',
+      reference: data.reference || `TXN-${Math.floor(100000 + Math.random() * 900000)}`,
+    };
+    store.payments.unshift(newPayment);
+
+    // If linked to an invoice, update invoice status in dataStore
+    if (newPayment.invoiceId) {
+      const invIndex = (store.invoices || []).findIndex(i => i.id === newPayment.invoiceId);
+      if (invIndex !== -1) {
+        store.invoices[invIndex] = {
+          ...store.invoices[invIndex],
+          status: 'Paid',
+          paidDate: newPayment.date,
+          paymentReference: newPayment.reference
+        };
+      }
+    }
+
+    this.saveStore();
+    return newPayment;
+  }
+
+  // ==========================================
+  // INTERNS METHODS
+  // ==========================================
+
+  public getInterns(): Intern[] {
+    const store = this.loadStore();
+    return [...(store.interns || [])];
+  }
+
+  public getInternById(id: string): Intern | undefined {
+    const store = this.loadStore();
+    return (store.interns || []).find(i => i.id === id);
+  }
+
+  public addIntern(data: Partial<Intern>): Intern {
+    const store = this.loadStore();
+    store.interns = store.interns || [];
+    const count = store.interns.length + 1;
+    const newIntern: Intern = {
+      id: data.id || `INT-${String(count).padStart(3, '0')}`,
+      name: data.name || 'Intern Name',
+      email: data.email || 'intern@kapateconsultancy.in',
+      role: data.role || 'Software Engineering Intern',
+      mentor: data.mentor || 'Shon Kapate',
+      college: data.college || 'Engineering Institute',
+      startDate: data.startDate || new Date().toISOString().split('T')[0],
+      endDate: data.endDate || new Date(Date.now() + 90 * 86400000).toISOString().split('T')[0],
+      status: (data.status as 'Active' | 'Completed') || 'Active',
+      tasksCompleted: data.tasksCompleted ?? 0,
+      tasksPending: data.tasksPending ?? 0,
+      loggedHours: data.loggedHours ?? 0,
+      attendancePct: data.attendancePct ?? 100,
+      trainingProgress: data.trainingProgress ?? 0,
+      mentorFeedback: data.mentorFeedback || 'Good performance',
+      evaluations: data.evaluations || {
+        technicalSkills: 80,
+        problemSolving: 80,
+        communication: 85,
+        teamwork: 85,
+        learning: 90,
+        taskCompletion: 80
+      },
+      kapateId: data.kapateId,
+      internalEmail: data.internalEmail
+    };
+    store.interns.unshift(newIntern);
+    this.saveStore();
+    return newIntern;
+  }
+
+  public updateIntern(id: string, patch: Partial<Intern>): Intern | null {
+    const store = this.loadStore();
+    store.interns = store.interns || [];
+    const idx = store.interns.findIndex(i => i.id === id);
+    if (idx === -1) return null;
+    store.interns[idx] = { ...store.interns[idx], ...patch };
+    this.saveStore();
+    return store.interns[idx];
+  }
+
+  public deleteIntern(id: string): boolean {
+    const store = this.loadStore();
+    store.interns = store.interns || [];
+    const len = store.interns.length;
+    store.interns = store.interns.filter(i => i.id !== id);
+    if (store.interns.length !== len) {
+      this.saveStore();
+      return true;
+    }
+    return false;
+  }
+
+  // ==========================================
+  // FREELANCERS METHODS
+  // ==========================================
+
+  public getFreelancers(): Freelancer[] {
+    const store = this.loadStore();
+    return [...(store.freelancers || [])];
+  }
+
+  public getFreelancerById(id: string): Freelancer | undefined {
+    const store = this.loadStore();
+    return (store.freelancers || []).find(f => f.id === id);
+  }
+
+  public addFreelancer(data: Partial<Freelancer>): Freelancer {
+    const store = this.loadStore();
+    store.freelancers = store.freelancers || [];
+    const count = store.freelancers.length + 1;
+    const newFreelancer: Freelancer = {
+      id: data.id || `FRL-${String(count).padStart(3, '0')}`,
+      name: data.name || 'Freelancer Name',
+      skill: data.skill || 'Cloud Architecture & DevOps',
+      projects: Array.isArray(data.projects) ? data.projects : ['Enterprise Platform'],
+      hourlyRate: data.hourlyRate ? String(data.hourlyRate) : '₹3,500/hr',
+      availability: data.availability || 'Full-time (Contract)',
+      status: (data.status as 'Active' | 'Available' | 'On Contract') || 'Active',
+      kapateId: data.kapateId,
+      internalEmail: data.internalEmail
+    };
+    store.freelancers.unshift(newFreelancer);
+    this.saveStore();
+    return newFreelancer;
+  }
+
+  public updateFreelancer(id: string, patch: Partial<Freelancer>): Freelancer | null {
+    const store = this.loadStore();
+    store.freelancers = store.freelancers || [];
+    const idx = store.freelancers.findIndex(f => f.id === id);
+    if (idx === -1) return null;
+    store.freelancers[idx] = { ...store.freelancers[idx], ...patch };
+    this.saveStore();
+    return store.freelancers[idx];
+  }
+
+  public deleteFreelancer(id: string): boolean {
+    const store = this.loadStore();
+    store.freelancers = store.freelancers || [];
+    const len = store.freelancers.length;
+    store.freelancers = store.freelancers.filter(f => f.id !== id);
+    if (store.freelancers.length !== len) {
+      this.saveStore();
+      return true;
+    }
+    return false;
+  }
+
+  // ==========================================
+  // SYSTEM SETTINGS & RBAC PERMISSIONS METHODS
+  // ==========================================
+
+  public getSystemSettings(): SystemSettings {
+    const store = this.loadStore();
+    return store.systemSettings || { ...DEFAULT_SYSTEM_SETTINGS };
+  }
+
+  public updateSystemSettings(updates: Partial<SystemSettings>): SystemSettings {
+    const store = this.loadStore();
+    const current = store.systemSettings || { ...DEFAULT_SYSTEM_SETTINGS };
+    store.systemSettings = {
+      ...current,
+      ...updates,
+      organization: { ...current.organization, ...(updates.organization || {}) },
+      authentication: { ...current.authentication, ...(updates.authentication || {}) },
+      email: { ...current.email, ...(updates.email || {}) },
+      ai: { ...current.ai, ...(updates.ai || {}) },
+      storage: { ...current.storage, ...(updates.storage || {}) },
+    };
+    this.saveStore();
+    return store.systemSettings;
+  }
+
+  public getRolePermissions(): Record<UserRole, string[]> {
+    const store = this.loadStore();
+    return store.rolePermissions || { ...DEFAULT_ROLE_PERMISSIONS };
+  }
+
+  public updateRolePermissions(role: UserRole, permissions: string[]): Record<UserRole, string[]> {
+    const store = this.loadStore();
+    store.rolePermissions = store.rolePermissions || { ...DEFAULT_ROLE_PERMISSIONS };
+    store.rolePermissions[role] = permissions;
+    this.saveStore();
+    return store.rolePermissions;
+  }
+
+  public resetRolePermissions(): Record<UserRole, string[]> {
+    const store = this.loadStore();
+    store.rolePermissions = { ...DEFAULT_ROLE_PERMISSIONS };
+    this.saveStore();
+    return store.rolePermissions;
   }
 }
 

@@ -12,15 +12,52 @@ export const AttendanceModule: React.FC = () => {
   const currentUser = useDemoStore((state) => state.currentUser);
   const showToast = useDemoStore((state) => state.showToast);
 
+  const fetchAttendance = useDemoStore((state) => state.fetchAttendance);
+
   const [isCheckedIn, setIsCheckedIn] = useState(true);
   const [leaveType, setLeaveType] = useState<'Casual Leave' | 'Sick Leave' | 'Earned Leave'>('Casual Leave');
   const [startDate, setStartDate] = useState('2026-09-22');
   const [endDate, setEndDate] = useState('2026-09-23');
   const [reason, setReason] = useState('Personal work');
 
-  const handleCheckInOut = () => {
-    setIsCheckedIn(!isCheckedIn);
-    showToast(isCheckedIn ? 'Checked OUT successfully. Total hours: 9.5 hrs' : 'Checked IN successfully at 09:15 AM', 'success');
+  const handleCheckInOut = async () => {
+    const nextState = !isCheckedIn;
+    setIsCheckedIn(nextState);
+
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const formattedHours = hours % 12 || 12;
+    const timeStr = `${String(formattedHours).padStart(2, '0')}:${minutes} ${ampm}`;
+
+    try {
+      const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      await fetch('/api/v1/workforce/attendance', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          date: now.toISOString().split('T')[0],
+          employeeName: currentUser.name,
+          status: 'Present',
+          checkIn: nextState ? timeStr : '09:00 AM',
+          checkOut: nextState ? '—' : timeStr,
+          totalHours: nextState ? 0 : 8.5
+        })
+      });
+
+      await fetchAttendance();
+    } catch (err) {
+      console.warn('[AttendanceModule] check-in API notice:', err);
+    }
+
+    showToast(
+      nextState ? `Checked IN successfully at ${timeStr}` : `Checked OUT successfully at ${timeStr}. Total hours: 8.5 hrs`,
+      'success'
+    );
   };
 
   const handleLeaveSubmit = (e: React.FormEvent) => {

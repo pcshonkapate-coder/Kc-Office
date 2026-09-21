@@ -19,6 +19,18 @@ export const GlobalSearchModal: React.FC = () => {
 
   const [query, setQuery] = useState('');
 
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setOpen(false);
+      }
+    };
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isOpen, setOpen]);
+
   if (!isOpen) return null;
 
   const isClient = currentUser.role === 'CLIENT';
@@ -34,7 +46,10 @@ export const GlobalSearchModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-start justify-center pt-20 p-4 animate-fade-in text-slate-900">
+    <div 
+      onClick={(e) => { if (e.target === e.currentTarget) setOpen(false); }}
+      className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-start justify-center pt-20 p-4 animate-fade-in text-slate-900"
+    >
       <div className="w-full max-w-2xl bg-white border border-slate-200 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
         
         {/* Search Header */}

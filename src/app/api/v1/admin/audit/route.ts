@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
+import { dataStore } from '@/lib/dataStore';
 import { getDatabase } from '@/lib/mongodb';
-import { INITIAL_AUDIT_LOGS } from '@/data/superAdminData';
 import { AuditLogEntry } from '@/types';
-
-let localAuditCache: AuditLogEntry[] = [...INITIAL_AUDIT_LOGS];
 
 export async function GET(req: NextRequest) {
   const auth = await requireAuth(req, ['SUPER_ADMIN', 'ADMIN']);
   if (!auth.authenticated || !auth.user) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+    return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
   }
 
   const { searchParams } = new URL(req.url);
@@ -19,23 +17,7 @@ export async function GET(req: NextRequest) {
   const resource = searchParams.get('resource');
   const limit = parseInt(searchParams.get('limit') || '100', 10);
 
-  let logs = [...localAuditCache];
-
-  try {
-    const { db } = await getDatabase();
-    const dbLogs = await db.collection<AuditLogEntry>('audit_logs')
-      .find({})
-      .sort({ timestamp: -1 })
-      .limit(limit)
-      .toArray();
-
-    if (dbLogs && dbLogs.length > 0) {
-      logs = dbLogs;
-      localAuditCache = [...dbLogs];
-    }
-  } catch {
-    // Fallback
-  }
+  let logs = dataStore.getAuditLogs();
 
   if (search) {
     logs = logs.filter(l =>
@@ -69,7 +51,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const auth = await requireAuth(req, ['SUPER_ADMIN', 'ADMIN']);
   if (!auth.authenticated || !auth.user) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+    return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
   }
 
   try {
@@ -77,17 +59,10 @@ export async function POST(req: NextRequest) {
     const { action, resource, targetId, targetLabel, severity = 'info', details, metadata } = body;
 
     if (!action || !resource || !details) {
-      return NextResponse.json({ error: 'Action, resource, and details are required for audit entry.' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'Action, resource, and details are required for audit entry.' }, { status: 400 });
     }
 
-    const newLog: AuditLogEntry = {
-      id: `aud-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
-      timestamp: new Date().toISOString(),
-      actor: auth.user.name,
-      actorKapateId: auth.user.kapateId,
-      actorName: auth.user.name,
-      actorEmail: auth.user.email,
-      actorRole: auth.user.role,
+    const newLog = dataStore.addAuditLog({
       action,
       module: resource,
       resource,
@@ -95,25 +70,29 @@ export async function POST(req: NextRequest) {
       targetLabel,
       severity: severity as 'info' | 'warning' | 'critical',
       details,
+      reason: details,
+      actor: auth.user.name,
+      actorKapateId: auth.user.kapateId,
+      actorName: auth.user.name,
+      actorEmail: auth.user.email,
+      actorRole: auth.user.role,
       result: 'SUCCESS',
       ipAddress: req.headers.get('x-forwarded-for') || '127.0.0.1',
       metadata
-    };
+    });
 
-    localAuditCache.unshift(newLog);
-
-    try {
-      const { db } = await getDatabase();
-      await db.collection('audit_logs').insertOne(newLog as any);
-    } catch {
-      // Fallback
-    }
+    // Best-effort replication
+    getDatabase()
+      .then(async ({ db }) => {
+        await db.collection('audit_logs').insertOne(newLog as any);
+      })
+      .catch(() => {});
 
     return NextResponse.json({
       success: true,
       data: newLog
     }, { status: 201 });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ success: false, error: err.message || 'Internal Server Error' }, { status: 500 });
   }
 }

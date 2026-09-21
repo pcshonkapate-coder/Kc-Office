@@ -3,7 +3,7 @@ from pydantic import BaseModel, EmailStr, Field
 
 
 class LoginRequest(BaseModel):
-    email: EmailStr = Field(..., example="admin@kapateconsultancy.in")
+    email: str = Field(..., description="Corporate email or Kapate ID", example="admin@kapateconsultancy.in")
     password: str = Field(..., min_length=6, example="KapateOS@2026!")
 
 
@@ -18,5 +18,10 @@ class UserSummary(BaseModel):
     id: str
     email: str
     full_name: str
-    roles: List[str]
-    permissions: List[str]
+    name: Optional[str] = None
+    role: Optional[str] = None
+    kapateId: Optional[str] = None
+    designation: Optional[str] = None
+    department: Optional[str] = None
+    roles: List[str] = Field(default_factory=list)
+    permissions: List[str] = Field(default_factory=list)

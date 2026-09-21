@@ -4,6 +4,10 @@ import os
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "kapate_os.db")
 
 def clean_database():
+    env = os.environ.get("ENVIRONMENT", "development").lower()
+    if env == "production":
+        print("FATAL: clean_database cannot be run in PRODUCTION environment.")
+        return
     if not os.path.exists(DB_PATH):
         print(f"Database not found at {DB_PATH}")
         return

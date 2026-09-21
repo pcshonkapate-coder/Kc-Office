@@ -1,33 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
+import { dataStore } from '@/lib/dataStore';
 import { getDatabase } from '@/lib/mongodb';
-import { INITIAL_ENTERPRISE_USERS, INITIAL_AUDIT_LOGS, DEFAULT_ROLE_PERMISSIONS, DEFAULT_SYSTEM_SETTINGS } from '@/data/superAdminData';
-import { INITIAL_PROJECTS, INITIAL_TASKS, INITIAL_LEADS, INITIAL_INVOICES } from '@/data/mockData';
 import { createHash } from 'crypto';
 
 export async function GET(req: NextRequest) {
   const auth = await requireAuth(req, ['SUPER_ADMIN']);
   if (!auth.authenticated || !auth.user) {
-    return NextResponse.json({ error: auth.error || 'Only Super Admin can download system backups.' }, { status: 403 });
+    return NextResponse.json({ success: false, error: auth.error || 'Only Super Admin can download system backups.' }, { status: 403 });
   }
 
   const { searchParams } = new URL(req.url);
   const download = searchParams.get('download') === 'true';
 
-  let users = INITIAL_ENTERPRISE_USERS;
-  let auditLogs = INITIAL_AUDIT_LOGS;
-
-  try {
-    const { db } = await getDatabase();
-    const [dbUsers, dbLogs] = await Promise.all([
-      db.collection('users').find({}).toArray().catch(() => null),
-      db.collection('audit_logs').find({}).toArray().catch(() => null),
-    ]);
-    if (dbUsers && dbUsers.length > 0) users = dbUsers as any;
-    if (dbLogs && dbLogs.length > 0) auditLogs = dbLogs as any;
-  } catch {
-    // Fallback
-  }
+  const users = dataStore.getUsers();
+  const employees = dataStore.getEmployees();
+  const projects = dataStore.getProjects();
+  const tasks = dataStore.getTasks();
+  const leads = dataStore.getLeads();
+  const invoices = dataStore.getInvoices();
+  const expenses = dataStore.getExpenses();
+  const payments = dataStore.getPayments();
+  const timesheets = dataStore.getTimesheets();
+  const attendance = dataStore.getAttendance();
+  const leaves = dataStore.getLeaves();
+  const auditLogs = dataStore.getAuditLogs();
+  const systemSettings = dataStore.getSystemSettings();
+  const rolePermissions = dataStore.getRolePermissions();
 
   // Build snapshot payload
   const snapshot = {
@@ -41,16 +40,22 @@ export async function GET(req: NextRequest) {
       email: auth.user.email,
       role: auth.user.role,
     },
-    systemSettings: DEFAULT_SYSTEM_SETTINGS,
-    rolePermissions: DEFAULT_ROLE_PERMISSIONS,
+    systemSettings,
+    rolePermissions,
     users: users.map(u => {
       const { passwordHash, ...safeUser } = u as any;
       return safeUser;
     }),
-    projects: INITIAL_PROJECTS,
-    tasks: INITIAL_TASKS,
-    leads: INITIAL_LEADS,
-    invoices: INITIAL_INVOICES,
+    employees,
+    projects,
+    tasks,
+    leads,
+    invoices,
+    expenses,
+    payments,
+    timesheets,
+    attendance,
+    leaves,
     auditLogs: auditLogs.slice(0, 500),
   };
 
@@ -62,26 +67,44 @@ export async function GET(req: NextRequest) {
     checksum,
   };
 
-  // Log backup event
-  try {
-    const { db } = await getDatabase();
-    await db.collection('audit_logs').insertOne({
-      id: `aud-${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      actorId: auth.user.userId,
-      actorName: auth.user.name,
-      actorEmail: auth.user.email,
-      actorRole: auth.user.role,
-      action: 'SYSTEM_BACKUP_EXPORT',
-      resource: 'Backup Engine',
-      targetLabel: 'Full Enterprise Snapshot',
-      severity: 'info',
-      details: `Generated system snapshot archive with checksum ${checksum.slice(0, 12)}...`,
-      ipAddress: req.headers.get('x-forwarded-for') || '127.0.0.1',
-    });
-  } catch {
-    // Fallback
-  }
+  // Log backup event in dataStore
+  dataStore.addAuditLog({
+    actor: auth.user.name,
+    actorKapateId: auth.user.kapateId,
+    actorName: auth.user.name,
+    actorEmail: auth.user.email,
+    actorRole: auth.user.role,
+    action: 'SYSTEM_BACKUP_EXPORT',
+    module: 'system',
+    resource: 'Backup Engine',
+    targetResource: 'backup/full',
+    targetLabel: 'Full Enterprise Snapshot',
+    severity: 'info',
+    details: `Generated system snapshot archive with checksum ${checksum.slice(0, 12)}...`,
+    reason: 'Super Admin exported system backup',
+    result: 'SUCCESS',
+    ipAddress: req.headers.get('x-forwarded-for') || '127.0.0.1',
+  });
+
+  // Best-effort replication
+  getDatabase()
+    .then(async ({ db }) => {
+      await db.collection('audit_logs').insertOne({
+        id: `aud-${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        actorId: auth.user.userId,
+        actorName: auth.user.name,
+        actorEmail: auth.user.email,
+        actorRole: auth.user.role,
+        action: 'SYSTEM_BACKUP_EXPORT',
+        resource: 'Backup Engine',
+        targetLabel: 'Full Enterprise Snapshot',
+        severity: 'info',
+        details: `Generated system snapshot archive with checksum ${checksum.slice(0, 12)}...`,
+        ipAddress: req.headers.get('x-forwarded-for') || '127.0.0.1',
+      });
+    })
+    .catch(() => {});
 
   if (download) {
     const dateStr = new Date().toISOString().split('T')[0];
@@ -101,10 +124,13 @@ export async function GET(req: NextRequest) {
         timestamp: finalBackup.exportTimestamp,
         checksum,
         usersCount: users.length,
-        projectsCount: INITIAL_PROJECTS.length,
-        tasksCount: INITIAL_TASKS.length,
-        leadsCount: INITIAL_LEADS.length,
-        invoicesCount: INITIAL_INVOICES.length,
+        employeesCount: employees.length,
+        projectsCount: projects.length,
+        tasksCount: tasks.length,
+        leadsCount: leads.length,
+        invoicesCount: invoices.length,
+        expensesCount: expenses.length,
+        paymentsCount: payments.length,
         auditLogsCount: auditLogs.length,
       },
       downloadUrl: '/api/v1/admin/backup?download=true'
@@ -115,7 +141,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const auth = await requireAuth(req, ['SUPER_ADMIN']);
   if (!auth.authenticated || !auth.user) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+    return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
   }
 
   return NextResponse.json({

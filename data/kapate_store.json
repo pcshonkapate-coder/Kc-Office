@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "lastUpdated": "2026-09-20T12:13:09.624Z",
+  "lastUpdated": "2026-09-21T08:37:12.086Z",
   "users": [
     {
       "id": "usr-admin",
@@ -20,9 +20,9 @@
         "Strategic Consulting"
       ],
       "assignedProjects": [],
-      "failedLogins": 2,
+      "failedLogins": 0,
       "lockedUntil": null,
-      "lastLoginAt": "2026-09-19T12:05:09.811Z",
+      "lastLoginAt": "2026-09-21T08:37:12.081Z",
       "mfaEnabled": true,
       "created": "2024-01-01",
       "passwordHash": "69cc9f3960789a67f9f3f09b9b1c8e7b:e08652c5e766b8d399b17f2626c620635858a341e975a8bd89de1f3c4fed9bd0b1325165ed73f4d97dd99eda9110c5b212fb66a0d0de09e57cbfeb03e3dc8602"
@@ -105,7 +105,7 @@
       "department": "Engineering",
       "kapateId": "KAP-EMP-000005",
       "internalEmail": "aarav.verma@kapateconsultancy.in",
-      "status": "ACTIVE",
+      "status": "SUSPENDED",
       "phone": "+91 98765 43210",
       "manager": "Shon Kapate",
       "skills": [
@@ -128,7 +128,7 @@
       "department": "Engineering",
       "kapateId": "KAP-EMP-000006",
       "internalEmail": "priya.mehta@kapateconsultancy.in",
-      "status": "ACTIVE",
+      "status": "SUSPENDED",
       "phone": "+91 98230 00000",
       "manager": "Shon Kapate",
       "skills": [
@@ -141,9 +141,114 @@
       "mfaEnabled": true,
       "created": "2026-09-20",
       "passwordHash": "517541258dbd4897dfab9ee734269531:06b5f6f89b44ab91ef0e29f3effffa745f5e22988b775408f6b05903344443977bd678edbe785b4d26b30e1ddacc820436b83ffa6d32e766365b97e42e058379"
+    },
+    {
+      "id": "usr-1789916793391-893",
+      "name": "Mukul",
+      "email": "mukul@kapateconsultancy.in",
+      "role": "PROJECT_MANAGER",
+      "designation": "Software Consultant",
+      "department": "Consulting",
+      "kapateId": "KAP-EMP-000007",
+      "internalEmail": "mukul@kapateconsultancy.in",
+      "status": "SUSPENDED",
+      "phone": "+91 98230 00000",
+      "manager": "Shon Kapate",
+      "skills": [
+        "Enterprise Solutions"
+      ],
+      "assignedProjects": [],
+      "failedLogins": 0,
+      "lockedUntil": null,
+      "lastLoginAt": "2026-09-20T15:06:33.391Z",
+      "mfaEnabled": true,
+      "created": "2026-09-20",
+      "passwordHash": "c489bd3413cacb6232d8bdb837ca0027:7b330208cf4d521d36751a2b0591bbdf38b3869989e0f902707be855a049dbc65f4dd9e96ac21a4ca6e1bafe014a29f3d7060493cbe392bd417973d7f19e7e09"
     }
   ],
   "employees": [
+    {
+      "id": "emp-1789921926231-464",
+      "name": "Verification Engineer 1789921926231",
+      "email": "engineer.1789921926231@kapateconsultancy.in",
+      "role": "Staff ML Engineer",
+      "department": "AI & Engineering",
+      "phone": "+91 98230 00000",
+      "manager": "Shon Kapate",
+      "skills": [
+        "Python",
+        "FastAPI",
+        "PyTorch"
+      ],
+      "joinDate": "2026-09-20",
+      "status": "Inactive",
+      "projectsCount": 0,
+      "utilization": 100,
+      "kapateId": "KAP-EMP-000010",
+      "internalEmail": "verification.engineer.1789921926231@kapateconsultancy.in",
+      "deletedAt": "2026-09-21T07:57:10.637Z"
+    },
+    {
+      "id": "emp-1789920742765-970",
+      "name": "Verification Engineer 1789920742763",
+      "email": "engineer.1789920742763@kapateconsultancy.in",
+      "role": "Staff ML Engineer",
+      "department": "AI & Engineering",
+      "phone": "+91 98230 00000",
+      "manager": "Shon Kapate",
+      "skills": [
+        "Python",
+        "FastAPI",
+        "PyTorch"
+      ],
+      "joinDate": "2026-09-20",
+      "status": "Inactive",
+      "projectsCount": 0,
+      "utilization": 100,
+      "kapateId": "KAP-EMP-000009",
+      "internalEmail": "verification.engineer.1789920742763@kapateconsultancy.in",
+      "deletedAt": "2026-09-21T07:59:38.774Z"
+    },
+    {
+      "id": "emp-1789920400994-705",
+      "name": "Verification Engineer 1789920400993",
+      "email": "engineer.1789920400993@kapateconsultancy.in",
+      "role": "Staff ML Engineer",
+      "department": "AI & Engineering",
+      "phone": "+91 98230 00000",
+      "manager": "Shon Kapate",
+      "skills": [
+        "Python",
+        "FastAPI",
+        "PyTorch"
+      ],
+      "joinDate": "2026-09-20",
+      "status": "Inactive",
+      "projectsCount": 0,
+      "utilization": 100,
+      "kapateId": "KAP-EMP-000008",
+      "internalEmail": "verification.engineer.1789920400993@kapateconsultancy.in",
+      "deletedAt": "2026-09-21T08:01:52.841Z"
+    },
+    {
+      "id": "EMP-107",
+      "name": "Mukul",
+      "email": "mukul@kapateconsultancy.in",
+      "role": "Software Consultant",
+      "department": "Consulting",
+      "phone": "+91 98230 00000",
+      "manager": "Shon Kapate",
+      "skills": [
+        "Enterprise Solutions"
+      ],
+      "joinDate": "2026-09-20",
+      "status": "Inactive",
+      "projectsCount": 0,
+      "utilization": 100,
+      "kapateId": "KAP-EMP-000007",
+      "internalEmail": "mukul@kapateconsultancy.in",
+      "deletedAt": "2026-09-21T08:04:07.459Z"
+    },
     {
       "id": "EMP-106",
       "name": "Priya Mehta",
@@ -156,11 +261,12 @@
         "Enterprise Solutions"
       ],
       "joinDate": "2026-09-20",
-      "status": "Active",
+      "status": "Inactive",
       "projectsCount": 0,
       "utilization": 100,
       "kapateId": "KAP-EMP-000006",
-      "internalEmail": "priya.mehta@kapateconsultancy.in"
+      "internalEmail": "priya.mehta@kapateconsultancy.in",
+      "deletedAt": "2026-09-21T08:04:09.719Z"
     },
     {
       "id": "EMP-105",
@@ -174,11 +280,12 @@
         "Enterprise Solutions"
       ],
       "joinDate": "2026-09-20",
-      "status": "Active",
+      "status": "Inactive",
       "projectsCount": 0,
       "utilization": 100,
       "kapateId": "KAP-EMP-000005",
-      "internalEmail": "aarav.verma@kapateconsultancy.in"
+      "internalEmail": "aarav.verma@kapateconsultancy.in",
+      "deletedAt": "2026-09-21T08:04:05.337Z"
     },
     {
       "id": "emp-1789819509859-371",
@@ -267,6 +374,58 @@
   "interns": [],
   "freelancers": [],
   "sessions": [
+    {
+      "id": "sess-muazrxub-7mmm",
+      "userId": "usr-admin",
+      "userName": "Shon Kapate",
+      "email": "admin@kapateconsultancy.in",
+      "role": "SUPER_ADMIN",
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT; Windows NT 10.0; en-IN) WindowsPowerShell/5.1.26100.9444",
+      "loginAt": "2026-09-21T08:37:12.083Z",
+      "lastActiveAt": "Just now",
+      "isImpersonated": false,
+      "status": "ACTIVE"
+    },
+    {
+      "id": "sess-muazrsol-kqqz",
+      "userId": "usr-admin",
+      "userName": "Shon Kapate",
+      "email": "admin@kapateconsultancy.in",
+      "role": "SUPER_ADMIN",
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT; Windows NT 10.0; en-IN) WindowsPowerShell/5.1.26100.9444",
+      "loginAt": "2026-09-21T08:37:05.397Z",
+      "lastActiveAt": "Just now",
+      "isImpersonated": false,
+      "status": "ACTIVE"
+    },
+    {
+      "id": "sess-muaytkpm-oaeo",
+      "userId": "usr-admin",
+      "userName": "Shon Kapate",
+      "email": "admin@kapateconsultancy.in",
+      "role": "SUPER_ADMIN",
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT; Windows NT 10.0; en-IN) WindowsPowerShell/5.1.26100.9444",
+      "loginAt": "2026-09-21T08:10:28.762Z",
+      "lastActiveAt": "Just now",
+      "isImpersonated": false,
+      "status": "ACTIVE"
+    },
+    {
+      "id": "sess-mu9y7xzy-zkag",
+      "userId": "usr-admin",
+      "userName": "Shon Kapate",
+      "email": "admin@kapateconsultancy.in",
+      "role": "SUPER_ADMIN",
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36",
+      "loginAt": "2026-09-20T15:05:53.374Z",
+      "lastActiveAt": "Just now",
+      "isImpersonated": false,
+      "status": "ACTIVE"
+    },
     {
       "id": "sess-mu9rysm3-e9o1",
       "userId": "usr-1789902952673-732",
@@ -373,6 +532,310 @@
     }
   ],
   "audit_logs": [
+    {
+      "id": "aud-1789979832086-697",
+      "timestamp": "2026-09-21 08:37:12",
+      "actor": "Shon Kapate",
+      "actorKapateId": "KAP-EMP-000001",
+      "action": "USER_LOGIN",
+      "module": "auth",
+      "targetResource": "sessions/sess-muazrxub-7mmm",
+      "targetUser": "admin@kapateconsultancy.in",
+      "previousValue": "",
+      "newValue": "",
+      "ipAddress": "127.0.0.1",
+      "result": "SUCCESS",
+      "requestId": "req-muazrxue",
+      "reason": "Successful enterprise password authentication"
+    },
+    {
+      "id": "aud-1789979825400-383",
+      "timestamp": "2026-09-21 08:37:05",
+      "actor": "Shon Kapate",
+      "actorKapateId": "KAP-EMP-000001",
+      "action": "USER_LOGIN",
+      "module": "auth",
+      "targetResource": "sessions/sess-muazrsol-kqqz",
+      "targetUser": "admin@kapateconsultancy.in",
+      "previousValue": "",
+      "newValue": "",
+      "ipAddress": "127.0.0.1",
+      "result": "SUCCESS",
+      "requestId": "req-muazrsoo",
+      "reason": "Successful enterprise password authentication"
+    },
+    {
+      "id": "aud-1789978228767-512",
+      "timestamp": "2026-09-21 08:10:28",
+      "actor": "Shon Kapate",
+      "actorKapateId": "KAP-EMP-000001",
+      "action": "USER_LOGIN",
+      "module": "auth",
+      "targetResource": "sessions/sess-muaytkpm-oaeo",
+      "targetUser": "admin@kapateconsultancy.in",
+      "previousValue": "",
+      "newValue": "",
+      "ipAddress": "127.0.0.1",
+      "result": "SUCCESS",
+      "requestId": "req-muaytkpr",
+      "reason": "Successful enterprise password authentication"
+    },
+    {
+      "id": "aud-1789977849722-907",
+      "timestamp": "2026-09-21 08:04:09",
+      "actor": "Shon Kapate",
+      "actorKapateId": "KAP-EMP-000001",
+      "action": "EMPLOYEE_DELETED",
+      "module": "workforce",
+      "targetResource": "employees/KAP-EMP-000006",
+      "targetUser": "System",
+      "previousValue": "",
+      "newValue": "",
+      "ipAddress": "127.0.0.1",
+      "result": "SUCCESS",
+      "requestId": "req-muaylg8q",
+      "reason": "Admin soft-deleted employee record"
+    },
+    {
+      "id": "aud-1789977847462-332",
+      "timestamp": "2026-09-21 08:04:07",
+      "actor": "Shon Kapate",
+      "actorKapateId": "KAP-EMP-000001",
+      "action": "EMPLOYEE_DELETED",
+      "module": "workforce",
+      "targetResource": "employees/KAP-EMP-000007",
+      "targetUser": "System",
+      "previousValue": "",
+      "newValue": "",
+      "ipAddress": "127.0.0.1",
+      "result": "SUCCESS",
+      "requestId": "req-muaylehy",
+      "reason": "Admin soft-deleted employee record"
+    },
+    {
+      "id": "aud-1789977845341-742",
+      "timestamp": "2026-09-21 08:04:05",
+      "actor": "Shon Kapate",
+      "actorKapateId": "KAP-EMP-000001",
+      "action": "EMPLOYEE_DELETED",
+      "module": "workforce",
+      "targetResource": "employees/KAP-EMP-000005",
+      "targetUser": "System",
+      "previousValue": "",
+      "newValue": "",
+      "ipAddress": "127.0.0.1",
+      "result": "SUCCESS",
+      "requestId": "req-muaylcv1",
+      "reason": "Admin soft-deleted employee record"
+    },
+    {
+      "id": "aud-1789977814832-963",
+      "timestamp": "2026-09-21 08:03:34",
+      "actor": "Shon Kapate",
+      "actorKapateId": "KAP-EMP-000001",
+      "action": "SYSTEM_BACKUP_EXPORT",
+      "module": "system",
+      "targetResource": "backup/full",
+      "targetUser": "System",
+      "previousValue": "",
+      "newValue": "",
+      "ipAddress": "::1",
+      "result": "SUCCESS",
+      "requestId": "req-muaykpbk",
+      "reason": "Super Admin exported system backup"
+    },
+    {
+      "id": "aud-1789977712849-965",
+      "timestamp": "2026-09-21 08:01:52",
+      "actor": "Shon Kapate",
+      "actorKapateId": "KAP-EMP-000001",
+      "action": "EMPLOYEE_DELETED",
+      "module": "workforce",
+      "targetResource": "employees/KAP-EMP-000008",
+      "targetUser": "System",
+      "previousValue": "",
+      "newValue": "",
+      "ipAddress": "127.0.0.1",
+      "result": "SUCCESS",
+      "requestId": "req-muayiimp",
+      "reason": "Admin soft-deleted employee record"
+    },
+    {
+      "id": "aud-1789977578781-553",
+      "timestamp": "2026-09-21 07:59:38",
+      "actor": "Shon Kapate",
+      "actorKapateId": "KAP-EMP-000001",
+      "action": "EMPLOYEE_DELETED",
+      "module": "workforce",
+      "targetResource": "employees/KAP-EMP-000009",
+      "targetUser": "System",
+      "previousValue": "",
+      "newValue": "",
+      "ipAddress": "127.0.0.1",
+      "result": "SUCCESS",
+      "requestId": "req-muayfn6l",
+      "reason": "Admin soft-deleted employee record"
+    },
+    {
+      "id": "aud-1789977430644-881",
+      "timestamp": "2026-09-21 07:57:10",
+      "actor": "Shon Kapate",
+      "actorKapateId": "KAP-EMP-000001",
+      "action": "EMPLOYEE_DELETED",
+      "module": "workforce",
+      "targetResource": "employees/KAP-EMP-000010",
+      "targetUser": "System",
+      "previousValue": "",
+      "newValue": "",
+      "ipAddress": "127.0.0.1",
+      "result": "SUCCESS",
+      "requestId": "req-muaycgvp",
+      "reason": "Admin soft-deleted employee record"
+    },
+    {
+      "id": "aud-1789921926243-774",
+      "timestamp": "2026-09-20 16:32:06",
+      "actor": "Verification Engineer 1789921926231",
+      "actorKapateId": "KAP-EMP-000001",
+      "action": "PROJECT_CREATED",
+      "module": "delivery",
+      "targetResource": "projects/PRJ-003",
+      "targetUser": "Client Enterprise 1789921926231",
+      "previousValue": "",
+      "newValue": "{\"name\":\"Autonomous Mission System 1789921926231\",\"budget\":3500000}",
+      "ipAddress": "127.0.0.1",
+      "result": "SUCCESS",
+      "requestId": "req-mua1ater",
+      "reason": "Created enterprise delivery project"
+    },
+    {
+      "id": "aud-1789921926236-536",
+      "timestamp": "2026-09-20 16:32:06",
+      "actor": "Admin",
+      "actorKapateId": "KAP-EMP-000001",
+      "action": "EMPLOYEE_CREATED",
+      "module": "workforce",
+      "targetResource": "employees/emp-1789921926231-464",
+      "targetUser": "engineer.1789921926231@kapateconsultancy.in",
+      "previousValue": "",
+      "newValue": "{\"name\":\"Verification Engineer 1789921926231\",\"role\":\"Staff ML Engineer\",\"kapateId\":\"KAP-EMP-000010\"}",
+      "ipAddress": "127.0.0.1",
+      "result": "SUCCESS",
+      "requestId": "req-mua1atek",
+      "reason": "Onboarded new enterprise employee record"
+    },
+    {
+      "id": "aud-1789920742778-771",
+      "timestamp": "2026-09-20 16:12:22",
+      "actor": "Verification Engineer 1789920742763",
+      "actorKapateId": "KAP-EMP-000001",
+      "action": "PROJECT_CREATED",
+      "module": "delivery",
+      "targetResource": "projects/PRJ-002",
+      "targetUser": "Client Enterprise 1789920742763",
+      "previousValue": "",
+      "newValue": "{\"name\":\"Autonomous Mission System 1789920742763\",\"budget\":3500000}",
+      "ipAddress": "127.0.0.1",
+      "result": "SUCCESS",
+      "requestId": "req-mua0lg8q",
+      "reason": "Created enterprise delivery project"
+    },
+    {
+      "id": "aud-1789920742769-932",
+      "timestamp": "2026-09-20 16:12:22",
+      "actor": "Admin",
+      "actorKapateId": "KAP-EMP-000001",
+      "action": "EMPLOYEE_CREATED",
+      "module": "workforce",
+      "targetResource": "employees/emp-1789920742765-970",
+      "targetUser": "engineer.1789920742763@kapateconsultancy.in",
+      "previousValue": "",
+      "newValue": "{\"name\":\"Verification Engineer 1789920742763\",\"role\":\"Staff ML Engineer\",\"kapateId\":\"KAP-EMP-000009\"}",
+      "ipAddress": "127.0.0.1",
+      "result": "SUCCESS",
+      "requestId": "req-mua0lg8h",
+      "reason": "Onboarded new enterprise employee record"
+    },
+    {
+      "id": "aud-1789920401003-389",
+      "timestamp": "2026-09-20 16:06:41",
+      "actor": "Verification Engineer 1789920400993",
+      "actorKapateId": "KAP-EMP-000001",
+      "action": "PROJECT_CREATED",
+      "module": "delivery",
+      "targetResource": "projects/PRJ-001",
+      "targetUser": "Client Enterprise 1789920400993",
+      "previousValue": "",
+      "newValue": "{\"name\":\"Autonomous Mission System 1789920400993\",\"budget\":3500000}",
+      "ipAddress": "127.0.0.1",
+      "result": "SUCCESS",
+      "requestId": "req-mua0e4iz",
+      "reason": "Created enterprise delivery project"
+    },
+    {
+      "id": "aud-1789920400998-566",
+      "timestamp": "2026-09-20 16:06:40",
+      "actor": "Admin",
+      "actorKapateId": "KAP-EMP-000001",
+      "action": "EMPLOYEE_CREATED",
+      "module": "workforce",
+      "targetResource": "employees/emp-1789920400994-705",
+      "targetUser": "engineer.1789920400993@kapateconsultancy.in",
+      "previousValue": "",
+      "newValue": "{\"name\":\"Verification Engineer 1789920400993\",\"role\":\"Staff ML Engineer\",\"kapateId\":\"KAP-EMP-000008\"}",
+      "ipAddress": "127.0.0.1",
+      "result": "SUCCESS",
+      "requestId": "req-mua0e4iu",
+      "reason": "Onboarded new enterprise employee record"
+    },
+    {
+      "id": "aud-1789916793406-996",
+      "timestamp": "2026-09-20 15:06:33",
+      "actor": "Shon Kapate",
+      "actorKapateId": "KAP-EMP-000001",
+      "action": "USER_CREATE",
+      "module": "security",
+      "targetResource": "users/usr-1789916793391-893",
+      "targetUser": "mukul@kapateconsultancy.in",
+      "previousValue": "",
+      "newValue": "{\"name\":\"Mukul\",\"role\":\"PROJECT_MANAGER\"}",
+      "ipAddress": "127.0.0.1",
+      "result": "SUCCESS",
+      "requestId": "req-mu9y8svy",
+      "reason": "Created enterprise user with role PROJECT_MANAGER"
+    },
+    {
+      "id": "aud-1789916793399-332",
+      "timestamp": "2026-09-20 15:06:33",
+      "actor": "Admin",
+      "actorKapateId": "KAP-EMP-000001",
+      "action": "USER_CREATED",
+      "module": "security",
+      "targetResource": "users/usr-1789916793391-893",
+      "targetUser": "mukul@kapateconsultancy.in",
+      "previousValue": "",
+      "newValue": "{\"name\":\"Mukul\",\"role\":\"PROJECT_MANAGER\",\"kapateId\":\"KAP-EMP-000007\"}",
+      "ipAddress": "127.0.0.1",
+      "result": "SUCCESS",
+      "requestId": "req-mu9y8svr",
+      "reason": "Created enterprise user login account"
+    },
+    {
+      "id": "aud-1789916753380-615",
+      "timestamp": "2026-09-20 15:05:53",
+      "actor": "Shon Kapate",
+      "actorKapateId": "KAP-EMP-000001",
+      "action": "USER_LOGIN",
+      "module": "auth",
+      "targetResource": "sessions/sess-mu9y7xzy-zkag",
+      "targetUser": "admin@kapateconsultancy.in",
+      "previousValue": "",
+      "newValue": "",
+      "ipAddress": "127.0.0.1",
+      "result": "SUCCESS",
+      "requestId": "req-mu9y7y04",
+      "reason": "Successful enterprise password authentication"
+    },
     {
       "id": "aud-1789906389623-135",
       "timestamp": "2026-09-20 12:13:09",
@@ -870,5 +1333,571 @@
       "reviewedBy": "Shon Kapate"
     }
   ],
-  "onboarding_invitations": []
+  "onboarding_invitations": [],
+  "projects": [
+    {
+      "id": "PRJ-003",
+      "name": "Autonomous Mission System 1789921926231",
+      "client": "Client Enterprise 1789921926231",
+      "budget": 3500000,
+      "spentBudget": 0,
+      "progress": 0,
+      "status": "Planning",
+      "deadline": "2026-12-19",
+      "team": [
+        "Verification Engineer 1789921926231"
+      ],
+      "manager": "Verification Engineer 1789921926231",
+      "description": "Enterprise project delivery engagement.",
+      "milestones": [
+        {
+          "id": "m-1789921926240-1",
+          "name": "Discovery & Requirements Lock",
+          "progress": 100,
+          "dueDate": "2026-09-20",
+          "status": "Completed"
+        },
+        {
+          "id": "m-1789921926240-2",
+          "name": "Architecture & Staging Provisioning",
+          "progress": 20,
+          "dueDate": "2026-11-30",
+          "status": "In Progress"
+        }
+      ],
+      "profitability": {
+        "revenue": 3500000,
+        "employeeCost": 1575000,
+        "cloudCost": 280000,
+        "aiApiCost": 175000,
+        "otherCost": 10000,
+        "grossProfit": 1470000,
+        "grossMargin": 42
+      }
+    },
+    {
+      "id": "PRJ-002",
+      "name": "Autonomous Mission System 1789920742763",
+      "client": "Client Enterprise 1789920742763",
+      "budget": 3500000,
+      "spentBudget": 0,
+      "progress": 0,
+      "status": "Planning",
+      "deadline": "2026-12-19",
+      "team": [
+        "Verification Engineer 1789920742763"
+      ],
+      "manager": "Verification Engineer 1789920742763",
+      "description": "Enterprise project delivery engagement.",
+      "milestones": [
+        {
+          "id": "m-1789920742774-1",
+          "name": "Discovery & Requirements Lock",
+          "progress": 100,
+          "dueDate": "2026-09-20",
+          "status": "Completed"
+        },
+        {
+          "id": "m-1789920742774-2",
+          "name": "Architecture & Staging Provisioning",
+          "progress": 20,
+          "dueDate": "2026-11-30",
+          "status": "In Progress"
+        }
+      ],
+      "profitability": {
+        "revenue": 3500000,
+        "employeeCost": 1575000,
+        "cloudCost": 280000,
+        "aiApiCost": 175000,
+        "otherCost": 10000,
+        "grossProfit": 1470000,
+        "grossMargin": 42
+      }
+    },
+    {
+      "id": "PRJ-001",
+      "name": "Autonomous Mission System 1789920400993",
+      "client": "Client Enterprise 1789920400993",
+      "budget": 3500000,
+      "spentBudget": 0,
+      "progress": 0,
+      "status": "Planning",
+      "deadline": "2026-12-19",
+      "team": [
+        "Verification Engineer 1789920400993"
+      ],
+      "manager": "Verification Engineer 1789920400993",
+      "description": "Enterprise project delivery engagement.",
+      "milestones": [
+        {
+          "id": "m-1789920401000-1",
+          "name": "Discovery & Requirements Lock",
+          "progress": 100,
+          "dueDate": "2026-09-20",
+          "status": "Completed"
+        },
+        {
+          "id": "m-1789920401000-2",
+          "name": "Architecture & Staging Provisioning",
+          "progress": 20,
+          "dueDate": "2026-11-30",
+          "status": "In Progress"
+        }
+      ],
+      "profitability": {
+        "revenue": 3500000,
+        "employeeCost": 1575000,
+        "cloudCost": 280000,
+        "aiApiCost": 175000,
+        "otherCost": 10000,
+        "grossProfit": 1470000,
+        "grossMargin": 42
+      }
+    }
+  ],
+  "tasks": [
+    {
+      "id": "TSK-103",
+      "title": "Harden Database Schemas 1789921926231",
+      "projectId": "PRJ-003",
+      "projectName": "Autonomous Mission System 1789921926231",
+      "assignedTo": "Verification Engineer 1789921926231",
+      "assigneeRole": "ENGINEER",
+      "priority": "Urgent",
+      "status": "IN PROGRESS",
+      "dueDate": "2026-09-27",
+      "estimatedHours": 12,
+      "loggedHours": 0,
+      "description": "",
+      "clientVisible": false
+    },
+    {
+      "id": "TSK-102",
+      "title": "Harden Database Schemas 1789920742763",
+      "projectId": "PRJ-002",
+      "projectName": "Autonomous Mission System 1789920742763",
+      "assignedTo": "Verification Engineer 1789920742763",
+      "assigneeRole": "ENGINEER",
+      "priority": "Urgent",
+      "status": "IN PROGRESS",
+      "dueDate": "2026-09-27",
+      "estimatedHours": 12,
+      "loggedHours": 0,
+      "description": "",
+      "clientVisible": false
+    },
+    {
+      "id": "TSK-101",
+      "title": "Harden Database Schemas 1789920400993",
+      "projectId": "PRJ-001",
+      "projectName": "Autonomous Mission System 1789920400993",
+      "assignedTo": "Verification Engineer 1789920400993",
+      "assigneeRole": "ENGINEER",
+      "priority": "Urgent",
+      "status": "IN_PROGRESS",
+      "dueDate": "2026-09-27",
+      "estimatedHours": 12,
+      "loggedHours": 0,
+      "description": "",
+      "clientVisible": false
+    }
+  ],
+  "leads": [
+    {
+      "id": "KAP-003",
+      "name": "Chief Technology Officer 1789921926231",
+      "email": "",
+      "phone": "",
+      "company": "Apex Industries 1789921926231",
+      "service": "AI Solutions",
+      "budget": "₹50L - ₹1Cr",
+      "source": "Website",
+      "owner": "Verification Engineer 1789921926231",
+      "status": "Qualified",
+      "score": 85,
+      "description": "",
+      "created": "2026-09-20",
+      "nextFollowUp": "2026-09-23"
+    },
+    {
+      "id": "KAP-002",
+      "name": "Chief Technology Officer 1789920742763",
+      "email": "",
+      "phone": "",
+      "company": "Apex Industries 1789920742763",
+      "service": "AI Solutions",
+      "budget": "₹50L - ₹1Cr",
+      "source": "Website",
+      "owner": "Verification Engineer 1789920742763",
+      "status": "Qualified",
+      "score": 85,
+      "description": "",
+      "created": "2026-09-20",
+      "nextFollowUp": "2026-09-23"
+    },
+    {
+      "id": "KAP-001",
+      "name": "Chief Technology Officer 1789920400993",
+      "email": "",
+      "phone": "",
+      "company": "Apex Industries 1789920400993",
+      "service": "AI Solutions",
+      "budget": "₹50L - ₹1Cr",
+      "source": "Website",
+      "owner": "Verification Engineer 1789920400993",
+      "status": "Qualified",
+      "score": 85,
+      "description": "",
+      "created": "2026-09-20",
+      "nextFollowUp": "2026-09-23"
+    }
+  ],
+  "companies": [],
+  "contacts": [],
+  "deals": [],
+  "proposals": [],
+  "contracts": [],
+  "timesheets": [
+    {
+      "id": "ts-1789921926254",
+      "employeeName": "Verification Engineer 1789921926231",
+      "projectName": "Autonomous Mission System 1789921926231",
+      "taskName": "Harden Database Schemas 1789921926231",
+      "hours": 8,
+      "date": "2026-09-20",
+      "day": "Sun",
+      "description": "Feature implementation and tests",
+      "status": "Submitted",
+      "isBillable": true
+    },
+    {
+      "id": "ts-1789920742789",
+      "employeeName": "Verification Engineer 1789920742763",
+      "projectName": "Autonomous Mission System 1789920742763",
+      "taskName": "Harden Database Schemas 1789920742763",
+      "hours": 8,
+      "date": "2026-09-20",
+      "day": "Sun",
+      "description": "Feature implementation and tests",
+      "status": "Submitted",
+      "isBillable": true
+    },
+    {
+      "id": "ts-1789920401013",
+      "employeeName": "Verification Engineer 1789920400993",
+      "projectName": "Autonomous Mission System 1789920400993",
+      "taskName": "Harden Database Schemas 1789920400993",
+      "hours": 8,
+      "date": "2026-09-20",
+      "day": "Sun",
+      "description": "Feature implementation and tests",
+      "status": "Submitted",
+      "isBillable": true
+    }
+  ],
+  "attendance": [],
+  "leaves": [],
+  "invoices": [
+    {
+      "id": "INV-0044",
+      "client": "Client Enterprise 1789921926231",
+      "projectName": "Autonomous Mission System 1789921926231",
+      "amount": 1500000,
+      "tax": 270000,
+      "total": 1770000,
+      "status": "Sent",
+      "dueDate": "2026-10-05",
+      "billingAddress": "742 Evergreen Terrace, Tech Park, BLR",
+      "gstin": "27AABCK1234F1Z5",
+      "items": [
+        {
+          "description": "Milestone Delivery - Architecture & Staging Provisioning",
+          "qty": 1,
+          "rate": 1500000,
+          "amount": 1500000
+        }
+      ]
+    },
+    {
+      "id": "INV-0043",
+      "client": "Client Enterprise 1789920742763",
+      "projectName": "Autonomous Mission System 1789920742763",
+      "amount": 1500000,
+      "tax": 270000,
+      "total": 1770000,
+      "status": "Sent",
+      "dueDate": "2026-10-05",
+      "billingAddress": "742 Evergreen Terrace, Tech Park, BLR",
+      "gstin": "27AABCK1234F1Z5",
+      "items": [
+        {
+          "description": "Milestone Delivery - Architecture & Staging Provisioning",
+          "qty": 1,
+          "rate": 1500000,
+          "amount": 1500000
+        }
+      ]
+    },
+    {
+      "id": "INV-0042",
+      "client": "Client Enterprise 1789920400993",
+      "projectName": "Autonomous Mission System 1789920400993",
+      "amount": 1500000,
+      "tax": 270000,
+      "total": 1770000,
+      "status": "Sent",
+      "dueDate": "2026-10-05",
+      "billingAddress": "742 Evergreen Terrace, Tech Park, BLR",
+      "gstin": "27AABCK1234F1Z5",
+      "items": [
+        {
+          "description": "Milestone Delivery - Architecture & Staging Provisioning",
+          "qty": 1,
+          "rate": 1500000,
+          "amount": 1500000
+        }
+      ]
+    }
+  ],
+  "payments": [],
+  "expenses": [],
+  "documents": [],
+  "systemSettings": {
+    "organization": {
+      "companyName": "Kapate Consultancy",
+      "domain": "kapateconsultancy.in",
+      "supportEmail": "admin@kapateconsultancy.in",
+      "hqAddress": "Pune / Mumbai, Maharashtra, India",
+      "gstin": "27KAPAT1234F1Z9",
+      "fiscalYearStart": "04-01",
+      "currency": "INR (₹)"
+    },
+    "authentication": {
+      "sessionDurationHours": 24,
+      "maxLoginAttempts": 5,
+      "accountLockoutMinutes": 30,
+      "mfaEnforced": false,
+      "requirePasswordResetDays": 90,
+      "minPasswordLength": 8
+    },
+    "email": {
+      "smtpHost": "smtp.gmail.com",
+      "smtpPort": 587,
+      "senderEmail": "admin@kapateconsultancy.in",
+      "senderName": "Kapate OS Administration",
+      "notificationsEnabled": true
+    },
+    "finance": {
+      "defaultTaxRate": 18,
+      "invoicePrefix": "INV-2026",
+      "paymentTermsDays": 30,
+      "gstThresholdAmount": 2000000
+    },
+    "notifications": {
+      "taskAssigned": true,
+      "invoiceOverdue": true,
+      "securityAlerts": true,
+      "dailyDigest": false
+    },
+    "ai": {
+      "enabled": true,
+      "provider": "gemini",
+      "model": "gemini-1.5-pro",
+      "enableSummarizer": true,
+      "enableSmartReply": true,
+      "enableEstimates": true,
+      "monthlyTokenLimit": 10000000,
+      "tokensUsedThisMonth": 1420500
+    },
+    "storage": {
+      "maxUploadSizeMB": 25,
+      "allowedTypes": [
+        "PDF",
+        "DOCX",
+        "ZIP",
+        "PNG",
+        "JPG",
+        "XLSX"
+      ],
+      "backupRetentionDays": 30,
+      "autoBackupEnabled": true
+    }
+  },
+  "rolePermissions": {
+    "SUPER_ADMIN": [
+      "crm.view",
+      "crm.create",
+      "crm.edit",
+      "crm.delete",
+      "crm.approve",
+      "crm.export",
+      "projects.view",
+      "projects.create",
+      "projects.edit",
+      "projects.delete",
+      "projects.approve",
+      "projects.export",
+      "finance.view",
+      "finance.create",
+      "finance.edit",
+      "finance.delete",
+      "finance.approve",
+      "finance.export",
+      "workforce.view",
+      "workforce.create",
+      "workforce.edit",
+      "workforce.delete",
+      "workforce.approve",
+      "workforce.export",
+      "interns.view",
+      "interns.create",
+      "interns.edit",
+      "interns.delete",
+      "interns.approve",
+      "interns.export",
+      "mail.view",
+      "mail.create",
+      "mail.edit",
+      "mail.delete",
+      "mail.approve",
+      "mail.export",
+      "security.view",
+      "security.create",
+      "security.edit",
+      "security.delete",
+      "security.approve",
+      "security.export",
+      "system.view",
+      "system.create",
+      "system.edit",
+      "system.delete",
+      "system.approve",
+      "system.export"
+    ],
+    "ADMIN": [
+      "crm.view",
+      "crm.create",
+      "crm.edit",
+      "crm.delete",
+      "crm.approve",
+      "crm.export",
+      "projects.view",
+      "projects.create",
+      "projects.edit",
+      "projects.delete",
+      "projects.approve",
+      "projects.export",
+      "finance.view",
+      "finance.create",
+      "finance.edit",
+      "finance.delete",
+      "finance.approve",
+      "finance.export",
+      "workforce.view",
+      "workforce.create",
+      "workforce.edit",
+      "workforce.delete",
+      "workforce.approve",
+      "workforce.export",
+      "interns.view",
+      "interns.create",
+      "interns.edit",
+      "interns.delete",
+      "interns.approve",
+      "interns.export",
+      "mail.view",
+      "mail.create",
+      "mail.edit",
+      "mail.delete",
+      "mail.approve",
+      "mail.export",
+      "security.view",
+      "security.create",
+      "security.edit",
+      "security.delete",
+      "security.approve",
+      "security.export",
+      "system.view",
+      "system.create",
+      "system.edit",
+      "system.delete",
+      "system.approve",
+      "system.export"
+    ],
+    "HR_ADMIN": [
+      "workforce.view",
+      "workforce.create",
+      "workforce.edit",
+      "workforce.approve",
+      "workforce.export",
+      "interns.view",
+      "interns.create",
+      "interns.edit",
+      "interns.approve",
+      "interns.export",
+      "security.view",
+      "security.approve",
+      "mail.view",
+      "mail.create",
+      "mail.edit"
+    ],
+    "FINANCE_ADMIN": [
+      "finance.view",
+      "finance.create",
+      "finance.edit",
+      "finance.approve",
+      "finance.export",
+      "crm.view",
+      "projects.view",
+      "mail.view",
+      "mail.create"
+    ],
+    "FINANCE": [
+      "finance.view",
+      "finance.create",
+      "finance.edit",
+      "finance.approve",
+      "finance.export",
+      "crm.view",
+      "projects.view",
+      "mail.view",
+      "mail.create"
+    ],
+    "PROJECT_MANAGER": [
+      "projects.view",
+      "projects.create",
+      "projects.edit",
+      "projects.approve",
+      "projects.export",
+      "crm.view",
+      "crm.edit",
+      "workforce.view",
+      "interns.view",
+      "interns.edit",
+      "interns.approve",
+      "mail.view",
+      "mail.create",
+      "mail.edit"
+    ],
+    "EMPLOYEE": [
+      "projects.view",
+      "projects.edit",
+      "workforce.view",
+      "mail.view",
+      "mail.create",
+      "mail.edit"
+    ],
+    "INTERN": [
+      "projects.view",
+      "projects.edit",
+      "interns.view",
+      "mail.view",
+      "mail.create"
+    ],
+    "CLIENT": [
+      "projects.view",
+      "finance.view"
+    ]
+  }
 }

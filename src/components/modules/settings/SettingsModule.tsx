@@ -24,8 +24,9 @@ export const SettingsModule: React.FC = () => {
         <button
           onClick={resetDemoData}
           className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs border border-slate-200"
+          title="Reloads all business data from the authoritative persistent store"
         >
-          <RefreshCw className="w-3.5 h-3.5 text-blue-600" /> Reset System State
+          <RefreshCw className="w-3.5 h-3.5 text-blue-600" /> Sync Authoritative Data
         </button>
       </div>
 

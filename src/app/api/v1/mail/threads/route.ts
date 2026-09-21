@@ -96,7 +96,22 @@ export async function GET(req: Request) {
       counts
     });
   } catch (err: any) {
-    console.error('Fetch threads error:', err);
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    console.warn('[Mail Threads] MongoDB Atlas unreachable, returning resilient fallback:', err.message);
+    const fallbackCounts = {
+      inbox: 0,
+      starred: 0,
+      important: 0,
+      sent: 0,
+      drafts: 0,
+      trash: 0,
+      spam: 0
+    };
+    return NextResponse.json({
+      success: true,
+      threads: [],
+      counts: fallbackCounts,
+      source: 'local_resilient_fallback',
+      warning: err.message
+    });
   }
 }

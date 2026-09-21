@@ -1,48 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
-import { getDatabase } from '@/lib/mongodb';
-import { INITIAL_ENTERPRISE_USERS, INITIAL_AUDIT_LOGS, INITIAL_SESSIONS } from '@/data/superAdminData';
-import { INITIAL_LEADS, INITIAL_PROJECTS, INITIAL_TASKS } from '@/data/mockData';
+import { dataStore } from '@/lib/dataStore';
 
 export async function GET(req: NextRequest) {
   const auth = await requireAuth(req, ['SUPER_ADMIN', 'ADMIN']);
   if (!auth.authenticated || !auth.user) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+    return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
   }
 
-  let totalUsers = INITIAL_ENTERPRISE_USERS.length;
-  let activeUsers = INITIAL_ENTERPRISE_USERS.filter(u => u.status === 'ACTIVE').length;
-  let lockedAccounts = INITIAL_ENTERPRISE_USERS.filter(u => u.status === 'LOCKED').length;
-  let totalProjects = INITIAL_PROJECTS.length;
-  let activeProjects = INITIAL_PROJECTS.filter((p: any) => p.status === 'IN_PROGRESS' || p.status === 'PLANNING').length;
-  let totalTasks = INITIAL_TASKS.length;
-  let openTasks = INITIAL_TASKS.filter((t: any) => t.status !== 'DONE').length;
-  let totalLeads = INITIAL_LEADS.length;
-  let openLeads = INITIAL_LEADS.filter((l: any) => l.status !== 'WON' && l.status !== 'LOST').length;
-  let activeSessionsCount = INITIAL_SESSIONS.filter(s => s.status === 'ACTIVE').length;
-  let totalAuditEvents = INITIAL_AUDIT_LOGS.length;
+  const users = dataStore.getUsers();
+  const projects = dataStore.getProjects();
+  const tasks = dataStore.getTasks();
+  const leads = dataStore.getLeads();
+  const sessions = dataStore.getSessions();
+  const auditLogs = dataStore.getAuditLogs();
 
-  // Try querying live MongoDB collections if connected
-  try {
-    const { db } = await getDatabase();
-    const [uCount, pCount, tCount, lCount, sCount, aCount] = await Promise.all([
-      db.collection('users').countDocuments({}).catch(() => null),
-      db.collection('projects').countDocuments({}).catch(() => null),
-      db.collection('tasks').countDocuments({}).catch(() => null),
-      db.collection('crm_leads').countDocuments({}).catch(() => null),
-      db.collection('security_sessions').countDocuments({ status: 'ACTIVE' }).catch(() => null),
-      db.collection('audit_logs').countDocuments({}).catch(() => null),
-    ]);
-
-    if (uCount !== null && uCount > 0) totalUsers = uCount;
-    if (pCount !== null && pCount > 0) totalProjects = pCount;
-    if (tCount !== null && tCount > 0) totalTasks = tCount;
-    if (lCount !== null && lCount > 0) totalLeads = lCount;
-    if (sCount !== null && sCount > 0) activeSessionsCount = sCount;
-    if (aCount !== null && aCount > 0) totalAuditEvents = aCount;
-  } catch {
-    // Database connection fallback to high-fidelity in-memory state
-  }
+  const totalUsers = users.length;
+  const activeUsers = users.filter(u => u.status === 'ACTIVE').length;
+  const lockedAccounts = users.filter(u => u.status === 'LOCKED').length;
+  const totalProjects = projects.length;
+  const activeProjects = projects.filter(p => p.status === 'In Progress' || p.status === 'Planning').length;
+  const totalTasks = tasks.length;
+  const openTasks = tasks.filter(t => t.status !== 'COMPLETED').length;
+  const totalLeads = leads.length;
+  const openLeads = leads.filter(l => l.status !== 'Lost').length;
+  const activeSessionsCount = sessions.filter(s => s.status === 'ACTIVE').length;
+  const totalAuditEvents = auditLogs.length;
 
   return NextResponse.json({
     success: true,

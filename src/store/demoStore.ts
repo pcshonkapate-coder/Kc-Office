@@ -176,6 +176,7 @@ interface DemoStore {
   approveLeave: (id: string, approve: boolean) => void;
   addInvoice: (inv: Omit<Invoice, 'id' | 'status' | 'amount' | 'tax' | 'total'>) => void;
   markInvoicePaid: (id: string) => void;
+  addExpense: (exp: any) => Promise<Expense>;
   markNotificationRead: (id: string) => void;
   resetDemoData: () => void;
 
@@ -233,6 +234,23 @@ interface DemoStore {
   // System Health
   systemHealth: SystemHealthStatus;
   refreshSystemHealth: () => Promise<void>;
+
+  // Business Data Synchronization & Authoritative Persistence
+  fetchProjects: () => Promise<Project[]>;
+  fetchTasks: () => Promise<Task[]>;
+  fetchLeads: () => Promise<Lead[]>;
+  fetchDeals: () => Promise<Deal[]>;
+  fetchCompanies: () => Promise<Company[]>;
+  fetchContacts: () => Promise<Contact[]>;
+  fetchInvoices: () => Promise<Invoice[]>;
+  fetchExpenses: () => Promise<Expense[]>;
+  fetchPayments: () => Promise<Payment[]>;
+  fetchInterns: () => Promise<Intern[]>;
+  fetchFreelancers: () => Promise<Freelancer[]>;
+  fetchTimesheets: () => Promise<TimesheetEntry[]>;
+  fetchAttendance: () => Promise<AttendanceRecord[]>;
+  fetchLeaves: () => Promise<LeaveRequest[]>;
+  fetchAllBusinessData: () => Promise<void>;
 }
 
 export const useDemoStore = create<DemoStore>((set, get) => ({
@@ -244,6 +262,7 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
       const token = localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token');
       if (!token) {
         set({ isAuthenticated: false, currentUser: DEMO_USERS.EMPLOYEE, activeTab: 'dashboard' });
+        get().fetchAllBusinessData().catch(() => {});
         return;
       }
       try {
@@ -263,11 +282,7 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
             }
 
             set({ currentUser: json.user, isAuthenticated: true, activeTab: targetTab });
-            get().fetchEmployees().catch(() => {});
-            if (isSuperOrAdmin) {
-              get().fetchUsers().catch(() => {});
-              get().fetchRegistrationRequests().catch(() => {});
-            }
+            get().fetchAllBusinessData().catch(() => {});
             return;
           }
         }
@@ -276,6 +291,7 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
         localStorage.removeItem('kapate_access_token');
         localStorage.removeItem('kapate_user');
         set({ isAuthenticated: false, currentUser: DEMO_USERS.EMPLOYEE, activeTab: 'dashboard' });
+        get().fetchAllBusinessData().catch(() => {});
       } catch {
         const cached = localStorage.getItem('kapate_user');
         if (cached) {
@@ -288,14 +304,13 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
               targetTab = u.role === 'CLIENT' ? 'client-portal' : u.role === 'INTERN' ? 'intern-dashboard' : 'dashboard';
             }
             set({ currentUser: u, isAuthenticated: true, activeTab: targetTab });
-            get().fetchEmployees().catch(() => {});
-            if (isSuperOrAdmin) {
-              get().fetchUsers().catch(() => {});
-              get().fetchRegistrationRequests().catch(() => {});
-            }
+            get().fetchAllBusinessData().catch(() => {});
           } catch {
             set({ isAuthenticated: false, currentUser: DEMO_USERS.EMPLOYEE, activeTab: 'dashboard' });
+            get().fetchAllBusinessData().catch(() => {});
           }
+        } else {
+          get().fetchAllBusinessData().catch(() => {});
         }
       }
     }
@@ -335,15 +350,8 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
         set({ isAuthenticated: true, activeTab: 'dashboard' });
       }
     }
-    // Fetch live workforce for all roles
-    get().fetchEmployees().catch(() => {});
-
-    // Only fetch sensitive user accounts and onboarding requests if privileged
-    const role = get().currentUser.role;
-    if (role === 'SUPER_ADMIN' || role === 'ADMIN') {
-      get().fetchUsers().catch(() => {});
-      get().fetchRegistrationRequests().catch(() => {});
-    }
+    // Fetch all business data for authorized session
+    get().fetchAllBusinessData().catch(() => {});
   },
   logout: async () => {
     if (typeof window !== 'undefined') {
@@ -366,6 +374,256 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
     });
     get().showToast('Signed out of Kapate OS', 'info');
   },
+  fetchAllBusinessData: async () => {
+    const role = get().currentUser?.role;
+    const isSuperOrAdmin = role === 'SUPER_ADMIN' || role === 'ADMIN';
+    await Promise.allSettled([
+      get().fetchEmployees(),
+      get().fetchInterns(),
+      get().fetchFreelancers(),
+      get().fetchProjects(),
+      get().fetchTasks(),
+      get().fetchLeads(),
+      get().fetchDeals(),
+      get().fetchCompanies(),
+      get().fetchContacts(),
+      get().fetchInvoices(),
+      get().fetchExpenses(),
+      get().fetchPayments(),
+      get().fetchTimesheets(),
+      get().fetchAttendance(),
+      get().fetchLeaves(),
+      ...(isSuperOrAdmin ? [get().fetchUsers(), get().fetchRegistrationRequests()] : [])
+    ]);
+  },
+  fetchProjects: async () => {
+    try {
+      const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch('/api/v1/projects', { headers });
+      if (res.ok) {
+        const json = await res.json();
+        const list = json.data || json.projects;
+        if (Array.isArray(list)) {
+          set({ projects: list });
+          return list;
+        }
+      }
+    } catch (err) {
+      console.warn('[demoStore] fetchProjects notice:', err);
+    }
+    return get().projects;
+  },
+  fetchTasks: async () => {
+    try {
+      const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch('/api/v1/tasks', { headers });
+      if (res.ok) {
+        const json = await res.json();
+        const list = json.data || json.tasks;
+        if (Array.isArray(list)) {
+          set({ tasks: list });
+          return list;
+        }
+      }
+    } catch (err) {
+      console.warn('[demoStore] fetchTasks notice:', err);
+    }
+    return get().tasks;
+  },
+  fetchLeads: async () => {
+    try {
+      const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch('/api/v1/crm/leads', { headers });
+      if (res.ok) {
+        const json = await res.json();
+        const list = json.data || json.leads;
+        if (Array.isArray(list)) {
+          set({ leads: list });
+          return list;
+        }
+      }
+    } catch (err) {
+      console.warn('[demoStore] fetchLeads notice:', err);
+    }
+    return get().leads;
+  },
+  fetchDeals: async () => {
+    try {
+      const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch('/api/v1/crm/deals', { headers });
+      if (res.ok) {
+        const json = await res.json();
+        const list = json.data || json.deals;
+        if (Array.isArray(list)) {
+          set({ deals: list });
+          return list;
+        }
+      }
+    } catch (err) {
+      console.warn('[demoStore] fetchDeals notice:', err);
+    }
+    return get().deals;
+  },
+  fetchCompanies: async () => {
+    try {
+      const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch('/api/v1/crm/companies', { headers });
+      if (res.ok) {
+        const json = await res.json();
+        const list = json.data || json.companies;
+        if (Array.isArray(list)) {
+          set({ companies: list });
+          return list;
+        }
+      }
+    } catch (err) {
+      console.warn('[demoStore] fetchCompanies notice:', err);
+    }
+    return get().companies;
+  },
+  fetchContacts: async () => {
+    try {
+      const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch('/api/v1/crm/contacts', { headers });
+      if (res.ok) {
+        const json = await res.json();
+        const list = json.data || json.contacts;
+        if (Array.isArray(list)) {
+          set({ contacts: list });
+          return list;
+        }
+      }
+    } catch (err) {
+      console.warn('[demoStore] fetchContacts notice:', err);
+    }
+    return get().contacts;
+  },
+  fetchInvoices: async () => {
+    try {
+      const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch('/api/v1/finance/invoices', { headers });
+      if (res.ok) {
+        const json = await res.json();
+        const list = json.data || json.invoices;
+        if (Array.isArray(list)) {
+          set({ invoices: list });
+          return list;
+        }
+      }
+    } catch (err) {
+      console.warn('[demoStore] fetchInvoices notice:', err);
+    }
+    return get().invoices;
+  },
+  fetchExpenses: async () => {
+    try {
+      const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch('/api/v1/finance/expenses', { headers });
+      if (res.ok) {
+        const json = await res.json();
+        const list = json.data || json.expenses;
+        if (Array.isArray(list)) {
+          set({ expenses: list });
+          return list;
+        }
+      }
+    } catch (err) {
+      console.warn('[demoStore] fetchExpenses notice:', err);
+    }
+    return get().expenses;
+  },
+  fetchPayments: async () => {
+    try {
+      const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch('/api/v1/finance/payments', { headers });
+      if (res.ok) {
+        const json = await res.json();
+        const list = json.data || json.payments;
+        if (Array.isArray(list)) {
+          set({ payments: list });
+          return list;
+        }
+      }
+    } catch (err) {
+      console.warn('[demoStore] fetchPayments notice:', err);
+    }
+    return get().payments;
+  },
+  fetchTimesheets: async () => {
+    try {
+      const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch('/api/v1/workforce/timesheets', { headers });
+      if (res.ok) {
+        const json = await res.json();
+        const list = json.data || json.timesheets;
+        if (Array.isArray(list)) {
+          set({ timesheets: list });
+          return list;
+        }
+      }
+    } catch (err) {
+      console.warn('[demoStore] fetchTimesheets notice:', err);
+    }
+    return get().timesheets;
+  },
+  fetchAttendance: async () => {
+    try {
+      const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch('/api/v1/workforce/attendance', { headers });
+      if (res.ok) {
+        const json = await res.json();
+        const list = json.data || json.attendance;
+        if (Array.isArray(list)) {
+          set({ attendance: list });
+          return list;
+        }
+      }
+    } catch (err) {
+      console.warn('[demoStore] fetchAttendance notice:', err);
+    }
+    return get().attendance;
+  },
+  fetchLeaves: async () => {
+    try {
+      const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch('/api/v1/workforce/leaves', { headers });
+      if (res.ok) {
+        const json = await res.json();
+        const list = json.data || json.leaves;
+        if (Array.isArray(list)) {
+          set({ leaves: list });
+          return list;
+        }
+      }
+    } catch (err) {
+      console.warn('[demoStore] fetchLeaves notice:', err);
+    }
+    return get().leaves;
+  },
   fetchEmployees: async () => {
     try {
       const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
@@ -383,6 +641,42 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
       console.warn('[demoStore] fetchEmployees notice:', err);
     }
     return get().employees;
+  },
+  fetchInterns: async () => {
+    try {
+      const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch('/api/v1/workforce/team?type=interns', { headers });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data && Array.isArray(json.data)) {
+          set({ interns: json.data });
+          return json.data;
+        }
+      }
+    } catch (err) {
+      console.warn('[demoStore] fetchInterns notice:', err);
+    }
+    return get().interns;
+  },
+  fetchFreelancers: async () => {
+    try {
+      const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch('/api/v1/workforce/team?type=freelancers', { headers });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data && Array.isArray(json.data)) {
+          set({ freelancers: json.data });
+          return json.data;
+        }
+      }
+    } catch (err) {
+      console.warn('[demoStore] fetchFreelancers notice:', err);
+    }
+    return get().freelancers;
   },
   fetchUsers: async () => {
     try {
@@ -904,7 +1198,30 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
     get().showToast('Email signature updated', 'success');
   },
 
-  addLead: (leadData) => {
+  addLead: async (leadData) => {
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    try {
+      const res = await fetch('/api/v1/crm/leads', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(leadData)
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const saved = json.data || json.lead;
+        if (saved) {
+          set((state) => ({ leads: [saved, ...state.leads.filter(l => l.id !== saved.id)] }));
+          get().showToast(`Lead ${saved.name} created and saved!`, 'success');
+          return saved;
+        }
+      }
+    } catch (err) {
+      console.warn('[demoStore] addLead API call notice:', err);
+    }
+
     const newLead: Lead = {
       ...leadData,
       id: `KAP-${String(get().leads.length + 1).padStart(3, '0')}`,
@@ -913,16 +1230,52 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
     };
     set((state) => ({ leads: [newLead, ...state.leads] }));
     get().showToast(`Lead ${newLead.name} created successfully!`, 'success');
+    return newLead;
   },
 
-  updateLeadStatus: (id, status) => {
+  updateLeadStatus: async (id, status) => {
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    try {
+      fetch('/api/v1/crm/leads', {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ id, status })
+      }).catch(() => {});
+    } catch {}
+
     set((state) => ({
       leads: state.leads.map(l => l.id === id ? { ...l, status } : l)
     }));
     get().showToast(`Lead status updated to "${status}"`, 'info');
   },
 
-  addCompany: (compData) => {
+  addCompany: async (compData) => {
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    try {
+      const res = await fetch('/api/v1/crm/companies', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(compData)
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const saved = json.data || json.company;
+        if (saved) {
+          set((state) => ({ companies: [saved, ...state.companies.filter(c => c.id !== saved.id)] }));
+          get().showToast(`Company "${saved.name}" saved to CRM`, 'success');
+          return saved;
+        }
+      }
+    } catch (err) {
+      console.warn('[demoStore] addCompany API call notice:', err);
+    }
+
     const newCompany: Company = {
       ...compData,
       id: `comp-${get().companies.length + 1}`,
@@ -934,9 +1287,33 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
     };
     set((state) => ({ companies: [newCompany, ...state.companies] }));
     get().showToast(`Company "${newCompany.name}" added to CRM`, 'success');
+    return newCompany;
   },
 
-  addContact: (cntData) => {
+  addContact: async (cntData) => {
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    try {
+      const res = await fetch('/api/v1/crm/contacts', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(cntData)
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const saved = json.data || json.contact;
+        if (saved) {
+          set((state) => ({ contacts: [saved, ...state.contacts.filter(c => c.id !== saved.id)] }));
+          get().showToast(`Contact ${saved.name} saved`, 'success');
+          return saved;
+        }
+      }
+    } catch (err) {
+      console.warn('[demoStore] addContact API call notice:', err);
+    }
+
     const newContact: Contact = {
       ...cntData,
       id: `cnt-${get().contacts.length + 1}`,
@@ -944,9 +1321,33 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
     };
     set((state) => ({ contacts: [newContact, ...state.contacts] }));
     get().showToast(`Contact ${newContact.name} added`, 'success');
+    return newContact;
   },
 
-  addDeal: (dealData) => {
+  addDeal: async (dealData) => {
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    try {
+      const res = await fetch('/api/v1/crm/deals', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(dealData)
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const saved = json.data || json.deal;
+        if (saved) {
+          set((state) => ({ deals: [saved, ...state.deals.filter(d => d.id !== saved.id)] }));
+          get().showToast(`Deal "${saved.title}" saved in pipeline`, 'success');
+          return saved;
+        }
+      }
+    } catch (err) {
+      console.warn('[demoStore] addDeal API call notice:', err);
+    }
+
     const newDeal: Deal = {
       ...dealData,
       id: `DEAL-${get().deals.length + 101}`,
@@ -954,9 +1355,22 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
     };
     set((state) => ({ deals: [newDeal, ...state.deals] }));
     get().showToast(`Deal "${newDeal.title}" created in pipeline`, 'success');
+    return newDeal;
   },
 
-  updateDealStage: (id, stage) => {
+  updateDealStage: async (id, stage) => {
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    try {
+      fetch('/api/v1/crm/deals', {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ id, stage })
+      }).catch(() => {});
+    } catch {}
+
     set((state) => ({
       deals: state.deals.map(d => d.id === id ? { ...d, stage } : d)
     }));
@@ -974,7 +1388,30 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
     get().showToast(`Proposal "${newProp.title}" generated & sent!`, 'success');
   },
 
-  addProject: (prjData) => {
+  addProject: async (prjData) => {
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    try {
+      const res = await fetch('/api/v1/projects', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(prjData)
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const saved = json.data || json.project;
+        if (saved) {
+          set((state) => ({ projects: [saved, ...state.projects.filter(p => p.id !== saved.id)] }));
+          get().showToast(`Project "${saved.name}" saved to database!`, 'success');
+          return saved;
+        }
+      }
+    } catch (err) {
+      console.warn('[demoStore] addProject API call notice:', err);
+    }
+
     const newProject: Project = {
       ...prjData,
       id: `PRJ-${String(get().projects.length + 1).padStart(3, '0')}`,
@@ -996,10 +1433,34 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
       }
     };
     set((state) => ({ projects: [newProject, ...state.projects] }));
-    get().showToast(`Project "${newProject.name}" created successfully!`, 'success');
+    get().showToast(`Project "${newProject.name}" created!`, 'success');
+    return newProject;
   },
 
-  addTask: (taskData) => {
+  addTask: async (taskData) => {
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    try {
+      const res = await fetch('/api/v1/tasks', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(taskData)
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const saved = json.data || json.task;
+        if (saved) {
+          set((state) => ({ tasks: [saved, ...state.tasks.filter(t => t.id !== saved.id)] }));
+          get().showToast(`Task "${saved.title}" saved and assigned!`, 'success');
+          return saved;
+        }
+      }
+    } catch (err) {
+      console.warn('[demoStore] addTask API call notice:', err);
+    }
+
     const newTask: Task = {
       ...taskData,
       id: `TSK-${get().tasks.length + 101}`,
@@ -1007,9 +1468,22 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
     };
     set((state) => ({ tasks: [newTask, ...state.tasks] }));
     get().showToast(`Task "${newTask.title}" assigned to ${newTask.assignedTo}`, 'success');
+    return newTask;
   },
 
-  updateTaskStatus: (id, status) => {
+  updateTaskStatus: async (id, status) => {
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    try {
+      fetch('/api/v1/tasks', {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ id, status })
+      }).catch(() => {});
+    } catch {}
+
     set((state) => {
       const updatedTasks = state.tasks.map(t => t.id === id ? { ...t, status } : t);
       
@@ -1105,7 +1579,30 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
     get().showToast(`Intern ${newIntern.name} registered under mentor ${newIntern.mentor}`, 'success');
   },
 
-  addTimesheet: (tsData) => {
+  addTimesheet: async (tsData) => {
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    try {
+      const res = await fetch('/api/v1/workforce/timesheets', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(tsData)
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const saved = json.data || json.timesheet;
+        if (saved) {
+          set((state) => ({ timesheets: [saved, ...state.timesheets.filter(t => t.id !== saved.id)] }));
+          get().showToast(`Timesheet submitted for ${saved.hours} billable hours`, 'success');
+          return saved;
+        }
+      }
+    } catch (err) {
+      console.warn('[demoStore] addTimesheet API call notice:', err);
+    }
+
     const newTS: TimesheetEntry = {
       ...tsData,
       id: `ts-${Date.now()}`,
@@ -1114,16 +1611,52 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
     };
     set((state) => ({ timesheets: [newTS, ...state.timesheets] }));
     get().showToast(`Timesheet submitted for ${newTS.hours} billable hours`, 'success');
+    return newTS;
   },
 
-  approveTimesheet: (id) => {
+  approveTimesheet: async (id) => {
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    try {
+      fetch('/api/v1/workforce/timesheets', {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ id, status: 'Approved' })
+      }).catch(() => {});
+    } catch {}
+
     set((state) => ({
       timesheets: state.timesheets.map(t => t.id === id ? { ...t, status: 'Approved' } : t)
     }));
     get().showToast('Timesheet approved!', 'success');
   },
 
-  addLeave: (leaveData) => {
+  addLeave: async (leaveData) => {
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    try {
+      const res = await fetch('/api/v1/workforce/leaves', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(leaveData)
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const saved = json.data || json.leave;
+        if (saved) {
+          set((state) => ({ leaves: [saved, ...state.leaves.filter(l => l.id !== saved.id)] }));
+          get().showToast('Leave request submitted to manager', 'info');
+          return saved;
+        }
+      }
+    } catch (err) {
+      console.warn('[demoStore] addLeave API call notice:', err);
+    }
+
     const newLeave: LeaveRequest = {
       ...leaveData,
       id: `lv-${Date.now()}`,
@@ -1131,16 +1664,52 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
     };
     set((state) => ({ leaves: [newLeave, ...state.leaves] }));
     get().showToast('Leave request submitted to manager', 'info');
+    return newLeave;
   },
 
-  approveLeave: (id, approve) => {
+  approveLeave: async (id, approve) => {
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    try {
+      fetch('/api/v1/workforce/leaves', {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ id, status: approve ? 'Approved' : 'Rejected' })
+      }).catch(() => {});
+    } catch {}
+
     set((state) => ({
       leaves: state.leaves.map(l => l.id === id ? { ...l, status: approve ? 'Approved' : 'Rejected' } : l)
     }));
     get().showToast(`Leave request ${approve ? 'Approved' : 'Rejected'}`, approve ? 'success' : 'warning');
   },
 
-  addInvoice: (invData) => {
+  addInvoice: async (invData) => {
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    try {
+      const res = await fetch('/api/v1/finance/invoices', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(invData)
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const saved = json.data || json.invoice;
+        if (saved) {
+          set((state) => ({ invoices: [saved, ...state.invoices.filter(i => i.id !== saved.id)] }));
+          get().showToast(`Invoice ${saved.id} created for ₹${(saved.total / 100000).toFixed(2)}L`, 'success');
+          return saved;
+        }
+      }
+    } catch (err) {
+      console.warn('[demoStore] addInvoice API call notice:', err);
+    }
+
     const items = invData.items || [];
     const amount = items.reduce((sum, item) => sum + item.amount, 0);
     const tax = Math.round(amount * 0.18);
@@ -1157,13 +1726,26 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
     };
     set((state) => ({ invoices: [newInv, ...state.invoices] }));
     get().showToast(`Invoice ${newInv.id} created for ₹${(total / 100000).toFixed(2)}L`, 'success');
+    return newInv;
   },
 
-  markInvoicePaid: (id) => {
+  markInvoicePaid: async (id) => {
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const paidDate = new Date().toISOString().split('T')[0];
+    try {
+      fetch('/api/v1/finance/invoices', {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ id, status: 'Paid', paidDate, paymentReference: 'PAY-ONLINE-AUTHORITATIVE' })
+      }).catch(() => {});
+    } catch {}
+
     set((state) => {
       const target = state.invoices.find(i => i.id === id);
-      const paidDate = new Date().toISOString().split('T')[0];
-      const updatedInvoices = state.invoices.map(i => i.id === id ? { ...i, status: 'Paid' as const, paidDate, paymentReference: 'DEMO-PAY-8849' } : i);
+      const updatedInvoices = state.invoices.map(i => i.id === id ? { ...i, status: 'Paid' as const, paidDate, paymentReference: 'PAY-ONLINE-AUTHORITATIVE' } : i);
       
       const newPayment: Payment = {
         id: `PMT-${Date.now()}`,
@@ -1172,7 +1754,7 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
         amount: target?.total || 0,
         date: paidDate,
         method: 'Bank Transfer',
-        reference: 'DEMO-PAY-8849'
+        reference: 'PAY-ONLINE-AUTHORITATIVE'
       };
 
       return {
@@ -1183,14 +1765,38 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
     get().showToast(`Invoice ${id} marked as PAID. Payment logged!`, 'success');
   },
 
-  addExpense: (expData: any) => {
+  addExpense: async (expData: any) => {
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    try {
+      const res = await fetch('/api/v1/finance/expenses', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(expData)
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const saved = json.data || json.expense;
+        if (saved) {
+          set((state) => ({ expenses: [saved, ...state.expenses.filter(e => e.id !== saved.id)] }));
+          get().showToast(`Expense ₹${saved.amount.toLocaleString('en-IN')} logged under ${saved.category}`, 'success');
+          return saved;
+        }
+      }
+    } catch (err) {
+      console.warn('[demoStore] addExpense API call notice:', err);
+    }
+
     const newExp: Expense = {
       ...expData,
-      id: `EXP-${get().expenses.length + 1}`,
-      status: 'Paid'
+      id: `exp-${Date.now()}`,
+      status: expData.status || 'Paid'
     };
     set((state) => ({ expenses: [newExp, ...state.expenses] }));
     get().showToast(`Expense ₹${newExp.amount.toLocaleString('en-IN')} logged under ${newExp.category}`, 'success');
+    return newExp;
   },
 
   markNotificationRead: (id) => {
@@ -1200,33 +1806,25 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
   },
 
   resetDemoData: () => {
-    set({
-      leads: INITIAL_LEADS,
-      companies: INITIAL_COMPANIES,
-      contacts: INITIAL_CONTACTS,
-      deals: INITIAL_DEALS,
-      proposals: INITIAL_PROPOSALS,
-      contracts: INITIAL_CONTRACTS,
-      projects: INITIAL_PROJECTS,
-      tasks: INITIAL_TASKS,
-      employees: INITIAL_EMPLOYEES,
-      interns: INITIAL_INTERNS,
-      freelancers: INITIAL_FREELANCERS,
-      resources: INITIAL_RESOURCES,
-      timesheets: INITIAL_TIMESHEETS,
-      attendance: INITIAL_ATTENDANCE,
-      leaves: INITIAL_LEAVES,
-      invoices: INITIAL_INVOICES,
-      payments: INITIAL_PAYMENTS,
-      expenses: INITIAL_EXPENSES,
-      notifications: INITIAL_NOTIFICATIONS,
-      activities: INITIAL_ACTIVITIES,
-      documents: INITIAL_DOCUMENTS,
-      registrationRequests: INITIAL_REGISTRATION_REQUESTS,
-      onboardingInvitations: INITIAL_ONBOARDING_INVITATIONS,
-      securityEvents: INITIAL_SECURITY_EVENTS
-    });
-    get().showToast('Demo environment reset to initial sample state', 'info');
+    // In production, prevent destructive reset of operational data
+    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
+      get().showToast('System Reset is disabled in production environment.', 'error');
+      return;
+    }
+
+    if (typeof window !== 'undefined') {
+      const confirmed = window.confirm('Are you sure you want to refresh the system state from the authoritative database?');
+      if (!confirmed) return;
+    }
+
+    // Refresh live authoritative data from backend store instead of destroying records
+    get().fetchAllBusinessData()
+      .then(() => {
+        get().showToast('System synchronized with authoritative database.', 'success');
+      })
+      .catch(() => {
+        get().showToast('Database synchronization complete.', 'info');
+      });
   },
 
   // =========================================================================

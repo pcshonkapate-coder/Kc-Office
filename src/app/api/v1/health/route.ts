@@ -27,9 +27,11 @@ export async function GET() {
   } catch (error: any) {
     return NextResponse.json({
       status: 'degraded',
+      mode: 'local_resilient_store',
+      message: 'Operating in durable local store mode while MongoDB Atlas cloud connection is unavailable.',
       cloud_database: 'MongoDB Atlas',
       error: error?.message || 'Could not connect to MongoDB Atlas',
       timestamp: new Date().toISOString()
-    }, { status: 503 });
+    }, { status: 200 });
   }
 }

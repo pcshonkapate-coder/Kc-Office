@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDemoStore } from '../../../store/demoStore';
 import { Project, Task, TaskStatus } from '../../../types';
 import {
@@ -20,6 +20,14 @@ export const ProjectsModule: React.FC = () => {
   const [subTab, setSubTab] = useState<'grid' | 'kanban'>(activeTab === 'tasks' ? 'kanban' : 'grid');
   const [selectedProject, setSelectedProject] = useState<Project | null>(projects[0] || null);
   const [projectDetailTab, setProjectDetailTab] = useState<'overview' | 'tasks' | 'milestones' | 'profitability'>('overview');
+
+  useEffect(() => {
+    if (!selectedProject && projects.length > 0) {
+      setSelectedProject(projects[0]);
+    } else if (selectedProject && !projects.some(p => p.id === selectedProject.id) && projects.length > 0) {
+      setSelectedProject(projects[0]);
+    }
+  }, [projects, selectedProject]);
   
   // Filtering states for tasks
   const [taskRoleFilter, setTaskRoleFilter] = useState<'ALL' | 'MANAGER' | 'CLIENT' | 'ENGINEER'>('ALL');

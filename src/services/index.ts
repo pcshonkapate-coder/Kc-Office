@@ -22,7 +22,7 @@ export const authService = {
   },
   me: async () => {
     try {
-      const res = await fetch('/api/v1/auth/me');
+      const res = await fetch('/api/v1/auth/me', { headers: getHeaders() });
       const data = await res.json();
       return data;
     } catch (err) {
@@ -32,200 +32,121 @@ export const authService = {
   },
   logout: async () => {
     try {
-      await fetch('/api/v1/auth/logout', { method: 'POST' });
+      await fetch('/api/v1/auth/logout', { method: 'POST', headers: getHeaders() });
     } catch (err) {
       console.error('authService.logout error:', err);
     }
   }
 };
 
+const getHeaders = (withBody = false): Record<string, string> => {
+  const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+  const headers: Record<string, string> = {};
+  if (withBody) headers['Content-Type'] = 'application/json';
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return headers;
+};
+
 export const leadService = {
   getLeads: async () => {
     try {
-      const res = await fetch('/api/v1/crm/leads');
+      const res = await fetch('/api/v1/crm/leads', { headers: getHeaders() });
       const json = await res.json();
-      if (json.data) return json.data as Lead[];
+      const list = json.data || json.leads;
+      if (Array.isArray(list)) return list as Lead[];
     } catch (e) {
       console.error(e);
     }
     return useDemoStore.getState().leads;
   },
   addLead: async (lead: Omit<Lead, 'id' | 'created'>) => {
-    try {
-      const res = await fetch('/api/v1/crm/leads', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(lead),
-      });
-      const json = await res.json();
-      if (json.data) {
-        useDemoStore.getState().addLead(lead);
-        return json.data;
-      }
-    } catch (e) {
-      console.error(e);
-    }
-    useDemoStore.getState().addLead(lead);
+    return useDemoStore.getState().addLead(lead);
   },
   updateStatus: async (id: string, status: Lead['status']) => {
-    try {
-      await fetch('/api/v1/crm/leads', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, status }),
-      });
-    } catch (e) {
-      console.error(e);
-    }
-    useDemoStore.getState().updateLeadStatus(id, status);
+    return useDemoStore.getState().updateLeadStatus(id, status);
   }
 };
 
 export const dealService = {
   getDeals: async () => {
     try {
-      const res = await fetch('/api/v1/crm/deals');
+      const res = await fetch('/api/v1/crm/deals', { headers: getHeaders() });
       const json = await res.json();
-      if (json.data) return json.data as Deal[];
+      const list = json.data || json.deals;
+      if (Array.isArray(list)) return list as Deal[];
     } catch (e) {
       console.error(e);
     }
     return useDemoStore.getState().deals;
   },
   addDeal: async (deal: Omit<Deal, 'id' | 'created'>) => {
-    try {
-      const res = await fetch('/api/v1/crm/deals', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(deal),
-      });
-      const json = await res.json();
-      if (json.data) {
-        useDemoStore.getState().addDeal(deal);
-        return json.data;
-      }
-    } catch (e) {
-      console.error(e);
-    }
-    useDemoStore.getState().addDeal(deal);
+    return useDemoStore.getState().addDeal(deal);
   },
   updateStage: async (id: string, stage: Deal['stage']) => {
-    try {
-      await fetch('/api/v1/crm/deals', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, stage }),
-      });
-    } catch (e) {
-      console.error(e);
-    }
-    useDemoStore.getState().updateDealStage(id, stage);
+    return useDemoStore.getState().updateDealStage(id, stage);
   }
 };
 
 export const companyService = {
   getCompanies: async () => {
     try {
-      const res = await fetch('/api/v1/crm/companies');
+      const res = await fetch('/api/v1/crm/companies', { headers: getHeaders() });
       const json = await res.json();
-      if (json.data) return json.data as Company[];
+      const list = json.data || json.companies;
+      if (Array.isArray(list)) return list as Company[];
     } catch (e) {
       console.error(e);
     }
     return useDemoStore.getState().companies;
   },
   addCompany: async (comp: Omit<Company, 'id' | 'contactsCount' | 'dealsCount' | 'activeProjects' | 'totalRevenue' | 'contacts'>) => {
-    try {
-      await fetch('/api/v1/crm/companies', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(comp),
-      });
-    } catch (e) {
-      console.error(e);
-    }
-    useDemoStore.getState().addCompany(comp);
+    return useDemoStore.getState().addCompany(comp);
   }
 };
 
 export const projectService = {
   getProjects: async () => {
     try {
-      const res = await fetch('/api/v1/projects');
+      const res = await fetch('/api/v1/projects', { headers: getHeaders() });
       const json = await res.json();
-      if (json.data) return json.data as Project[];
+      const list = json.data || json.projects;
+      if (Array.isArray(list)) return list as Project[];
     } catch (e) {
       console.error(e);
     }
     return useDemoStore.getState().projects;
   },
   addProject: async (prj: Omit<Project, 'id' | 'spentBudget' | 'progress' | 'status' | 'milestones' | 'profitability'>) => {
-    try {
-      const res = await fetch('/api/v1/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(prj),
-      });
-      const json = await res.json();
-      if (json.data) {
-        useDemoStore.getState().addProject(prj);
-        return json.data;
-      }
-    } catch (e) {
-      console.error(e);
-    }
-    useDemoStore.getState().addProject(prj);
+    return useDemoStore.getState().addProject(prj);
   }
 };
 
 export const taskService = {
   getTasks: async () => {
     try {
-      const res = await fetch('/api/v1/tasks');
+      const res = await fetch('/api/v1/tasks', { headers: getHeaders() });
       const json = await res.json();
-      if (json.data) return json.data as Task[];
+      const list = json.data || json.tasks;
+      if (Array.isArray(list)) return list as Task[];
     } catch (e) {
       console.error(e);
     }
     return useDemoStore.getState().tasks;
   },
   addTask: async (task: Omit<Task, 'id' | 'loggedHours'>) => {
-    try {
-      const res = await fetch('/api/v1/tasks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(task),
-      });
-      const json = await res.json();
-      if (json.data) {
-        useDemoStore.getState().addTask(task);
-        return json.data;
-      }
-    } catch (e) {
-      console.error(e);
-    }
-    useDemoStore.getState().addTask(task);
+    return useDemoStore.getState().addTask(task);
   },
   updateStatus: async (id: string, status: Task['status']) => {
-    try {
-      await fetch('/api/v1/tasks', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, status }),
-      });
-    } catch (e) {
-      console.error(e);
-    }
-    useDemoStore.getState().updateTaskStatus(id, status);
+    return useDemoStore.getState().updateTaskStatus(id, status);
   }
 };
 
 export const employeeService = {
   getEmployees: async () => {
     try {
-      const res = await fetch('/api/v1/workforce/team?type=employees');
+      const res = await fetch('/api/v1/workforce/team?type=employees', { headers: getHeaders() });
       const json = await res.json();
-      if (json.data) return json.data as Employee[];
+      if (json.data && Array.isArray(json.data)) return json.data as Employee[];
     } catch (e) {
       console.error(e);
     }
@@ -233,9 +154,9 @@ export const employeeService = {
   },
   getInterns: async () => {
     try {
-      const res = await fetch('/api/v1/workforce/team?type=interns');
+      const res = await fetch('/api/v1/workforce/team?type=interns', { headers: getHeaders() });
       const json = await res.json();
-      if (json.data) return json.data as Intern[];
+      if (json.data && Array.isArray(json.data)) return json.data as Intern[];
     } catch (e) {
       console.error(e);
     }
@@ -248,37 +169,20 @@ export const employeeService = {
 export const invoiceService = {
   getInvoices: async () => {
     try {
-      const res = await fetch('/api/v1/finance/invoices');
+      const res = await fetch('/api/v1/finance/invoices', { headers: getHeaders() });
       const json = await res.json();
-      if (json.data) return json.data as Invoice[];
+      const list = json.data || json.invoices;
+      if (Array.isArray(list)) return list as Invoice[];
     } catch (e) {
       console.error(e);
     }
     return useDemoStore.getState().invoices;
   },
   addInvoice: async (inv: Omit<Invoice, 'id' | 'status' | 'amount' | 'tax' | 'total'>) => {
-    try {
-      await fetch('/api/v1/finance/invoices', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(inv),
-      });
-    } catch (e) {
-      console.error(e);
-    }
-    useDemoStore.getState().addInvoice(inv);
+    return useDemoStore.getState().addInvoice(inv);
   },
   markPaid: async (id: string) => {
-    try {
-      await fetch('/api/v1/finance/invoices', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, status: 'Paid', paidDate: new Date().toISOString().split('T')[0] }),
-      });
-    } catch (e) {
-      console.error(e);
-    }
-    useDemoStore.getState().markInvoicePaid(id);
+    return useDemoStore.getState().markInvoicePaid(id);
   }
 };
 

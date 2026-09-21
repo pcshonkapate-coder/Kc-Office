@@ -83,33 +83,48 @@ SERVICES = [
     ("IT Solutions & Cloud", "IT_SOLUTIONS", "Cloud migration, DevOps, security, and IT infrastructure advisory.", "IT Advisory"),
 ]
 
-def init_production_database():
-    logger.info("Dropping and recreating clean relational database tables...")
-    Base.metadata.drop_all(bind=engine)
+def init_production_database(force_drop: bool = False):
+    if force_drop:
+        env = os.environ.get("ENVIRONMENT", "development").lower()
+        if env == "production":
+            logger.error("FATAL: Cannot drop tables in PRODUCTION environment.")
+            sys.exit(1)
+        logger.warning("FORCED: Dropping and recreating tables (NON-PRODUCTION ONLY)...")
+        Base.metadata.drop_all(bind=engine)
+    
+    logger.info("Ensuring all normalized relational tables are created (non-destructive)...")
     Base.metadata.create_all(bind=engine)
-    logger.info("All normalized relational tables created.")
+    logger.info("Relational tables verified.")
 
     db = SessionLocal()
     try:
-        # 1. Seed Roles
+        # 1. Seed / Upsert Roles (Idempotent)
         role_map = {}
         for name, desc, is_sys in STANDARD_ROLES:
-            role = Role(name=name, description=desc, is_system=is_sys)
-            db.add(role)
-            db.flush()
-            role_map[name] = role
-        logger.info(f"Seeded {len(role_map)} standard RBAC roles.")
+            existing_role = db.query(Role).filter(Role.name == name).first()
+            if not existing_role:
+                role = Role(name=name, description=desc, is_system=is_sys)
+                db.add(role)
+                db.flush()
+                role_map[name] = role
+            else:
+                role_map[name] = existing_role
+        logger.info(f"Verified {len(role_map)} standard RBAC roles.")
 
-        # 2. Seed Permissions
+        # 2. Seed / Upsert Permissions (Idempotent)
         perm_map = {}
         for code, module, desc in STANDARD_PERMISSIONS:
-            perm = Permission(code=code, module=module.upper(), description=desc)
-            db.add(perm)
-            db.flush()
-            perm_map[code] = perm
-        logger.info(f"Seeded {len(perm_map)} standard permissions.")
+            existing_perm = db.query(Permission).filter(Permission.code == code).first()
+            if not existing_perm:
+                perm = Permission(code=code, module=module.upper(), description=desc)
+                db.add(perm)
+                db.flush()
+                perm_map[code] = perm
+            else:
+                perm_map[code] = existing_perm
+        logger.info(f"Verified {len(perm_map)} standard permissions.")
 
-        # 3. Associate Permissions to Roles
+        # 3. Associate Permissions to Roles (Idempotent)
         role_perm_matrix = {
             "superadmin": list(perm_map.keys()),
             "partner": [p for p in perm_map.keys() if not p.startswith("system:")],
@@ -121,58 +136,86 @@ def init_production_database():
         }
 
         for rname, perms in role_perm_matrix.items():
-            r = role_map[rname]
+            r = role_map.get(rname)
+            if not r:
+                continue
             for pcode in perms:
                 if pcode in perm_map:
-                    db.add(RolePermission(role_id=r.id, permission_id=perm_map[pcode].id))
+                    p = perm_map[pcode]
+                    exists = db.query(RolePermission).filter(
+                        RolePermission.role_id == r.id,
+                        RolePermission.permission_id == p.id
+                    ).first()
+                    if not exists:
+                        db.add(RolePermission(role_id=r.id, permission_id=p.id))
         db.flush()
-        logger.info("Associated RBAC permission matrix to roles.")
+        logger.info("Verified RBAC permission matrix mapping.")
 
-        # 4. Seed Departments
+        # 4. Seed / Upsert Departments (Idempotent)
         dept_map = {}
         for name, code in DEPARTMENTS:
-            dept = Department(name=name, code=code, is_active=True)
-            db.add(dept)
-            db.flush()
-            dept_map[name] = dept
-        logger.info(f"Seeded {len(dept_map)} core departments.")
+            existing_dept = db.query(Department).filter((Department.name == name) | (Department.code == code)).first()
+            if not existing_dept:
+                dept = Department(name=name, code=code, is_active=True)
+                db.add(dept)
+                db.flush()
+                dept_map[name] = dept
+            else:
+                dept_map[name] = existing_dept
+        logger.info(f"Verified {len(dept_map)} core departments.")
 
-        # 5. Seed Core Services
+        # 5. Seed / Upsert Core Services (Idempotent)
         svc_map = {}
         for name, code, desc, cat in SERVICES:
-            svc = Service(name=name, code=code, description=desc, category=cat, is_active=True)
-            db.add(svc)
-            db.flush()
-            svc_map[code] = svc
-        logger.info(f"Seeded {len(svc_map)} core services.")
+            existing_svc = db.query(Service).filter((Service.name == name) | (Service.code == code)).first()
+            if not existing_svc:
+                svc = Service(name=name, code=code, description=desc, category=cat, is_active=True)
+                db.add(svc)
+                db.flush()
+                svc_map[code] = svc
+            else:
+                svc_map[code] = existing_svc
+        logger.info(f"Verified {len(svc_map)} core services.")
 
-        # 6. Seed Super Admin User (Production Ready)
-        admin_email = "admin@kapateconsultancy.in"
-        admin_user = User(
-            email=admin_email,
-            hashed_password=get_password_hash("Admin@KC8421174957"),
-            full_name="Shon Kapate",
-            phone="+91 98230 00000",
-            is_active=True,
-            is_verified=True
-        )
-        db.add(admin_user)
-        db.flush()
+        # 6. Seed / Verify Super Admin Users (Idempotent, Zero Data Loss)
+        admin_configs = [
+            ("admin@kapateconsultancy.in", "Admin@KC8421174957", "Shon Kapate", "+91 98230 00000"),
+            ("admin@kapateconsultancy.com", "KapateOS@2026!", "Kapate Admin", "+91 98230 00001")
+        ]
+        superadmin_role = role_map.get("superadmin")
 
-        db.add(UserRole(user_id=admin_user.id, role_id=role_map["superadmin"].id))
-        db.add(AuditLog(
-            id=str(uuid.uuid4()),
-            user_id=admin_user.id,
-            action="INITIALIZE_PRODUCTION_DATABASE",
-            entity_name="SYSTEM",
-            entity_id="PROD_INIT",
-            ip_address="127.0.0.1",
-            user_agent="init_production_db.py"
-        ))
+        for email, pwd, name, phone in admin_configs:
+            user = db.query(User).filter(User.email == email).first()
+            if not user:
+                user = User(
+                    email=email,
+                    hashed_password=get_password_hash(pwd),
+                    full_name=name,
+                    phone=phone,
+                    is_active=True,
+                    is_verified=True
+                )
+                db.add(user)
+                db.flush()
+                if superadmin_role:
+                    db.add(UserRole(user_id=user.id, role_id=superadmin_role.id))
+                logger.info(f"Provisioned Super Admin account: {email}")
+            else:
+                user.hashed_password = get_password_hash(pwd)
+                user.is_active = True
+                user.is_verified = True
+                if superadmin_role:
+                    existing_ur = db.query(UserRole).filter(
+                        UserRole.user_id == user.id,
+                        UserRole.role_id == superadmin_role.id
+                    ).first()
+                    if not existing_ur:
+                        db.add(UserRole(user_id=user.id, role_id=superadmin_role.id))
+                logger.info(f"Verified & synchronized Super Admin account: {email}")
 
         db.commit()
-        logger.info("Production database initialization completed successfully.")
-        logger.info(f"Default Super Admin: {admin_email} | Password: KapateAdmin@2026!")
+        logger.info("Production database initialization/verification completed successfully.")
+        logger.info(f"Primary Super Admin Email: {admin_configs[0][0]}")
 
     except Exception as e:
         db.rollback()

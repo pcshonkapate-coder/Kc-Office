@@ -44,6 +44,24 @@ export const QuickCreateModal: React.FC = () => {
   const [empDepartment, setEmpDepartment] = useState('AI & Engineering Solutions');
   const [empSkills, setEmpSkills] = useState('Python, PyTorch, LangChain, Next.js');
 
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setOpen(false);
+      }
+    };
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isOpen, setOpen]);
+
+  React.useEffect(() => {
+    if (projects.length > 0 && (!taskProject || taskProject === 'General Operations')) {
+      setTaskProject(projects[0].name);
+    }
+  }, [projects, taskProject]);
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -71,7 +89,7 @@ export const QuickCreateModal: React.FC = () => {
       const selectedProj = projects.find((p) => p.name === taskProject) || projects[0];
       const isClient = taskAssigned.includes('Client');
       const isManager = taskAssigned.includes('Manager') || taskAssigned.includes('Shon');
-      addTask({
+      await addTask({
         title: taskTitle || 'New Development Task',
         projectId: selectedProj?.id || 'PRJ-001',
         projectName: selectedProj?.name || taskProject,
@@ -84,8 +102,9 @@ export const QuickCreateModal: React.FC = () => {
         clientVisible: isClient || taskClientVisible,
         assigneeRole: isManager ? 'MANAGER' : isClient ? 'CLIENT' : 'EMPLOYEE'
       });
+      setTaskTitle('');
     } else if (activeType === 'lead') {
-      addLead({
+      await addLead({
         name: leadName || 'New Lead Contact',
         company: leadCompany || 'Enterprise Lead Corp',
         service: leadService,
@@ -99,30 +118,39 @@ export const QuickCreateModal: React.FC = () => {
         phone: '+91 98000 11223',
         nextFollowUp: new Date().toISOString().split('T')[0],
       });
+      setLeadName('');
+      setLeadCompany('');
     } else if (activeType === 'project') {
-      addProject({
+      await addProject({
         name: projectName || 'New AI Solution Project',
-        client: projectClient,
+        client: projectClient || 'Enterprise Client',
         manager: 'Rahul Deshmukh',
-        budget: Number(projectBudget),
+        budget: Number(projectBudget) || 1000000,
         deadline: '2026-12-31',
         description: 'Project initialized via quick create',
         team: ['Amit Patil', 'Rahul Deshmukh', 'Sneha Joshi'],
       });
+      setProjectName('');
+      setProjectClient('');
+      setProjectBudget(0);
     } else if (activeType === 'company') {
-      addCompany({
+      await addCompany({
         name: leadCompany || 'New Client Company Ltd',
         industry: 'Technology & AI',
         website: 'https://example.com',
         location: 'Mumbai',
       });
+      setLeadCompany('');
     }
 
     setOpen(false);
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in text-slate-900">
+    <div 
+      onClick={(e) => { if (e.target === e.currentTarget) setOpen(false); }}
+      className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in text-slate-900"
+    >
       <div className="w-full max-w-lg bg-white border border-slate-200 rounded-3xl shadow-2xl overflow-hidden">
         
         {/* Modal Header */}

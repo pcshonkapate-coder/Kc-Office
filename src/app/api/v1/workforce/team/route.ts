@@ -14,6 +14,8 @@ export async function GET(req: NextRequest) {
   const search = (searchParams.get('search') || '').toLowerCase().trim();
 
   let employees = dataStore.getEmployees();
+  let interns = dataStore.getInterns();
+  let freelancers = dataStore.getFreelancers();
 
   if (search) {
     employees = employees.filter(e =>
@@ -23,10 +25,18 @@ export async function GET(req: NextRequest) {
       (e.role && e.role.toLowerCase().includes(search)) ||
       (e.department && e.department.toLowerCase().includes(search))
     );
+    interns = interns.filter(i =>
+      i.name.toLowerCase().includes(search) ||
+      i.email.toLowerCase().includes(search) ||
+      (i.kapateId && i.kapateId.toLowerCase().includes(search)) ||
+      (i.college && i.college.toLowerCase().includes(search))
+    );
+    freelancers = freelancers.filter(f =>
+      f.name.toLowerCase().includes(search) ||
+      (f.skill && f.skill.toLowerCase().includes(search)) ||
+      (f.kapateId && f.kapateId.toLowerCase().includes(search))
+    );
   }
-
-  const interns: Intern[] = (dataStore as any).loadStore ? (dataStore as any).loadStore().interns || [] : [];
-  const freelancers: Freelancer[] = (dataStore as any).loadStore ? (dataStore as any).loadStore().freelancers || [] : [];
 
   if (type === 'employees') return NextResponse.json({ success: true, data: employees, count: employees.length });
   if (type === 'interns') return NextResponse.json({ success: true, data: interns, count: interns.length });
@@ -39,7 +49,9 @@ export async function GET(req: NextRequest) {
       interns,
       freelancers,
     },
-    totalEmployees: employees.length
+    totalEmployees: employees.length,
+    totalInterns: interns.length,
+    totalFreelancers: freelancers.length,
   });
 }
 
@@ -55,13 +67,12 @@ export async function POST(req: NextRequest) {
 
     if (!member.name || member.name.trim() === '') {
       return NextResponse.json(
-        { success: false, error: 'Employee name is required.' },
+        { success: false, error: 'Member name is required.' },
         { status: 400 }
       );
     }
 
     if (type === 'employee') {
-      // 1. Transactionally insert into persistent dataStore
       const createdEmployee = dataStore.addEmployee({
         id: member.id,
         name: member.name.trim(),
@@ -78,7 +89,7 @@ export async function POST(req: NextRequest) {
         kapateId: member.kapateId
       });
 
-      // 2. Immediate Post-Insert Verification (Acceptance Criterion 7)
+      // Immediate Post-Insert Verification
       const verifiedRecord = dataStore.getEmployeeById(createdEmployee.id);
       if (!verifiedRecord) {
         return NextResponse.json(
@@ -87,7 +98,7 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // 3. Auto-provision linked user authentication account (Acceptance Criterion 16)
+      // Auto-provision linked user authentication account
       try {
         const userEmail = verifiedRecord.internalEmail || verifiedRecord.email;
         const existingUser = dataStore.getUserByEmail(userEmail);
@@ -110,7 +121,6 @@ export async function POST(req: NextRequest) {
         console.warn('[Workforce Team] User account provisioning notice:', userErr);
       }
 
-      // 4. Return database verified record
       return NextResponse.json({
         success: true,
         data: verifiedRecord,
@@ -119,45 +129,36 @@ export async function POST(req: NextRequest) {
     }
 
     if (type === 'intern') {
-      const kapateId = member.kapateId || dataStore.generateNextKapateId('INT');
-      const cleanName = member.name.trim();
-      const baseName = cleanName.toLowerCase().replace(/[^a-z0-9]/g, '.');
-      const internalEmail = member.internalEmail || `${baseName}@kapateconsultancy.in`;
-
-      const newIntern: Intern = {
-        id: member.id || `int-${Date.now()}`,
-        name: cleanName,
+      const createdIntern = dataStore.addIntern({
+        id: member.id,
+        name: member.name.trim(),
         role: member.role || 'Research & Engineering Intern',
-        college: member.college || 'Engineering Institute Partner',
+        college: member.college || 'Engineering Partner Institute',
         mentor: member.mentor || auth.user.name || 'Shon Kapate',
         startDate: member.startDate || new Date().toISOString().split('T')[0],
         endDate: member.endDate || new Date(Date.now() + 90 * 86400000).toISOString().split('T')[0],
         status: member.status || 'Active',
-        email: member.email || internalEmail,
-        tasksCompleted: 0,
-        tasksPending: 0,
-        loggedHours: 0,
-        attendancePct: 100,
-        trainingProgress: 0,
-        mentorFeedback: 'Intern successfully onboarded into Kapate OS mentorship track.',
-        evaluations: {
-          technicalSkills: 80,
-          problemSolving: 80,
-          communication: 85,
-          teamwork: 85,
-          learning: 90,
-          taskCompletion: 80,
-        },
-        kapateId,
-        internalEmail,
-      };
+        email: member.email,
+        kapateId: member.kapateId,
+      });
 
-      const store = (dataStore as any).loadStore();
-      store.interns = store.interns || [];
-      store.interns.unshift(newIntern);
-      (dataStore as any).saveStore();
+      return NextResponse.json({ success: true, data: createdIntern }, { status: 201 });
+    }
 
-      return NextResponse.json({ success: true, data: newIntern }, { status: 201 });
+    if (type === 'freelancer') {
+      const createdFreelancer = dataStore.addFreelancer({
+        id: member.id,
+        name: member.name.trim(),
+        skill: member.skill || member.role || 'Consultant Specialist',
+        hourlyRate: member.hourlyRate || member.rate || '₹3,000/hr',
+        availability: member.availability || 'Full-time (Contract)',
+        status: member.status || 'Active',
+        projects: Array.isArray(member.projects) ? member.projects : [],
+        kapateId: member.kapateId,
+        internalEmail: member.internalEmail
+      });
+
+      return NextResponse.json({ success: true, data: createdFreelancer }, { status: 201 });
     }
 
     return NextResponse.json({ success: false, error: 'Invalid member type' }, { status: 400 });
@@ -170,6 +171,40 @@ export async function POST(req: NextRequest) {
   }
 }
 
+export async function PUT(req: NextRequest) {
+  const auth = await requireAuth(req, ['SUPER_ADMIN', 'ADMIN', 'PROJECT_MANAGER']);
+  if (!auth.authenticated || !auth.user) {
+    return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+  }
+
+  try {
+    const body = await req.json();
+    const { id, type = 'employee', ...patch } = body;
+    if (!id) {
+      return NextResponse.json({ success: false, error: 'Member ID is required.' }, { status: 400 });
+    }
+
+    if (type === 'intern') {
+      const updated = dataStore.updateIntern(id, patch);
+      if (!updated) return NextResponse.json({ success: false, error: 'Intern not found' }, { status: 404 });
+      return NextResponse.json({ success: true, data: updated });
+    }
+
+    if (type === 'freelancer') {
+      const updated = dataStore.updateFreelancer(id, patch);
+      if (!updated) return NextResponse.json({ success: false, error: 'Freelancer not found' }, { status: 404 });
+      return NextResponse.json({ success: true, data: updated });
+    }
+
+    // Default: employee
+    const updated = dataStore.updateEmployee(id, patch);
+    if (!updated) return NextResponse.json({ success: false, error: 'Employee not found' }, { status: 404 });
+    return NextResponse.json({ success: true, data: updated });
+  } catch (err: any) {
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  }
+}
+
 export async function DELETE(req: NextRequest) {
   const auth = await requireAuth(req, ['SUPER_ADMIN', 'ADMIN']);
   if (!auth.authenticated || !auth.user) {
@@ -178,12 +213,25 @@ export async function DELETE(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');
+  const type = searchParams.get('type') || 'employee';
 
   if (!id) {
     return NextResponse.json({ success: false, error: 'Member ID is required' }, { status: 400 });
   }
 
   try {
+    if (type === 'intern') {
+      const success = dataStore.deleteIntern(id);
+      if (!success) return NextResponse.json({ success: false, error: 'Intern not found.' }, { status: 404 });
+      return NextResponse.json({ success: true, message: 'Intern deleted successfully.' });
+    }
+
+    if (type === 'freelancer') {
+      const success = dataStore.deleteFreelancer(id);
+      if (!success) return NextResponse.json({ success: false, error: 'Freelancer not found.' }, { status: 404 });
+      return NextResponse.json({ success: true, message: 'Freelancer deleted successfully.' });
+    }
+
     const permanent = searchParams.get('permanent') === 'true';
     const success = dataStore.deleteEmployee(id, !permanent);
     if (!success) {
