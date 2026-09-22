@@ -1,7 +1,7 @@
 from typing import Optional, List, Dict, Any
 from datetime import datetime, date
 from decimal import Decimal
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 
 # --- Configurable Services ---
@@ -30,8 +30,7 @@ class ServiceResponse(ServiceBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # --- Contacts ---
@@ -67,8 +66,7 @@ class ContactResponse(ContactBase):
     designation: Optional[str] = None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # --- Companies ---
@@ -113,8 +111,7 @@ class CompanyResponse(CompanyBase):
     total_deal_value: Decimal = Decimal("0.00")
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CompanyDetailResponse(CompanyResponse):
@@ -215,8 +212,7 @@ class LeadResponse(LeadBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # --- Deals ---
@@ -268,8 +264,7 @@ class DealStageHistoryResponse(BaseModel):
     changed_by_name: Optional[str] = None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DealResponse(DealBase):
@@ -282,8 +277,7 @@ class DealResponse(DealBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # --- Activities ---
@@ -316,8 +310,7 @@ class ActivityResponse(ActivityBase):
     created_by_name: Optional[str] = None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DealDetailResponse(DealResponse):
@@ -360,5 +353,4 @@ class FollowUpReminderResponse(FollowUpReminderCreate):
     user_id: str
     created_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

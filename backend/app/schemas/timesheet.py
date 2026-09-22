@@ -1,6 +1,6 @@
 from typing import List, Optional, Any
 from datetime import date, datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 # --- Resource Allocation ---
@@ -28,8 +28,7 @@ class ResourceAllocationResponse(ResourceAllocationBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ResourceAllocationAdminResponse(ResourceAllocationResponse):
@@ -64,8 +63,7 @@ class TimesheetResponse(TimesheetBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # --- Reporting & Workload ---

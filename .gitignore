@@ -41,6 +41,8 @@ backend/.env.local
 # misc & logs
 .DS_Store
 *.pem
+*.tmp
+data/*.tmp
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

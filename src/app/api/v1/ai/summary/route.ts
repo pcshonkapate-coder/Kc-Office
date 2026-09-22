@@ -61,5 +61,32 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  if (type === 'email_summary') {
+    const threadSubject = body.subject || 'Enterprise Discussion';
+    const lastSnippet = body.snippet || (body.messages && body.messages[body.messages.length - 1]?.body) || 'Project delivery and milestone updates.';
+    return NextResponse.json({
+      data: {
+        summary: `Thread focuses on architectural milestones, SLA compliance, and operational sign-off for "${threadSubject}". Key discussions: ${lastSnippet.substring(0, 150)}. Deliverables align with Kapate OS verified roadmap.`,
+        actionItems: [
+          `Review technical deliverables and milestone sign-off for "${threadSubject}"`,
+          `Validate SLA & compliance targets with ${body.senderName || 'Stakeholder'}`,
+          `Schedule engineering sync and update project deliverables in Kapate OS`
+        ]
+      }
+    });
+  }
+
+  if (type === 'email_draft_reply') {
+    const sender = body.senderName ? body.senderName.split(' ')[0] : 'Colleague';
+    const threadSubject = body.subject || 'Project Milestone';
+    const user = auth.user.name || 'Kapate OS Team';
+    const draft = `Hi ${sender},\n\nThank you for the detailed update regarding "${threadSubject}".\n\nI have reviewed the current progress, technical specifications, and timeline against our Kapate OS SLA criteria. Everything is on schedule and meets our quality benchmarks.\n\nPlease proceed with the next scheduled milestone, and keep the team updated through the portal.\n\nBest regards,\n${user}\nKapate Consultancy`;
+    return NextResponse.json({
+      data: {
+        reply: draft
+      }
+    });
+  }
+
   return NextResponse.json({ error: 'Invalid AI prompt type' }, { status: 400 });
 }

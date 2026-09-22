@@ -1,5 +1,6 @@
 import { createHmac, randomBytes, pbkdf2Sync } from 'crypto';
 import type { UserRole } from '../types';
+import { dataStore } from './dataStore';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'kapate_os_super_secure_jwt_secret_key_2026_enterprise';
 const TOKEN_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -151,6 +152,22 @@ export function requireAuth(req: Request, allowedRoles?: UserRole[]): AuthResult
     // SUPER_ADMIN and ADMIN have access to standard internal routes
     const isSuper = user.role === 'SUPER_ADMIN' || user.role === 'ADMIN';
     if (!isSuper && !allowedRoles.includes(user.role)) {
+      try {
+        dataStore.addAuditLog({
+          actor: user.name,
+          actorKapateId: user.kapateId || 'UNKNOWN',
+          action: 'UNAUTHORIZED_ACCESS_ATTEMPT',
+          module: 'security',
+          targetResource: req.url || 'endpoint',
+          targetUser: user.email,
+          ipAddress: req.headers.get('x-forwarded-for') || '127.0.0.1',
+          result: 'BLOCKED',
+          reason: `User role ${user.role} attempted to access restricted resource requiring [${allowedRoles.join(', ')}]`
+        });
+      } catch (e) {
+        console.error('[requireAuth] audit log error:', e);
+      }
+
       return {
         authenticated: false,
         error: `Access Denied. Your role (${user.role}) is not authorized for this resource.`,

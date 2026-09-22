@@ -5,7 +5,7 @@ import { getDatabase } from '@/lib/mongodb';
 import { Payment } from '@/types';
 
 export async function GET(req: NextRequest) {
-  const auth = await requireAuth(req);
+  const auth = await requireAuth(req, ['SUPER_ADMIN', 'ADMIN', 'FINANCE', 'CLIENT']);
   if (!auth.authenticated || !auth.user) {
     return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
   }

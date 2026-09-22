@@ -5,8 +5,8 @@ import { getDatabase } from '@/lib/mongodb';
 import { Expense } from '@/types';
 
 export async function GET(req: NextRequest) {
-  // Disallow CLIENT role from accessing internal expenses
-  const auth = await requireAuth(req, ['SUPER_ADMIN', 'ADMIN', 'FINANCE', 'PROJECT_MANAGER', 'EMPLOYEE']);
+  // Disallow CLIENT and INTERN roles from accessing internal expenses
+  const auth = await requireAuth(req, ['SUPER_ADMIN', 'ADMIN', 'FINANCE', 'PROJECT_MANAGER']);
   if (!auth.authenticated || !auth.user) {
     return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
   }

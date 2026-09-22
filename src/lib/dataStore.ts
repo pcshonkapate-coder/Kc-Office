@@ -10,6 +10,15 @@ import { hashPassword } from './auth';
 import { getDatabase } from './mongodb';
 import { DEFAULT_SYSTEM_SETTINGS, DEFAULT_ROLE_PERMISSIONS } from '../data/superAdminData';
 
+export interface ActiveClockSession {
+  userId: string;
+  employeeName: string;
+  kapateId: string;
+  clockInTimestamp: number;
+  clockInFormatted: string;
+  date: string;
+}
+
 export interface StoreSchema {
   version: number;
   lastUpdated: string;
@@ -38,11 +47,13 @@ export interface StoreSchema {
   documents: AppDocument[];
   systemSettings?: SystemSettings;
   rolePermissions?: Record<UserRole, string[]>;
+  activeClockSessions?: Record<string, ActiveClockSession>;
 }
 
 const DEFAULT_STORE: StoreSchema = {
   version: 1,
   lastUpdated: new Date().toISOString(),
+  activeClockSessions: {},
   systemSettings: DEFAULT_SYSTEM_SETTINGS,
   rolePermissions: DEFAULT_ROLE_PERMISSIONS,
   projects: [],
@@ -260,7 +271,7 @@ class DataStore {
     }
 
     // 2. Ensure Default Employee User
-    let empUser = store.users.find(u => u.email === 'employee@kapateconsultancy.in' || u.kapateId === 'KAP-EMP-000002');
+    const empUser = store.users.find(u => u.email === 'employee@kapateconsultancy.in' || u.kapateId === 'KAP-EMP-000002');
     if (!empUser) {
       store.users.push({
         id: 'usr-employee-default',
@@ -290,7 +301,7 @@ class DataStore {
     }
 
     // 3. Ensure Default Project Manager User
-    let pmUser = store.users.find(u => u.email === 'manager@kapateconsultancy.in' || u.role === 'PROJECT_MANAGER');
+    const pmUser = store.users.find(u => u.email === 'manager@kapateconsultancy.in' || u.role === 'PROJECT_MANAGER');
     if (!pmUser) {
       store.users.push({
         id: 'usr-manager-default',
@@ -320,7 +331,7 @@ class DataStore {
     }
 
     // 4. Ensure Default Intern User
-    let internUser = store.users.find(u => u.email === 'intern@kapateconsultancy.in' || u.role === 'INTERN');
+    const internUser = store.users.find(u => u.email === 'intern@kapateconsultancy.in' || u.role === 'INTERN');
     if (!internUser) {
       store.users.push({
         id: 'usr-intern-default',
@@ -363,21 +374,37 @@ class DataStore {
     if (!this.inMemoryStore) return;
     this.inMemoryStore.lastUpdated = new Date().toISOString();
 
-    try {
-      const dir = path.dirname(this.filePath);
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-      }
+    const dir = path.dirname(this.filePath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
 
-      const tempPath = `${this.filePath}.${Date.now()}.tmp`;
-      const dataStr = JSON.stringify(this.inMemoryStore, null, 2);
+    const tempPath = `${this.filePath}.${Date.now()}.${Math.random().toString(36).substring(2, 7)}.tmp`;
+    const dataStr = JSON.stringify(this.inMemoryStore, null, 2);
+
+    try {
       fs.writeFileSync(tempPath, dataStr, 'utf-8');
-      fs.renameSync(tempPath, this.filePath);
+      try {
+        fs.renameSync(tempPath, this.filePath);
+      } catch {
+        // Fallback for Windows NTFS locking or permission collisions during atomic overwrite
+        fs.copyFileSync(tempPath, this.filePath);
+        try {
+          fs.unlinkSync(tempPath);
+        } catch {}
+      }
       try {
         this.lastLoadedMtime = fs.statSync(this.filePath).mtimeMs;
       } catch {}
     } catch (e) {
       console.error('[DataStore] Failed to write persistent store file:', e);
+    } finally {
+      // Ensure temp file is always cleaned up and never leaves orphaned files
+      if (fs.existsSync(tempPath)) {
+        try {
+          fs.unlinkSync(tempPath);
+        } catch {}
+      }
     }
 
     // Asynchronously synchronize with MongoDB Atlas if available
@@ -1450,6 +1477,29 @@ class DataStore {
     return newRec;
   }
 
+  public getActiveClockSession(userId: string): ActiveClockSession | null {
+    const store = this.loadStore();
+    if (!store.activeClockSessions) return null;
+    return store.activeClockSessions[userId] || null;
+  }
+
+  public startClockSession(session: ActiveClockSession): ActiveClockSession {
+    const store = this.loadStore();
+    store.activeClockSessions = store.activeClockSessions || {};
+    store.activeClockSessions[session.userId] = session;
+    this.saveStore();
+    return session;
+  }
+
+  public endClockSession(userId: string): ActiveClockSession | null {
+    const store = this.loadStore();
+    if (!store.activeClockSessions || !store.activeClockSessions[userId]) return null;
+    const session = store.activeClockSessions[userId];
+    delete store.activeClockSessions[userId];
+    this.saveStore();
+    return session;
+  }
+
   public getLeaves(employeeName?: string): LeaveRequest[] {
     const store = this.loadStore();
     let list = [...(store.leaves || [])];
@@ -1783,7 +1833,7 @@ declare global {
   var _kapateDataStore: DataStore | undefined;
 }
 
-if (!global._kapateDataStore) {
+if (!global._kapateDataStore || typeof (global._kapateDataStore as any).getActiveClockSession !== 'function') {
   global._kapateDataStore = new DataStore();
 }
 

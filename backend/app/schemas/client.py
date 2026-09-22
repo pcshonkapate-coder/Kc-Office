@@ -1,6 +1,6 @@
 from typing import List, Optional
 from datetime import date, datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 # --- Safe Client Schemas ---
 # These schemas explicitly omit sensitive internal fields.
@@ -12,8 +12,7 @@ class ClientDocumentResponse(BaseModel):
     entity_type: str
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ClientInvoiceItemResponse(BaseModel):
@@ -22,8 +21,7 @@ class ClientInvoiceItemResponse(BaseModel):
     unit_price: float
     total: float
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ClientInvoiceResponse(BaseModel):
@@ -38,8 +36,7 @@ class ClientInvoiceResponse(BaseModel):
     
     items: List[ClientInvoiceItemResponse] = []
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ClientPaymentResponse(BaseModel):
@@ -50,8 +47,7 @@ class ClientPaymentResponse(BaseModel):
     payment_method: str
     status: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ClientTaskResponse(BaseModel):
@@ -61,8 +57,7 @@ class ClientTaskResponse(BaseModel):
     status: str
     due_date: Optional[date] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ClientMilestoneResponse(BaseModel):
@@ -75,8 +70,7 @@ class ClientMilestoneResponse(BaseModel):
     completion_percentage: int
     tasks: List[ClientTaskResponse] = []
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ClientProjectResponse(BaseModel):
@@ -92,8 +86,7 @@ class ClientProjectResponse(BaseModel):
     
     milestones: List[ClientMilestoneResponse] = []
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ClientDashboardResponse(BaseModel):

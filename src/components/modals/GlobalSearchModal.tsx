@@ -11,13 +11,17 @@ export const GlobalSearchModal: React.FC = () => {
   const currentUser = useDemoStore((state) => state.currentUser);
 
   const leads = useDemoStore((state) => state.leads);
-  const deals = useDemoStore((state) => state.deals);
   const projects = useDemoStore((state) => state.projects);
   const tasks = useDemoStore((state) => state.tasks);
   const invoices = useDemoStore((state) => state.invoices);
-  const documents = useDemoStore((state) => state.documents);
 
   const [query, setQuery] = useState('');
+  const [serverResults, setServerResults] = useState<{
+    projects?: typeof projects;
+    tasks?: typeof tasks;
+    leads?: typeof leads;
+    invoices?: typeof invoices;
+  } | null>(null);
 
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -31,14 +35,59 @@ export const GlobalSearchModal: React.FC = () => {
     }
   }, [isOpen, setOpen]);
 
+  React.useEffect(() => {
+    if (!isOpen || !query.trim()) {
+      return;
+    }
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const timer = setTimeout(() => {
+      fetch(`/api/v1/system/search?q=${encodeURIComponent(query)}`, { headers })
+        .then(r => r.ok ? r.json() : null)
+        .then(json => {
+          if (json && json.data) {
+            setServerResults(json.data);
+          }
+        })
+        .catch(() => {});
+    }, 150);
+
+    return () => clearTimeout(timer);
+  }, [query, isOpen]);
+
   if (!isOpen) return null;
 
   const isClient = currentUser.role === 'CLIENT';
+  const isIntern = currentUser.role === 'INTERN';
+  const canSeeFinance = currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'ADMIN' || currentUser.role === 'FINANCE';
+  const canSeeCommercial = currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'ADMIN' || currentUser.role === 'PROJECT_MANAGER';
 
-  const filteredLeads = isClient ? [] : leads.filter(l => l.name.toLowerCase().includes(query.toLowerCase()) || l.company.toLowerCase().includes(query.toLowerCase()));
-  const filteredProjects = projects.filter(p => p.name.toLowerCase().includes(query.toLowerCase()));
-  const filteredTasks = tasks.filter(t => t.title.toLowerCase().includes(query.toLowerCase()));
-  const filteredInvoices = invoices.filter(i => i.id.toLowerCase().includes(query.toLowerCase()) || i.client.toLowerCase().includes(query.toLowerCase()));
+  const activeQuery = query.trim().toLowerCase();
+  const effectiveServerResults = activeQuery ? serverResults : null;
+
+  const filteredProjects = !activeQuery ? [] : (effectiveServerResults?.projects || projects.filter(p => {
+    if (isClient) return p.client.toLowerCase().includes(currentUser.name.toLowerCase()) && p.name.toLowerCase().includes(activeQuery);
+    if (isIntern) return ((p.team && p.team.some(m => m.toLowerCase().includes(currentUser.name.toLowerCase()))) || p.name.toLowerCase().includes('internal') || p.client.toLowerCase().includes('internal')) && p.name.toLowerCase().includes(activeQuery);
+    return p.name.toLowerCase().includes(activeQuery);
+  }));
+
+  const filteredTasks = !activeQuery ? [] : (effectiveServerResults?.tasks || tasks.filter(t => {
+    if (isClient) return (t.clientVisible || t.assignedTo?.toLowerCase().includes(currentUser.name.toLowerCase())) && t.title.toLowerCase().includes(activeQuery);
+    if (isIntern) return t.assignedTo?.toLowerCase().includes(currentUser.name.toLowerCase()) && t.title.toLowerCase().includes(activeQuery);
+    return t.title.toLowerCase().includes(activeQuery);
+  }));
+
+  const filteredLeads = !activeQuery ? [] : (effectiveServerResults?.leads || (canSeeCommercial ? leads.filter(l => {
+    return l.name.toLowerCase().includes(activeQuery) || l.company.toLowerCase().includes(activeQuery);
+  }) : []));
+
+  const filteredInvoices = !activeQuery ? [] : (effectiveServerResults?.invoices || (canSeeFinance ? invoices.filter(i => {
+    return i.id.toLowerCase().includes(activeQuery) || i.client.toLowerCase().includes(activeQuery);
+  }) : isClient ? invoices.filter(i => {
+    return i.client.toLowerCase().includes(currentUser.name.toLowerCase()) && (i.id.toLowerCase().includes(activeQuery) || i.client.toLowerCase().includes(activeQuery));
+  }) : []));
 
   const handleSelect = (tab: string) => {
     setActiveTab(tab);

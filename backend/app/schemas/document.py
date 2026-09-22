@@ -1,6 +1,6 @@
 from typing import Optional, Dict, Any, List
 from datetime import datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 # --- Document Version Schemas ---
@@ -22,8 +22,7 @@ class DocumentVersionResponse(DocumentVersionBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # --- Signature Tracker Schemas ---
@@ -35,8 +34,7 @@ class SignatureTrackerResponse(BaseModel):
     status: str
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # --- Managed Document Schemas ---
@@ -74,5 +72,4 @@ class ManagedDocumentResponse(ManagedDocumentBase):
     versions: Optional[List[DocumentVersionResponse]] = None
     signatures: Optional[List[SignatureTrackerResponse]] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

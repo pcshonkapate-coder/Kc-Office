@@ -99,6 +99,38 @@ export async function PUT(req: Request) {
     const updatePayload: Record<string, any> = { ...updates };
     if (status) updatePayload.status = status;
 
+    const existing = dataStore.getTasks().find(t => t.id === id);
+    if (existing) {
+      if (status && status !== existing.status) {
+        dataStore.addAuditLog({
+          actor: auth.user ? auth.user.name : 'System',
+          actorKapateId: auth.user?.kapateId || 'KAP-EMP-000001',
+          action: 'TASK_STATUS_CHANGED',
+          module: 'delivery',
+          targetResource: `tasks/${id}`,
+          targetUser: existing.assignedTo,
+          previousValue: existing.status,
+          newValue: status,
+          result: 'SUCCESS',
+          reason: `Task moved from ${existing.status} to ${status}`
+        });
+      }
+      if (updates.assignedTo && updates.assignedTo !== existing.assignedTo) {
+        dataStore.addAuditLog({
+          actor: auth.user ? auth.user.name : 'System',
+          actorKapateId: auth.user?.kapateId || 'KAP-EMP-000001',
+          action: 'TASK_REASSIGNED',
+          module: 'delivery',
+          targetResource: `tasks/${id}`,
+          targetUser: updates.assignedTo,
+          previousValue: existing.assignedTo,
+          newValue: updates.assignedTo,
+          result: 'SUCCESS',
+          reason: `Task reassigned to ${updates.assignedTo}`
+        });
+      }
+    }
+
     const updated = dataStore.updateTask(id, updatePayload);
     if (!updated) {
       return NextResponse.json({ success: false, error: 'Task not found.' }, { status: 404 });

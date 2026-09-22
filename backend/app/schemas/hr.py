@@ -1,6 +1,6 @@
 from typing import List, Optional, Dict, Any
 from datetime import date, datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 # --- Attendance ---
@@ -24,8 +24,7 @@ class AttendanceResponse(AttendanceBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # --- Leave Requests ---
@@ -49,8 +48,7 @@ class LeaveRequestResponse(LeaveRequestBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # --- Performance Reviews ---
@@ -73,8 +71,7 @@ class PerformanceReviewResponse(PerformanceReviewBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # --- Employee Review Metrics Example ---

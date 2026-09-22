@@ -2,11 +2,10 @@
 
 import React, { useState, useMemo } from 'react';
 import { useDemoStore } from '../../../store/demoStore';
-import { Task, Project, TimesheetEntry, Employee } from '../../../types';
+import { Task } from '../../../types';
 import {
-  FolderKanban, CheckSquare, Clock, Users, AlertTriangle, CheckCircle2,
-  XCircle, Filter, ArrowUpDown, ChevronRight, Shield, Sparkles, TrendingUp,
-  BarChart3, RefreshCw, Layers, Calendar, UserCheck
+  FolderKanban, Clock, Users, AlertTriangle, CheckCircle2,
+  XCircle, Filter, Shield, TrendingUp
 } from 'lucide-react';
 
 export const ManagerCommandCenter: React.FC = () => {
@@ -20,6 +19,7 @@ export const ManagerCommandCenter: React.FC = () => {
   const rejectTimesheet = useDemoStore((state) => state.rejectTimesheet);
   const showToast = useDemoStore((state) => state.showToast);
 
+  const [currentTimestamp] = useState(() => Date.now());
   const [activeTab, setActiveTab] = useState<'sprint' | 'timesheets' | 'resources' | 'milestones'>('sprint');
   const [selectedProjectId, setSelectedProjectId] = useState<string>('ALL');
   const [selectedTimesheetIds, setSelectedTimesheetIds] = useState<string[]>([]);
@@ -41,7 +41,7 @@ export const ManagerCommandCenter: React.FC = () => {
     { id: 'COMPLETED', label: 'Shipped / Verified', color: 'border-emerald-800 bg-emerald-950/30 text-emerald-300' },
   ];
 
-  const handlePriorityChange = (taskId: string, newPriority: any) => {
+  const handlePriorityChange = (taskId: string, newPriority: 'Low' | 'Medium' | 'High' | 'Urgent') => {
     updateTask(taskId, { priority: newPriority });
     showToast(`Task priority updated to ${newPriority}`, 'success');
   };
@@ -134,20 +134,38 @@ export const ManagerCommandCenter: React.FC = () => {
       const completed = projTasks.filter((t) => t.status === 'COMPLETED').length;
       const progressPct = total > 0 ? Math.round((completed / total) * 100) : p.progress || 0;
 
+      // Calculate server-authoritative SOW burn from approved timesheets
+      const approvedHours = timesheets
+        .filter((t) => 
+          (t.projectName?.toLowerCase() === p.name.toLowerCase() || 
+           t.projectName?.toLowerCase().includes(p.name.toLowerCase()) ||
+           p.name.toLowerCase().includes((t.projectName || '').toLowerCase())) &&
+          t.status === 'Approved'
+        )
+        .reduce((sum, t) => sum + (Number(t.hours) || 0), 0);
+
+      const contractedHours = Math.max(160, Math.round((p.budget || 500000) / 2500)); // ₹2,500/hr contract baseline
+      const remainingHours = Math.max(0, contractedHours - approvedHours);
+      const burnPct = Math.min(100, Math.round((approvedHours / contractedHours) * 100));
+
       // SOW deadline calculation
-      const deadlineDate = p.deadline ? new Date(p.deadline) : new Date(Date.now() + 45 * 24 * 60 * 60 * 1000);
-      const daysLeft = Math.ceil((deadlineDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+      const deadlineDate = p.deadline ? new Date(p.deadline) : new Date(currentTimestamp + 45 * 24 * 60 * 60 * 1000);
+      const daysLeft = Math.ceil((deadlineDate.getTime() - currentTimestamp) / (1000 * 60 * 60 * 24));
 
       return {
         ...p,
         totalTasks: total,
         completedTasks: completed,
         sowProgressPct: progressPct,
+        contractedHours,
+        approvedHours,
+        remainingHours,
+        burnPct,
         daysLeft,
         isAtRisk: daysLeft < 14 && progressPct < 80,
       };
     });
-  }, [projects, tasks]);
+  }, [projects, tasks, timesheets, currentTimestamp]);
 
   return (
     <div className="space-y-6 text-slate-100 animate-fade-in font-sans">
@@ -178,7 +196,7 @@ export const ManagerCommandCenter: React.FC = () => {
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => setActiveTab(tab.id as 'sprint' | 'timesheets' | 'resources' | 'milestones')}
                 className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                   activeTab === tab.id
                     ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
@@ -266,7 +284,7 @@ export const ManagerCommandCenter: React.FC = () => {
                             {/* Priority Tag Switcher */}
                             <select
                               value={task.priority || 'Medium'}
-                              onChange={(e) => handlePriorityChange(task.id, e.target.value)}
+                              onChange={(e) => handlePriorityChange(task.id, e.target.value as 'Low' | 'Medium' | 'High' | 'Urgent')}
                               className={`text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded border focus:outline-none cursor-pointer ${
                                 (task.priority as string) === 'P0-Critical' || task.priority === 'Urgent'
                                   ? 'bg-rose-950 text-rose-300 border-rose-800'
@@ -313,7 +331,7 @@ export const ManagerCommandCenter: React.FC = () => {
                                 <button
                                   key={targetCol.id}
                                   onClick={() => {
-                                    updateTaskStatus(task.id, targetCol.id as any);
+                                    updateTaskStatus(task.id, targetCol.id as Task['status']);
                                     showToast(`Task moved to ${targetCol.label}`, 'info');
                                   }}
                                   className="text-[9px] font-bold py-1 px-1 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded text-center truncate border border-slate-800/80 transition-colors"
@@ -599,9 +617,29 @@ export const ManagerCommandCenter: React.FC = () => {
                   />
                 </div>
 
+                {/* SOW Contract Hours Burn Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-slate-900 font-mono text-xs">
+                  <div className="p-2 rounded-xl bg-slate-900/60 text-center">
+                    <span className="block text-[10px] text-slate-400 uppercase">Contract SOW</span>
+                    <strong className="text-white">{p.contractedHours} hrs</strong>
+                  </div>
+                  <div className="p-2 rounded-xl bg-slate-900/60 text-center">
+                    <span className="block text-[10px] text-slate-400 uppercase">Burned (Approved)</span>
+                    <strong className="text-amber-400">{p.approvedHours} hrs</strong>
+                  </div>
+                  <div className="p-2 rounded-xl bg-slate-900/60 text-center">
+                    <span className="block text-[10px] text-slate-400 uppercase">Remaining SOW</span>
+                    <strong className="text-emerald-400">{p.remainingHours} hrs</strong>
+                  </div>
+                  <div className="p-2 rounded-xl bg-slate-900/60 text-center">
+                    <span className="block text-[10px] text-slate-400 uppercase">Target Deadline</span>
+                    <strong className="text-blue-400">{p.daysLeft}d left</strong>
+                  </div>
+                </div>
+
                 <div className="flex items-center justify-between text-xs text-slate-400 font-mono">
-                  <span>Completed: {p.completedTasks} / {p.totalTasks} SOW deliverables</span>
-                  <span>Target Deadline: {p.deadline || 'Q4 2026'} ({p.daysLeft} days remaining)</span>
+                  <span>Deliverables: {p.completedTasks} / {p.totalTasks} shipped</span>
+                  <span>Contract SLA: {p.deadline || 'Q4 2026'}</span>
                 </div>
               </div>
             ))}

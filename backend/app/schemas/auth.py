@@ -3,8 +3,8 @@ from pydantic import BaseModel, EmailStr, Field
 
 
 class LoginRequest(BaseModel):
-    email: str = Field(..., description="Corporate email or Kapate ID", example="admin@kapateconsultancy.in")
-    password: str = Field(..., min_length=6, example="KapateOS@2026!")
+    email: str = Field(..., description="Corporate email or Kapate ID", examples=["admin@kapateconsultancy.in"])
+    password: str = Field(..., min_length=6, examples=["KapateOS@2026!"])
 
 
 class TokenResponse(BaseModel):

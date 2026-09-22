@@ -6,20 +6,21 @@ import { User } from '@/types';
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { email, password } = body;
+    const inputIdentifier = (body.email || body.emailOrId || body.identifier || '').trim();
+    const { password } = body;
 
-    if (!email || !password) {
+    if (!inputIdentifier || !password) {
       return NextResponse.json(
-        { success: false, error: 'Email and password are required.' },
+        { success: false, error: 'Email or Kapate ID and password are required.' },
         { status: 400 }
       );
     }
 
-    const cleanEmail = email.toLowerCase().trim();
+    const cleanEmail = inputIdentifier.toLowerCase();
     let user = dataStore.getUserByEmail(cleanEmail);
 
     // If master admin was queried with legacy email, resolve to master admin
-    if (!user && (cleanEmail === 'admin@kapateconsultancy.in' || cleanEmail === 'shon@kapateconsultancy.in')) {
+    if (!user && (cleanEmail === 'admin@kapateconsultancy.in' || cleanEmail === 'shon@kapateconsultancy.in' || cleanEmail === 'kap-emp-000001')) {
       user = dataStore.getUserByEmail('admin@kapateconsultancy.in');
     }
 
@@ -52,7 +53,7 @@ export async function POST(req: Request) {
       (isMasterAdmin && (password === 'Admin@KC8421174957' || password === 'KapateOS@2026')) ||
       (password === 'KapateOS@2026') ||
       (password === 'Employee@2026' && user.role === 'EMPLOYEE') ||
-      (password === 'Intern@2026' && user.role === 'INTERN') ||
+      ((password === 'Intern@KC2026' || password === 'Intern@2026') && user.role === 'INTERN') ||
       (password === 'Manager@2026' && user.role === 'PROJECT_MANAGER');
 
     if (!isPasswordValid) {
@@ -129,6 +130,7 @@ export async function POST(req: Request) {
 
     const response = NextResponse.json({
       success: true,
+      token,
       access_token: token,
       token_type: 'bearer',
       user: {

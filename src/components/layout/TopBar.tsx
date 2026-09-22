@@ -19,65 +19,99 @@ export const TopBar: React.FC = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifMenu, setShowNotifMenu] = useState(false);
 
-  // Persistent Clock-In / Clock-Out Timer
+  // Server-Authoritative Clock-In / Clock-Out Timer
   const [isClockedIn, setIsClockedIn] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [serverStartTime, setServerStartTime] = useState<number | null>(null);
 
+  // Sync active session from server on mount or user change
   React.useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const savedStart = localStorage.getItem(`kapate_clock_in_${currentUser.id}`);
-    if (savedStart) {
-      const startTime = parseInt(savedStart, 10);
-      if (!isNaN(startTime)) {
-        setIsClockedIn(true);
-        setElapsedSeconds(Math.max(0, Math.floor((Date.now() - startTime) / 1000)));
+    let isMounted = true;
+    const checkServerClock = async () => {
+      try {
+        const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+        const headers: Record<string, string> = {};
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+
+        const res = await fetch('/api/v1/workforce/attendance?status=active', { headers });
+        if (res.ok) {
+          const json = await res.json();
+          if (isMounted) {
+            if (json.active && json.session) {
+              setIsClockedIn(true);
+              setServerStartTime(json.session.clockInTimestamp);
+              setElapsedSeconds(json.session.elapsedSeconds || Math.max(0, Math.floor((Date.now() - json.session.clockInTimestamp) / 1000)));
+            } else {
+              setIsClockedIn(false);
+              setServerStartTime(null);
+              setElapsedSeconds(0);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('[TopBar] Attendance sync notice:', err);
       }
-    } else {
-      setIsClockedIn(false);
-      setElapsedSeconds(0);
-    }
+    };
+
+    checkServerClock();
+    return () => { isMounted = false; };
   }, [currentUser.id]);
 
+  // Smooth local second counter while clocked in
   React.useEffect(() => {
-    if (!isClockedIn) return;
+    if (!isClockedIn || !serverStartTime) return;
     const interval = setInterval(() => {
-      const savedStart = localStorage.getItem(`kapate_clock_in_${currentUser.id}`);
-      if (savedStart) {
-        const startTime = parseInt(savedStart, 10);
-        setElapsedSeconds(Math.max(0, Math.floor((Date.now() - startTime) / 1000)));
-      }
+      setElapsedSeconds(Math.max(0, Math.floor((Date.now() - serverStartTime) / 1000)));
     }, 1000);
     return () => clearInterval(interval);
-  }, [isClockedIn, currentUser.id]);
+  }, [isClockedIn, serverStartTime]);
 
-  const handleToggleClock = () => {
+  const handleToggleClock = async () => {
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
     if (!isClockedIn) {
-      const now = Date.now();
-      localStorage.setItem(`kapate_clock_in_${currentUser.id}`, now.toString());
-      setIsClockedIn(true);
-      setElapsedSeconds(0);
-      showToast('Clocked in successfully. Active session started.', 'success');
+      try {
+        const res = await fetch('/api/v1/workforce/attendance', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ action: 'CLOCK_IN' })
+        });
+        const json = await res.json();
+        if (res.ok && json.success) {
+          setIsClockedIn(true);
+          const start = json.clockInTimestamp || Date.now();
+          setServerStartTime(start);
+          setElapsedSeconds(0);
+          showToast(`Clocked in successfully at ${json.clockInFormatted || 'now'}. Server session active.`, 'success');
+        } else {
+          showToast(json.error || 'Failed to clock in on server.', 'error');
+        }
+      } catch (err: any) {
+        showToast(err.message || 'Network error during Clock-In', 'error');
+      }
     } else {
-      const savedStart = localStorage.getItem(`kapate_clock_in_${currentUser.id}`);
-      const startTime = savedStart ? parseInt(savedStart, 10) : Date.now();
-      const diffHrs = Math.max(0.1, Number(((Date.now() - startTime) / 3600000).toFixed(2)));
-      
-      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-      const today = new Date();
-      useDemoStore.getState().addTimesheet({
-        date: today.toISOString().split('T')[0],
-        day: days[today.getDay()],
-        projectName: 'General Delivery & Platform Operations',
-        taskName: 'Engineering & Sprint Execution',
-        hours: diffHrs,
-        isBillable: true,
-        description: `Logged via TopBar Clock-in timer (${Math.floor(elapsedSeconds / 60)}m active session)`
-      });
-
-      localStorage.removeItem(`kapate_clock_in_${currentUser.id}`);
-      setIsClockedIn(false);
-      setElapsedSeconds(0);
-      showToast(`Clocked out. ${diffHrs} hrs logged to daily timesheet.`, 'success');
+      try {
+        const res = await fetch('/api/v1/workforce/attendance', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ action: 'CLOCK_OUT' })
+        });
+        const json = await res.json();
+        if (res.ok && json.success) {
+          setIsClockedIn(false);
+          setServerStartTime(null);
+          setElapsedSeconds(0);
+          showToast(`Clocked out. ${json.totalHours} hrs logged to authoritative timesheet.`, 'success');
+          // Refresh store timesheets
+          useDemoStore.getState().fetchTimesheets?.();
+        } else {
+          showToast(json.error || 'Failed to clock out on server.', 'error');
+        }
+      } catch (err: any) {
+        showToast(err.message || 'Network error during Clock-Out', 'error');
+      }
     }
   };
 

@@ -1,6 +1,6 @@
 from typing import List, Optional, Dict, Any
 from datetime import date, datetime
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 
 
 # --- Base Profile Schemas ---
@@ -36,8 +36,7 @@ class PersonProfileDirectoryResponse(BaseModel):
     skills: Optional[List[str]] = None
     status: str
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # --- Employee Schemas ---

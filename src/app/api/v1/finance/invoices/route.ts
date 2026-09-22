@@ -5,7 +5,7 @@ import { getDatabase } from '@/lib/mongodb';
 import { Invoice } from '@/types';
 
 export async function GET(req: NextRequest) {
-  const auth = await requireAuth(req);
+  const auth = await requireAuth(req, ['SUPER_ADMIN', 'ADMIN', 'FINANCE', 'PROJECT_MANAGER', 'CLIENT']);
   if (!auth.authenticated || !auth.user) {
     return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
   }
@@ -29,9 +29,10 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const amount = Number(body.amount) || Number(body.total) || 500000;
-    const tax = Number(body.tax) || Math.round(amount * 0.18);
-    const total = Number(body.total) || (amount + tax);
+    const amount = Number(body.amount) > 0 ? Number(body.amount) : 500000;
+    // Server-Authoritative GST (18%) & Total Calculation
+    const tax = Math.round(amount * 0.18);
+    const total = amount + tax;
 
     const newInvoice = dataStore.addInvoice({
       id: body.id,

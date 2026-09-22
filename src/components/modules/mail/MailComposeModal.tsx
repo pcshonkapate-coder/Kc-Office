@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { useDemoStore } from '../../../store/demoStore';
 import { EmailRecipient, EmailAttachment, EmailPriority } from '../../../types';
 import {
-  X, Send, Paperclip, Sparkles, Layers, Bold, Italic, List,
-  Heading, Code, Quote, Trash2, Shield, User, Check, Plus,
-  UploadCloud, FileText, AlertCircle
+  X, Send, Paperclip, Sparkles, Layers,
+  UploadCloud
 } from 'lucide-react';
 
 export const MailComposeModal: React.FC = () => {
@@ -45,8 +44,10 @@ export const MailComposeModal: React.FC = () => {
   const [activeDirectoryField, setActiveDirectoryField] = useState<'TO' | 'CC' | 'BCC'>('TO');
   const [isDraggingFile, setIsDraggingFile] = useState(false);
 
-  // Load initial data if replying/forwarding or opening draft
-  useEffect(() => {
+  // Synchronize state when initial data changes without cascading render effects
+  const [prevInitialData, setPrevInitialData] = useState(mailComposeInitialData);
+  if (prevInitialData !== mailComposeInitialData) {
+    setPrevInitialData(mailComposeInitialData);
     if (mailComposeInitialData) {
       if (mailComposeInitialData.to) setSelectedRecipients(mailComposeInitialData.to);
       if (mailComposeInitialData.cc) setSelectedCc(mailComposeInitialData.cc);
@@ -68,7 +69,7 @@ export const MailComposeModal: React.FC = () => {
       setAttachments([]);
       setPriority('Normal');
     }
-  }, [mailComposeInitialData, defaultSender, isMailComposeOpen]);
+  }
 
   if (!isMailComposeOpen) return null;
 
@@ -163,16 +164,6 @@ export const MailComposeModal: React.FC = () => {
     showToast(`Attached ${newAttachments.length} file(s)`, 'success');
   };
 
-  const handleAttachPresetSample = () => {
-    const mockFiles: EmailAttachment[] = [
-      { id: `att-${Date.now()}-1`, filename: 'kapate-ai-architecture-blueprint.pdf', size: '2.8 MB', fileType: 'PDF', url: '#' },
-      { id: `att-${Date.now()}-2`, filename: 'q3-delivery-milestone-matrix.docx', size: '480 KB', fileType: 'DOCX', url: '#' },
-      { id: `att-${Date.now()}-3`, filename: 'benchmark-latency-traces.xlsx', size: '320 KB', fileType: 'SHEET', url: '#' }
-    ];
-    const picked = mockFiles[Math.floor(Math.random() * mockFiles.length)];
-    setAttachments(prev => [...prev, picked]);
-    showToast(`Attached sample: ${picked.filename}`, 'info');
-  };
 
   const handleApplyTemplate = (templateId: string) => {
     const tmpl = emailTemplates.find(t => t.id === templateId);
@@ -216,7 +207,7 @@ export const MailComposeModal: React.FC = () => {
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
-    let finalTo = [...selectedRecipients];
+    const finalTo = [...selectedRecipients];
     if (toInput.trim() && toInput.includes('@')) {
       finalTo.push({ name: toInput.split('@')[0], email: toInput.trim() });
     }
@@ -241,7 +232,7 @@ export const MailComposeModal: React.FC = () => {
   };
 
   const handleSaveDraft = () => {
-    let finalTo = [...selectedRecipients];
+    const finalTo = [...selectedRecipients];
     if (toInput.trim() && toInput.includes('@')) {
       finalTo.push({ name: toInput.split('@')[0], email: toInput.trim() });
     }
@@ -278,7 +269,7 @@ export const MailComposeModal: React.FC = () => {
           e.preventDefault();
           setIsDraggingFile(false);
           if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            handleFileUpload({ target: { files: e.dataTransfer.files } } as any);
+            handleFileUpload({ target: { files: e.dataTransfer.files } } as unknown as React.ChangeEvent<HTMLInputElement>);
           }
         }}
         className={`bg-white rounded-3xl border ${
@@ -555,7 +546,7 @@ export const MailComposeModal: React.FC = () => {
                 <span className="font-semibold text-slate-500 text-[11px]">Priority:</span>
                 <select
                   value={priority}
-                  onChange={(e) => setPriority(e.target.value as any)}
+                  onChange={(e) => setPriority(e.target.value as EmailPriority)}
                   className="bg-white border border-slate-200 rounded-lg px-2 py-1 text-[11px] font-semibold text-slate-700 focus:outline-none cursor-pointer"
                 >
                   <option value="Normal">Normal</option>
@@ -631,15 +622,9 @@ export const MailComposeModal: React.FC = () => {
                 <span>Upload File</span>
               </button>
 
-              <button
-                type="button"
-                onClick={handleAttachPresetSample}
-                className="p-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
-                title="Attach sample project document"
-              >
-                <Paperclip className="w-3.5 h-3.5 text-slate-400" />
-                <span>Preset Sample</span>
-              </button>
+              <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">
+                Supports PDF, Docs, Sheets & Images
+              </span>
             </div>
 
             <div className="flex items-center gap-2">

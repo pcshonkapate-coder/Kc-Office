@@ -1,6 +1,6 @@
 from typing import List, Optional, Any
 from datetime import date, datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 # --- Shared Base Schemas ---
@@ -27,8 +27,7 @@ class DeliveryCommentResponse(DeliveryCommentBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # --- Subtasks ---
@@ -47,8 +46,7 @@ class SubtaskResponse(SubtaskBase):
     id: str
     parent_task_id: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # --- Tasks ---
@@ -89,8 +87,7 @@ class TaskResponse(TaskBase):
     updated_at: datetime
     subtasks: List[SubtaskResponse] = []
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # --- Milestones ---
@@ -116,8 +113,7 @@ class MilestoneResponse(MilestoneBase):
     updated_at: datetime
     tasks: List[TaskResponse] = []
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # --- Projects ---
@@ -149,8 +145,7 @@ class ProjectResponse(ProjectBase):
     updated_at: datetime
     milestones: List[MilestoneResponse] = []
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # --- Kanban & Drag/Drop ---

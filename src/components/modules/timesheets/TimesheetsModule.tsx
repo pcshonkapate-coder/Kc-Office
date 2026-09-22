@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useDemoStore } from '../../../store/demoStore';
 import { Clock, Send } from 'lucide-react';
 
@@ -11,24 +11,20 @@ export const TimesheetsModule: React.FC = () => {
   const addTimesheet = useDemoStore((state) => state.addTimesheet);
   const currentUser = useDemoStore((state) => state.currentUser);
 
-  const [project, setProject] = useState(projects[0]?.name || 'AI Customer Support Platform');
+  const [project, setProject] = useState('');
   const [task, setTask] = useState('Model Training & Evaluation');
   const [hours, setHours] = useState(7.5);
   const [isBillable, setIsBillable] = useState(true);
   const [description, setDescription] = useState('Finetuned Llama 3 model on support transcripts.');
 
-  useEffect(() => {
-    if ((!project || project === '') && projects.length > 0) {
-      setProject(projects[0].name);
-    }
-  }, [projects, project]);
+  const currentProjectName = project || projects[0]?.name || 'AI Customer Support Platform';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     addTimesheet({
       date: new Date().toISOString().split('T')[0],
       day: 'Today',
-      projectName: project || (projects[0]?.name || 'General Project'),
+      projectName: currentProjectName,
       taskName: task,
       hours: Number(hours),
       isBillable,
@@ -61,7 +57,7 @@ export const TimesheetsModule: React.FC = () => {
             <div>
               <label className="block font-semibold text-slate-700 mb-1">Project</label>
               <select
-                value={project}
+                value={currentProjectName}
                 onChange={(e) => setProject(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:border-blue-600"
               >

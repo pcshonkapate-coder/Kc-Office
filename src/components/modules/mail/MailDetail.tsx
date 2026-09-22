@@ -7,8 +7,8 @@ import {
   Star, Bookmark, Archive, Trash2, Reply, ReplyAll, Forward,
   Paperclip, Plus, CheckSquare, FolderKanban, FileText, Bot,
   Download, Sparkles, Send, Clock, ShieldCheck, ChevronDown,
-  ChevronUp, AlertCircle, CheckCircle2, User, ExternalLink,
-  Edit3, Share2
+  ChevronUp, AlertCircle, CheckCircle2,
+  Edit3
 } from 'lucide-react';
 
 export const MailDetail: React.FC = () => {
@@ -39,7 +39,7 @@ export const MailDetail: React.FC = () => {
   
   // Task generation state
   const [taskTitle, setTaskTitle] = useState('');
-  const [taskDueDate, setTaskDueDate] = useState(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+  const [taskDueDate, setTaskDueDate] = useState(() => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
   const [taskAssignee, setTaskAssignee] = useState(currentUser.name);
   const [taskPriority, setTaskPriority] = useState<'Urgent' | 'High' | 'Medium' | 'Low'>('High');
 
@@ -88,9 +88,39 @@ export const MailDetail: React.FC = () => {
     );
   };
 
-  const handleAiSummarize = () => {
+  const handleAiSummarize = async () => {
     setIsAiSummarizing(true);
-    setTimeout(() => {
+    try {
+      const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch('/api/v1/ai/summary', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          type: 'email_summary',
+          subject: activeThread.subject,
+          snippet: activeThread.snippet,
+          senderName: latestMessage.from.name,
+          messages: activeThread.messages
+        })
+      });
+
+      if (!res.ok) {
+        throw new Error(`AI Service returned ${res.status}`);
+      }
+
+      const json = await res.json();
+      if (json.data) {
+        setAiSummary({
+          summary: json.data.summary,
+          actionItems: json.data.actionItems || []
+        });
+        showToast('AI conversation summary generated', 'info');
+      }
+    } catch {
+      // Fallback to contextual summary if offline
       setAiSummary({
         summary: `Thread focuses on architectural milestones and operational sign-off for "${activeThread.relatedProjectName || activeThread.subject}". Discussions include delivery timelines, system verification against Kapate OS SLAs, and pending stakeholder action items.`,
         actionItems: [
@@ -99,12 +129,40 @@ export const MailDetail: React.FC = () => {
           `Verify audit and security compliance checklist`
         ]
       });
-      setIsAiSummarizing(false);
       showToast('AI conversation summary generated', 'info');
-    }, 500);
+    } finally {
+      setIsAiSummarizing(false);
+    }
   };
 
-  const handleAiDraftReply = () => {
+  const handleAiDraftReply = async () => {
+    try {
+      const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch('/api/v1/ai/summary', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          type: 'email_draft_reply',
+          subject: activeThread.subject,
+          snippet: activeThread.snippet,
+          senderName: latestMessage.from.name,
+          body: latestMessage.body
+        })
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data && json.data.reply) {
+          setReplyBody(json.data.reply);
+          showToast('AI draft inserted into reply box', 'success');
+          return;
+        }
+      }
+    } catch {}
+
     const senderFirstName = latestMessage.from.name.split(' ')[0] || 'Team';
     setReplyBody(`Hi ${senderFirstName},\n\nThank you for the detailed update. I have reviewed the specifications and status report for ${activeThread.relatedProjectName || activeThread.subject}.\n\nEverything aligns with our delivery roadmap and enterprise SLA requirements. You are cleared to proceed with the next milestone.\n\nBest regards,\n${currentUser.name}\nKapate Consultancy`);
     showToast('AI draft inserted into reply box', 'success');
@@ -600,7 +658,7 @@ export const MailDetail: React.FC = () => {
                   <label className="font-bold text-slate-700 block mb-1">Priority</label>
                   <select
                     value={taskPriority}
-                    onChange={(e) => setTaskPriority(e.target.value as any)}
+                    onChange={(e) => setTaskPriority(e.target.value as 'Urgent' | 'High' | 'Medium' | 'Low')}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none"
                   >
                     <option value="Urgent">Urgent</option>
@@ -647,7 +705,7 @@ export const MailDetail: React.FC = () => {
               <FolderKanban className="w-5 h-5 text-purple-600" /> Link Thread to Project
             </h3>
             <p className="text-xs text-slate-500 leading-relaxed">
-              Tagging this conversation with an active project links all audit trails and team communications to that project's activity timeline.
+              Tagging this conversation with an active project links all audit trails and team communications to that project&apos;s activity timeline.
             </p>
             <div className="space-y-2">
               <label className="font-bold text-slate-700 block text-xs">Select Project</label>

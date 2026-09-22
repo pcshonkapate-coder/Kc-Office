@@ -1,6 +1,6 @@
 from typing import List, Optional
 from datetime import date, date as pydate, datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 # --- Expenses ---
 
@@ -23,8 +23,7 @@ class ExpenseResponse(ExpenseBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # --- Invoice Items ---
 
@@ -43,8 +42,7 @@ class InvoiceItemResponse(InvoiceItemBase):
     id: str
     invoice_id: str
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # --- Invoices ---
 
@@ -82,8 +80,7 @@ class InvoiceResponse(InvoiceBase):
     updated_at: datetime
     items: List[InvoiceItemResponse] = []
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # --- Payments ---
 
@@ -105,5 +102,4 @@ class PaymentResponse(PaymentBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
