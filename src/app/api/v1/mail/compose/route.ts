@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getCloudCollection } from '@/lib/mongodb';
 import { requireAuth } from '@/lib/auth';
+import { dataStore } from '@/lib/dataStore';
 import { EmailMessage, EmailThread, EmailRecipient } from '@/types';
 
 export async function POST(req: Request) {
@@ -66,18 +67,63 @@ export async function POST(req: Request) {
       attachments
     };
 
+    // 1. Persist directly to authoritative local dataStore
+    try {
+      dataStore.addEmailMessage(newMessage);
+
+      const existingLocalThread = dataStore.getEmailThreadById(effectiveThreadId);
+      if (existingLocalThread) {
+        const updatedMsgs = [...(existingLocalThread.messages || []), newMessage];
+        const updatedParticipants = [
+          ...existingLocalThread.participants,
+          ...allParticipants
+        ].filter((v, i, a) => a.findIndex(t => t.email.toLowerCase() === v.email.toLowerCase()) === i);
+
+        dataStore.updateEmailThread(effectiveThreadId, {
+          subject: subject || existingLocalThread.subject,
+          snippet: (content || '').substring(0, 120),
+          lastMessageTimestamp: nowTimeStr,
+          lastSenderName: auth.user.name,
+          messageCount: updatedMsgs.length,
+          messages: updatedMsgs,
+          participants: updatedParticipants,
+          hasAttachments: existingLocalThread.hasAttachments || attachments.length > 0,
+          isUnread: !isDraft,
+          folder: isDraft ? 'DRAFTS' : 'INBOX'
+        });
+      } else {
+        const newThreadRecord: EmailThread = {
+          id: effectiveThreadId,
+          subject: subject || '(No Subject)',
+          snippet: (content || '').substring(0, 120),
+          lastMessageTimestamp: nowTimeStr,
+          lastSenderName: auth.user.name,
+          isUnread: false,
+          isStarred: false,
+          isImportant: priority === 'Urgent' || priority === 'Important',
+          folder: isDraft ? 'DRAFTS' : 'SENT',
+          labels: ['Work'],
+          priority: priority as any,
+          messageCount: 1,
+          hasAttachments: attachments.length > 0,
+          participants: allParticipants,
+          messages: [newMessage]
+        };
+        dataStore.addEmailThread(newThreadRecord);
+      }
+    } catch (dsErr: any) {
+      console.warn('[Mail Compose] Local dataStore notice:', dsErr.message);
+    }
+
+    // 2. Best effort replication to MongoDB Atlas
     try {
       const threadsColl = await getCloudCollection<EmailThread>('email_threads');
       const messagesColl = await getCloudCollection<EmailMessage>('email_messages');
 
-      // Save message record
       await messagesColl.insertOne(newMessage as any);
 
-      // Find existing thread if replying
       const existingThread = await threadsColl.findOne({ id: effectiveThreadId });
-
       if (existingThread) {
-        // Append message to existing thread
         const updatedMessages = [...(existingThread.messages || []), newMessage];
         const updatedParticipants = [
           ...existingThread.participants,
@@ -96,13 +142,12 @@ export async function POST(req: Request) {
               messages: updatedMessages,
               participants: updatedParticipants,
               hasAttachments: existingThread.hasAttachments || attachments.length > 0,
-              isUnread: !isDraft, // Mark as unread for the receiving side
-              folder: isDraft ? 'DRAFTS' : 'INBOX' // If replied, show in INBOX for recipients
+              isUnread: !isDraft,
+              folder: isDraft ? 'DRAFTS' : 'INBOX'
             }
           }
         );
       } else {
-        // Create fresh thread record in MongoDB
         const newThread: EmailThread = {
           id: effectiveThreadId,
           subject: subject || '(No Subject)',
@@ -124,7 +169,7 @@ export async function POST(req: Request) {
         await threadsColl.insertOne(newThread as any);
       }
     } catch (cloudErr: any) {
-      console.warn('[Mail Compose] MongoDB cloud replication skipped due to network/SSL:', cloudErr.message);
+      console.warn('[Mail Compose] MongoDB cloud replication skipped:', cloudErr.message);
     }
 
     return NextResponse.json({

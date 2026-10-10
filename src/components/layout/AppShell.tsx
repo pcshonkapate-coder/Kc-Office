@@ -8,7 +8,7 @@ import { Toast } from '../ui/Toast';
 import { QuickCreateModal } from '../modals/QuickCreateModal';
 import { GlobalSearchModal } from '../modals/GlobalSearchModal';
 
-// Modules
+// Existing Modules
 import { ExecutiveDashboard } from '../modules/dashboard/ExecutiveDashboard';
 import { CRMModule } from '../modules/crm/CRMModule';
 import { SalesModule } from '../modules/sales/SalesModule';
@@ -30,7 +30,15 @@ import { ManagerCommandCenter } from '../modules/manager/ManagerCommandCenter';
 import { EmployeeWorkspace } from '../modules/employee/EmployeeWorkspace';
 import { InternLearningHub } from '../modules/intern/InternLearningHub';
 import { OnboardPersonnelModal } from '../modals/OnboardPersonnelModal';
-import { ShieldAlert, LogOut, Shield } from 'lucide-react';
+
+// Kapate OS 2.0 Core Modules
+import { MyWorkModule } from '../modules/my-work/MyWorkModule';
+import { ChatModule } from '../modules/chat/ChatModule';
+import { CalendarModule } from '../modules/calendar/CalendarModule';
+import { KnowledgeModule } from '../modules/knowledge/KnowledgeModule';
+import { AutomationsModule } from '../modules/automations/AutomationsModule';
+
+import { ShieldAlert, LogOut } from 'lucide-react';
 
 export const AppShell: React.FC = () => {
   const activeTab = useDemoStore((state) => state.activeTab);
@@ -55,19 +63,19 @@ export const AppShell: React.FC = () => {
     // Role-based Access Control (RBAC) Guards for privileged modules
     if ((activeTab === 'super-admin' || activeTab === 'admin-control') && !isSuperOrAdmin) {
       return (
-        <div className="p-8 rounded-3xl bg-white border border-rose-200 shadow-sm text-center max-w-lg mx-auto my-12 space-y-4 animate-fade-in">
-          <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto border border-rose-200">
+        <div className="p-8 rounded-3xl bg-slate-900 border border-rose-900/50 shadow-xl text-center max-w-lg mx-auto my-12 space-y-4 animate-fade-in">
+          <div className="w-12 h-12 rounded-2xl bg-rose-950/60 text-rose-400 flex items-center justify-center mx-auto border border-rose-800/40">
             <ShieldAlert className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-slate-900">Access Restricted</h2>
-            <p className="text-xs text-slate-500 mt-1">
-              Super Admin Center requires elevated root credentials. Your current role is <strong className="font-mono text-slate-700">{currentUser.role}</strong>.
+            <h2 className="text-lg font-bold text-white">Access Restricted</h2>
+            <p className="text-xs text-slate-400 mt-1">
+              Super Admin Center requires elevated root credentials. Your current role is <strong className="font-mono text-cyan-400">{currentUser.role}</strong>.
             </p>
           </div>
           <button
             onClick={() => useDemoStore.getState().setActiveTab('dashboard')}
-            className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-colors cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-slate-800 text-white text-xs font-bold hover:bg-slate-750 border border-slate-700 transition-colors cursor-pointer"
           >
             Return to Dashboard
           </button>
@@ -77,19 +85,19 @@ export const AppShell: React.FC = () => {
 
     if ((activeTab === 'security' || activeTab === 'identity') && !isHrOrAdmin) {
       return (
-        <div className="p-8 rounded-3xl bg-white border border-rose-200 shadow-sm text-center max-w-lg mx-auto my-12 space-y-4 animate-fade-in">
-          <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto border border-rose-200">
+        <div className="p-8 rounded-3xl bg-slate-900 border border-rose-900/50 shadow-xl text-center max-w-lg mx-auto my-12 space-y-4 animate-fade-in">
+          <div className="w-12 h-12 rounded-2xl bg-rose-950/60 text-rose-400 flex items-center justify-center mx-auto border border-rose-800/40">
             <ShieldAlert className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-slate-900">Security Access Restricted</h2>
-            <p className="text-xs text-slate-500 mt-1">
+            <h2 className="text-lg font-bold text-white">Security Access Restricted</h2>
+            <p className="text-xs text-slate-400 mt-1">
               Security audit ledger and personnel onboarding require Administrative privileges.
             </p>
           </div>
           <button
             onClick={() => useDemoStore.getState().setActiveTab('dashboard')}
-            className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-colors cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-slate-800 text-white text-xs font-bold hover:bg-slate-750 border border-slate-700 transition-colors cursor-pointer"
           >
             Return to Dashboard
           </button>
@@ -99,19 +107,19 @@ export const AppShell: React.FC = () => {
 
     if ((activeTab === 'finance' || activeTab === 'profitability') && !isFinanceOrAdmin) {
       return (
-        <div className="p-8 rounded-3xl bg-white border border-rose-200 shadow-sm text-center max-w-lg mx-auto my-12 space-y-4 animate-fade-in">
-          <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto border border-rose-200">
+        <div className="p-8 rounded-3xl bg-slate-900 border border-rose-900/50 shadow-xl text-center max-w-lg mx-auto my-12 space-y-4 animate-fade-in">
+          <div className="w-12 h-12 rounded-2xl bg-rose-950/60 text-rose-400 flex items-center justify-center mx-auto border border-rose-800/40">
             <ShieldAlert className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-slate-900">Finance Access Restricted</h2>
-            <p className="text-xs text-slate-500 mt-1">
+            <h2 className="text-lg font-bold text-white">Finance Access Restricted</h2>
+            <p className="text-xs text-slate-400 mt-1">
               Invoices, expenses, and financial ledgers are restricted to Finance and Executive personnel.
             </p>
           </div>
           <button
             onClick={() => useDemoStore.getState().setActiveTab('dashboard')}
-            className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-colors cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-slate-800 text-white text-xs font-bold hover:bg-slate-750 border border-slate-700 transition-colors cursor-pointer"
           >
             Return to Dashboard
           </button>
@@ -132,6 +140,19 @@ export const AppShell: React.FC = () => {
           return <InternLearningHub />;
         }
         return <ExecutiveDashboard />;
+      
+      // Kapate OS 2.0 Unified Modules
+      case 'my-work':
+        return <MyWorkModule />;
+      case 'chat':
+        return <ChatModule />;
+      case 'calendar':
+        return <CalendarModule />;
+      case 'knowledge':
+        return <KnowledgeModule />;
+      case 'automations':
+        return <AutomationsModule />;
+
       case 'crm':
       case 'leads':
       case 'companies':
@@ -187,7 +208,7 @@ export const AppShell: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col font-sans selection:bg-blue-600 selection:text-white">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-slate-950">
       {/* Persistent Super Admin Impersonation Banner */}
       {impersonatedOriginalUser && (
         <div className="bg-gradient-to-r from-amber-600 via-amber-500 to-orange-600 text-white px-4 py-2.5 text-xs shadow-md sticky top-0 z-50 flex items-center justify-between border-b border-amber-400">
@@ -200,7 +221,7 @@ export const AppShell: React.FC = () => {
                 SUPER ADMIN IMPERSONATION ACTIVE
               </span>
               <span className="font-semibold">
-                Operating as: <strong className="underline decoration-white/50">{currentUser.name}</strong> ({currentUser.email} • {currentUser.role})
+                Operating as: <strong className="underline decoration-white/50">{currentUser.name}</strong> ({currentUser.email} &bull; {currentUser.role})
               </span>
               {impersonationReason && (
                 <span className="text-amber-100 ml-2 hidden sm:inline text-[11px] italic">
@@ -231,13 +252,13 @@ export const AppShell: React.FC = () => {
         <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+        <div className="flex-1 flex flex-col min-w-0 min-h-screen bg-slate-950">
           
           {/* Top Bar Navigation & Actions */}
           <TopBar />
 
           {/* Dynamic Active Module Container */}
-          <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6 overflow-y-auto">
+          <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6 overflow-y-auto custom-scrollbar">
             {renderModule()}
           </main>
         </div>
@@ -252,3 +273,4 @@ export const AppShell: React.FC = () => {
     </div>
   );
 };
+export default AppShell;

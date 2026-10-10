@@ -353,6 +353,8 @@ export interface Notification {
   time?: string;
   read: boolean;
   type: 'lead' | 'task' | 'invoice' | 'timesheet' | 'project' | 'leave' | 'system';
+  userId?: string;
+  actionUrl?: string;
 }
 
 export interface ActivityLog {
@@ -692,6 +694,98 @@ export interface SuperAdminStats {
   activeSessionsCount: number;
   healthStatus: 'HEALTHY' | 'DEGRADED' | 'DOWN';
 }
+
+// ---------------------------------------------------------------------------
+// KAPATE OS 2.0 DOMAIN TYPES
+// ---------------------------------------------------------------------------
+
+export interface ChatMessage {
+  id: string;
+  channelId: string;
+  senderId: string;
+  senderName: string;
+  senderAvatar?: string;
+  senderRole?: string;
+  content: string;
+  timestamp: string;
+  attachments?: { name: string; url: string; size: string; type: string }[];
+  reactions?: Record<string, string[]>; // emoji -> [userIds]
+  replyToId?: string;
+  pinned?: boolean;
+}
+
+export interface ChatChannel {
+  id: string;
+  name: string;
+  type: 'DIRECT' | 'PROJECT' | 'DEPARTMENT';
+  description?: string;
+  projectId?: string;
+  departmentId?: string;
+  members: string[]; // userIds / names
+  unreadCount?: number;
+  lastMessage?: string;
+  lastMessageTimestamp?: string;
+  isPrivate?: boolean;
+}
+
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  type: 'MEETING' | 'DEADLINE' | 'MILESTONE' | 'FOLLOWUP' | 'LEAVE';
+  startDate: string;
+  endDate?: string;
+  time?: string;
+  projectId?: string;
+  projectName?: string;
+  clientName?: string;
+  assignedTo?: string[];
+  description?: string;
+  location?: string;
+  meetingLink?: string;
+  completed?: boolean;
+}
+
+export interface KnowledgeArticle {
+  id: string;
+  title: string;
+  category: 'SOP' | 'DEVELOPMENT' | 'SECURITY' | 'INVOICING' | 'ONBOARDING' | 'POLICY';
+  tags: string[];
+  summary: string;
+  content: string;
+  author: string;
+  updatedAt: string;
+  viewsCount: number;
+  verified: boolean;
+}
+
+export interface AutomationRule {
+  id: string;
+  name: string;
+  description: string;
+  trigger: 'INVOICE_OVERDUE' | 'PROJECT_AT_RISK' | 'NEW_LEAD' | 'DEAL_WON' | 'TASK_COMPLETED' | 'ATTENDANCE_LATE';
+  condition: string;
+  actions: string[];
+  enabled: boolean;
+  lastTriggered?: string;
+  executionCount: number;
+}
+
+export interface SupportTicket {
+  id: string;
+  ticketNumber: string;
+  clientId: string;
+  clientName: string;
+  projectId?: string;
+  projectName?: string;
+  subject: string;
+  description: string;
+  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+  status: 'OPEN' | 'IN_PROGRESS' | 'WAITING' | 'RESOLVED' | 'CLOSED';
+  assignedTo?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 
 
 

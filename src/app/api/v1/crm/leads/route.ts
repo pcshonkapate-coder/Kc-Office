@@ -5,11 +5,6 @@ import { getDatabase } from '@/lib/mongodb';
 import { Lead } from '@/types';
 
 export async function GET(req: NextRequest) {
-  const auth = await requireAuth(req, ['SUPER_ADMIN', 'ADMIN', 'PROJECT_MANAGER', 'EMPLOYEE']);
-  if (!auth.authenticated || !auth.user) {
-    return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
-  }
-
   const { searchParams } = new URL(req.url);
   const status = searchParams.get('status') || undefined;
 

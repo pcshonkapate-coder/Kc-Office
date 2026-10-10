@@ -10,12 +10,17 @@ import {
 export const CRMModule: React.FC = () => {
   const activeTab = useDemoStore((state) => state.activeTab);
   const leads = useDemoStore((state) => state.leads);
+  const fetchLeads = useDemoStore((state) => state.fetchLeads);
   const updateLeadStatus = useDemoStore((state) => state.updateLeadStatus);
   const companies = useDemoStore((state) => state.companies);
   const contacts = useDemoStore((state) => state.contacts);
   const deals = useDemoStore((state) => state.deals);
   const updateDealStage = useDemoStore((state) => state.updateDealStage);
   const setQuickCreateOpen = useDemoStore((state) => state.setQuickCreateOpen);
+
+  React.useEffect(() => {
+    fetchLeads();
+  }, [fetchLeads]);
 
   const [subTab, setSubTab] = useState<'leads' | 'companies' | 'contacts' | 'deals'>(
     activeTab === 'companies' ? 'companies' : activeTab === 'contacts' ? 'contacts' : activeTab === 'deals' ? 'deals' : 'leads'

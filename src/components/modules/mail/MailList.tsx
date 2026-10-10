@@ -18,6 +18,7 @@ export const MailList: React.FC = () => {
   const activeEmailAccountEmail = useDemoStore((state) => state.activeEmailAccountEmail);
   const mailSearchQuery = useDemoStore((state) => state.mailSearchQuery);
   const emailLabels = useDemoStore((state) => state.emailLabels);
+  const fetchEmailThreads = useDemoStore((state) => state.fetchEmailThreads);
 
   const setSelectedEmailThreadId = useDemoStore((state) => state.setSelectedEmailThreadId);
   const setMailSearchQuery = useDemoStore((state) => state.setMailSearchQuery);
@@ -35,6 +36,15 @@ export const MailList: React.FC = () => {
   const [filterOnlyUrgent, setFilterOnlyUrgent] = useState(false);
   const [showMoveMenu, setShowMoveMenu] = useState(false);
   const [showLabelMenu, setShowLabelMenu] = useState(false);
+
+  // Auto-fetch email threads on mount, folder change, or account switch
+  useEffect(() => {
+    fetchEmailThreads();
+    const interval = setInterval(() => {
+      fetchEmailThreads();
+    }, 12000);
+    return () => clearInterval(interval);
+  }, [fetchEmailThreads, activeMailFolder, activeEmailAccountEmail]);
 
   // Filter threads based on mailbox, folder, search, label, and quick filters
   const filteredThreads = useMemo(() => {

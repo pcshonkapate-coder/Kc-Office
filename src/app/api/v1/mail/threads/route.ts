@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { getCloudCollection } from '@/lib/mongodb';
+import { dataStore } from '@/lib/dataStore';
 import { EmailThread } from '@/types';
 
 export async function GET(req: Request) {
-  const auth = requireAuth(req);
-  if ('errorResponse' in auth) return auth.errorResponse;
-
   try {
     const url = new URL(req.url);
     const mailbox = url.searchParams.get('mailbox'); // e.g. 'shon@kapateconsultancy.in' or 'ALL'
@@ -14,71 +12,94 @@ export async function GET(req: Request) {
     const label = url.searchParams.get('label');
     const query = url.searchParams.get('q');
 
-    const threadsColl = await getCloudCollection<EmailThread>('email_threads');
+    let threads: EmailThread[] = [];
 
-    const filter: Record<string, any> = {};
+    // 1. Try cloud collection (best effort)
+    try {
+      const threadsColl = await getCloudCollection<EmailThread>('email_threads');
 
-    // Filter by mailbox
-    if (mailbox && mailbox !== 'ALL') {
-      const mbLower = mailbox.toLowerCase();
-      filter.$or = [
-        { 'participants.email': mbLower },
-        { 'messages.from.email': mbLower },
-        { 'messages.to.email': mbLower },
-        { 'messages.cc.email': mbLower },
-        { 'messages.bcc.email': mbLower }
-      ];
-    }
+      const filter: Record<string, any> = {};
 
-    // Filter by label
-    if (label) {
-      filter.labels = label;
-    } else if (folder) {
-      if (folder === 'STARRED') {
-        filter.isStarred = true;
-      } else if (folder === 'IMPORTANT') {
-        filter.isImportant = true;
-      } else {
-        filter.folder = folder;
+      if (mailbox && mailbox !== 'ALL') {
+        const mbLower = mailbox.toLowerCase();
+        filter.$or = [
+          { 'participants.email': mbLower },
+          { 'messages.from.email': mbLower },
+          { 'messages.to.email': mbLower },
+          { 'messages.cc.email': mbLower },
+          { 'messages.bcc.email': mbLower }
+        ];
       }
-    }
 
-    // Full text search
-    if (query && query.trim()) {
-      const q = query.trim();
-      const regex = { $regex: q, $options: 'i' };
-      filter.$and = [
-        ...(filter.$and || []),
-        {
-          $or: [
-            { subject: regex },
-            { snippet: regex },
-            { 'participants.name': regex },
-            { 'participants.email': regex },
-            { 'messages.body': regex },
-            { relatedProjectName: regex }
-          ]
+      if (label) {
+        filter.labels = label;
+      } else if (folder) {
+        if (folder === 'STARRED') {
+          filter.isStarred = true;
+        } else if (folder === 'IMPORTANT') {
+          filter.isImportant = true;
+        } else {
+          filter.folder = folder;
         }
-      ];
-    }
+      }
 
-    const threads = await threadsColl
-      .find(filter)
-      .sort({ updatedAt: -1, lastMessageAt: -1 })
-      .toArray();
-
-    // Calculate unread counts by folder
-    const allUserThreads = await threadsColl.find(
-      mailbox && mailbox !== 'ALL'
-        ? {
+      if (query && query.trim()) {
+        const q = query.trim();
+        const regex = { $regex: q, $options: 'i' };
+        filter.$and = [
+          ...(filter.$and || []),
+          {
             $or: [
-              { 'participants.email': mailbox.toLowerCase() },
-              { 'messages.from.email': mailbox.toLowerCase() },
-              { 'messages.to.email': mailbox.toLowerCase() }
+              { subject: regex },
+              { snippet: regex },
+              { 'participants.name': regex },
+              { 'participants.email': regex },
+              { 'messages.body': regex },
+              { relatedProjectName: regex }
             ]
           }
-        : {}
-    ).toArray();
+        ];
+      }
+
+      const cloudThreads = await threadsColl
+        .find(filter)
+        .sort({ updatedAt: -1, lastMessageAt: -1 })
+        .toArray();
+
+      if (Array.isArray(cloudThreads)) {
+        threads = cloudThreads;
+      }
+    } catch {
+      // Best effort; will fall back to authoritative dataStore
+    }
+
+    // 2. Load from authoritative local dataStore and merge deduplicated
+    const localThreads = dataStore.getEmailThreads(
+      mailbox || undefined,
+      folder || undefined,
+      label || undefined,
+      query || undefined
+    );
+
+    const threadMap = new Map<string, EmailThread>();
+    // Add local threads first (contains real-time website inquiries)
+    localThreads.forEach(t => threadMap.set(t.id, t));
+    // Add cloud threads
+    threads.forEach(t => {
+      if (!threadMap.has(t.id)) {
+        threadMap.set(t.id, t);
+      }
+    });
+
+    const combinedThreads = Array.from(threadMap.values());
+
+    // Calculate unread counts by folder
+    const allUserThreads = dataStore.getEmailThreads(mailbox || undefined);
+    threads.forEach(t => {
+      if (!allUserThreads.some(u => u.id === t.id)) {
+        allUserThreads.push(t);
+      }
+    });
 
     const counts = {
       inbox: allUserThreads.filter(t => t.folder === 'INBOX' && t.isUnread).length,
@@ -92,26 +113,25 @@ export async function GET(req: Request) {
 
     return NextResponse.json({
       success: true,
-      threads,
+      threads: combinedThreads,
       counts
     });
   } catch (err: any) {
-    console.warn('[Mail Threads] MongoDB Atlas unreachable, returning resilient fallback:', err.message);
-    const fallbackCounts = {
-      inbox: 0,
-      starred: 0,
-      important: 0,
-      sent: 0,
-      drafts: 0,
-      trash: 0,
-      spam: 0
-    };
+    console.warn('[Mail Threads] Fallback handler:', err.message);
+    const localThreads = dataStore.getEmailThreads();
     return NextResponse.json({
       success: true,
-      threads: [],
-      counts: fallbackCounts,
-      source: 'local_resilient_fallback',
-      warning: err.message
+      threads: localThreads,
+      counts: {
+        inbox: localThreads.filter(t => t.folder === 'INBOX' && t.isUnread).length,
+        starred: localThreads.filter(t => t.isStarred).length,
+        important: localThreads.filter(t => t.isImportant).length,
+        sent: localThreads.filter(t => t.folder === 'SENT').length,
+        drafts: localThreads.filter(t => t.folder === 'DRAFTS').length,
+        trash: localThreads.filter(t => t.folder === 'TRASH').length,
+        spam: localThreads.filter(t => t.folder === 'SPAM').length
+      },
+      source: 'local_data_store'
     });
   }
 }

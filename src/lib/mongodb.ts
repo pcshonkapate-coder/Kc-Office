@@ -22,9 +22,13 @@ if (process.env.NODE_ENV === 'development') {
     client = new MongoClient(uri, {
       maxPoolSize: 20,
       minPoolSize: 2,
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 2500,
+      connectTimeoutMS: 2500,
     });
-    global._mongoClientPromise = client.connect();
+    global._mongoClientPromise = client.connect().catch((err) => {
+      console.warn('[MongoDB Atlas] Initial connection notice (using resilient local dataStore):', err?.message || err);
+      return client;
+    });
   }
   clientPromise = global._mongoClientPromise;
 } else {
@@ -32,9 +36,13 @@ if (process.env.NODE_ENV === 'development') {
   client = new MongoClient(uri, {
     maxPoolSize: 50,
     minPoolSize: 5,
-    serverSelectionTimeoutMS: 5000,
+    serverSelectionTimeoutMS: 2500,
+    connectTimeoutMS: 2500,
   });
-  clientPromise = client.connect();
+  clientPromise = client.connect().catch((err) => {
+    console.warn('[MongoDB Atlas] Production connection notice (using resilient local dataStore):', err?.message || err);
+    return client;
+  });
 }
 
 /**

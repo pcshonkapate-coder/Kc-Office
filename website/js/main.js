@@ -103,6 +103,24 @@ function initContactForm() {
   const modal = document.getElementById('confirmation-modal');
   const closeModalBtn = document.getElementById('modal-close-btn');
 
+  // Auto-select practice area if provided via URL query parameter (e.g. ?service=AI%20Solutions)
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const serviceParam = urlParams.get('service');
+    const serviceSelect = form.querySelector('[name="service"]');
+    if (serviceParam && serviceSelect) {
+      const paramLower = serviceParam.toLowerCase();
+      for (let i = 0; i < serviceSelect.options.length; i++) {
+        const optVal = serviceSelect.options[i].value.toLowerCase();
+        const optText = serviceSelect.options[i].text.toLowerCase();
+        if ((optVal && optVal.includes(paramLower)) || (optVal && paramLower.includes(optVal)) || optText.includes(paramLower)) {
+          serviceSelect.selectedIndex = i;
+          break;
+        }
+      }
+    }
+  } catch {}
+
   const validateField = (input, condition, errorMsg) => {
     const group = input.closest('.form-group');
     const feedback = group?.querySelector('.form-feedback');
@@ -143,8 +161,8 @@ function initContactForm() {
     }
 
     if (messageInput) {
-      const hasMessage = messageInput.value.trim().length >= 10;
-      isValid = validateField(messageInput, hasMessage, 'Please provide a message (minimum 10 characters).') && isValid;
+      const hasMessage = messageInput.value.trim().length >= 5;
+      isValid = validateField(messageInput, hasMessage, 'Please provide a message (minimum 5 characters).') && isValid;
     }
 
     if (isValid) {
@@ -184,8 +202,7 @@ function initContactForm() {
         candidateEndpoints.push('http://localhost:8000/api/v1/public/leads');
         candidateEndpoints.push('http://localhost:8000/api/v1/crm/leads/public');
       } else {
-        candidateEndpoints.push('https://api.kapateconsultancy.in/api/v1/public/leads');
-        candidateEndpoints.push('https://api.kapateconsultancy.com/api/v1/public/leads');
+        candidateEndpoints.push('https://kapateconsultancy.in/api/v1/public/leads');
       }
 
       let leadCode = 'KC-' + new Date().getFullYear() + '-' + Math.floor(10000 + Math.random() * 90000);

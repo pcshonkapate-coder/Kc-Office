@@ -4,7 +4,8 @@ import type {
   Employee, Intern, Freelancer, User, SecuritySession, AuditLogEntry, UserRole,
   RegistrationRequest, OnboardingInvitation, Project, Task, Lead, Company, Contact,
   Deal, DealStage, Proposal, Contract, TimesheetEntry, AttendanceRecord, LeaveRequest, Invoice,
-  Payment, Expense, AppDocument, SystemSettings
+  Payment, Expense, AppDocument, SystemSettings,
+  EmailThread, EmailMessage, Notification, ChatMessage
 } from '../types';
 import { hashPassword } from './auth';
 import { getDatabase } from './mongodb';
@@ -45,6 +46,10 @@ export interface StoreSchema {
   payments: Payment[];
   expenses: Expense[];
   documents: AppDocument[];
+  email_threads?: EmailThread[];
+  email_messages?: EmailMessage[];
+  notifications?: Notification[];
+  chat_messages?: ChatMessage[];
   systemSettings?: SystemSettings;
   rolePermissions?: Record<UserRole, string[]>;
   activeClockSessions?: Record<string, ActiveClockSession>;
@@ -71,6 +76,10 @@ const DEFAULT_STORE: StoreSchema = {
   payments: [],
   expenses: [],
   documents: [],
+  email_threads: [],
+  email_messages: [],
+  notifications: [],
+  chat_messages: [],
   users: [
     {
       id: 'usr-admin',
@@ -223,6 +232,10 @@ class DataStore {
           if (!Array.isArray(parsed.payments)) parsed.payments = [];
           if (!Array.isArray(parsed.expenses)) parsed.expenses = [];
           if (!Array.isArray(parsed.documents)) parsed.documents = [];
+          if (!Array.isArray(parsed.email_threads)) parsed.email_threads = [];
+          if (!Array.isArray(parsed.email_messages)) parsed.email_messages = [];
+          if (!Array.isArray(parsed.notifications)) parsed.notifications = [];
+          if (!Array.isArray(parsed.chat_messages)) parsed.chat_messages = [];
           if (!parsed.systemSettings) parsed.systemSettings = { ...DEFAULT_SYSTEM_SETTINGS };
           if (!parsed.rolePermissions) parsed.rolePermissions = { ...DEFAULT_ROLE_PERMISSIONS };
           // Ensure master admin always exists
@@ -1824,6 +1837,147 @@ class DataStore {
     store.rolePermissions = { ...DEFAULT_ROLE_PERMISSIONS };
     this.saveStore();
     return store.rolePermissions;
+  }
+
+  // ==========================================
+  // EMAIL THREADS & MESSAGES
+  // ==========================================
+
+  public getEmailThreads(mailbox?: string, folder?: string, label?: string, query?: string): EmailThread[] {
+    const store = this.loadStore();
+    let list = [...(store.email_threads || [])];
+
+    if (mailbox && mailbox !== 'ALL') {
+      const mb = mailbox.toLowerCase();
+      list = list.filter(t =>
+        t.participants?.some(p => p.email?.toLowerCase() === mb) ||
+        t.messages?.some(m =>
+          m.from?.email?.toLowerCase() === mb ||
+          m.to?.some(to => to.email?.toLowerCase() === mb)
+        )
+      );
+    }
+
+    if (label) {
+      list = list.filter(t => t.labels?.includes(label));
+    } else if (folder) {
+      if (folder === 'STARRED') {
+        list = list.filter(t => t.isStarred);
+      } else if (folder === 'IMPORTANT') {
+        list = list.filter(t => t.isImportant);
+      } else {
+        list = list.filter(t => t.folder === folder);
+      }
+    }
+
+    if (query && query.trim()) {
+      const q = query.toLowerCase().trim();
+      list = list.filter(t =>
+        t.subject?.toLowerCase().includes(q) ||
+        t.snippet?.toLowerCase().includes(q) ||
+        t.lastSenderName?.toLowerCase().includes(q)
+      );
+    }
+
+    return list;
+  }
+
+  public getEmailThreadById(id: string): EmailThread | null {
+    const store = this.loadStore();
+    return (store.email_threads || []).find(t => t.id === id) || null;
+  }
+
+  public addEmailThread(thread: EmailThread): EmailThread {
+    const store = this.loadStore();
+    store.email_threads = store.email_threads || [];
+    const existingIndex = store.email_threads.findIndex(t => t.id === thread.id);
+    if (existingIndex !== -1) {
+      store.email_threads[existingIndex] = { ...store.email_threads[existingIndex], ...thread };
+      this.saveStore();
+      return store.email_threads[existingIndex];
+    }
+    store.email_threads.unshift(thread);
+    this.saveStore();
+    return thread;
+  }
+
+  public updateEmailThread(id: string, patch: Partial<EmailThread>): EmailThread | null {
+    const store = this.loadStore();
+    store.email_threads = store.email_threads || [];
+    const index = store.email_threads.findIndex(t => t.id === id);
+    if (index === -1) return null;
+    store.email_threads[index] = { ...store.email_threads[index], ...patch };
+    this.saveStore();
+    return store.email_threads[index];
+  }
+
+  public addEmailMessage(message: EmailMessage): EmailMessage {
+    const store = this.loadStore();
+    store.email_messages = store.email_messages || [];
+    store.email_messages.push(message);
+    this.saveStore();
+    return message;
+  }
+
+  // ==========================================
+  // NOTIFICATIONS
+  // ==========================================
+
+  public getNotifications(limit = 50): Notification[] {
+    const store = this.loadStore();
+    return [...(store.notifications || [])].slice(0, limit);
+  }
+
+  public addNotification(notif: Partial<Notification>): Notification {
+    const store = this.loadStore();
+    store.notifications = store.notifications || [];
+    const newNotif: Notification = {
+      id: notif.id || `notif-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`,
+      userId: notif.userId || 'all',
+      title: notif.title || 'System Notification',
+      message: notif.message || '',
+      type: (notif.type as any) || 'system',
+      read: notif.read ?? false,
+      timestamp: notif.timestamp || new Date().toISOString(),
+      actionUrl: notif.actionUrl
+    };
+    store.notifications.unshift(newNotif);
+    if (store.notifications.length > 200) {
+      store.notifications = store.notifications.slice(0, 200);
+    }
+    this.saveStore();
+    return newNotif;
+  }
+
+  // ==========================================
+  // CHAT MESSAGES
+  // ==========================================
+
+  public getChatMessages(channelId?: string): ChatMessage[] {
+    const store = this.loadStore();
+    let list = [...(store.chat_messages || [])];
+    if (channelId) list = list.filter(m => m.channelId === channelId);
+    return list;
+  }
+
+  public addChatMessage(msg: Partial<ChatMessage>): ChatMessage {
+    const store = this.loadStore();
+    store.chat_messages = store.chat_messages || [];
+    const newMsg: ChatMessage = {
+      id: msg.id || `chat-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`,
+      channelId: msg.channelId || 'chan-general',
+      senderId: msg.senderId || 'usr-admin',
+      senderName: msg.senderName || 'System',
+      senderRole: msg.senderRole || 'SUPER_ADMIN',
+      content: msg.content || '',
+      timestamp: msg.timestamp || new Date().toISOString()
+    };
+    store.chat_messages.push(newMsg);
+    if (store.chat_messages.length > 500) {
+      store.chat_messages = store.chat_messages.slice(-500);
+    }
+    this.saveStore();
+    return newMsg;
   }
 }
 

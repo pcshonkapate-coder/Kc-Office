@@ -7,7 +7,8 @@ import {
   EmailAccount, EmailAttachment, EmailLabel, EmailMessage, EmailRecipient,
   EmailSignature, EmailTemplate, EmailThread, MailFolder, EmailPriority,
   RegistrationRequest, OnboardingInvitation, SecurityEvent, AccountStatus,
-  AuditLogEntry, SecuritySession, SystemSettings, SystemHealthStatus
+  AuditLogEntry, SecuritySession, SystemSettings, SystemHealthStatus,
+  ChatMessage, ChatChannel, CalendarEvent, KnowledgeArticle, AutomationRule, SupportTicket
 } from '../types';
 import {
   DEFAULT_ROLE_PERMISSIONS, INITIAL_ENTERPRISE_USERS,
@@ -23,7 +24,9 @@ import {
   INITIAL_DOCUMENTS, INITIAL_EMAIL_ACCOUNTS, INITIAL_EMAIL_LABELS,
   INITIAL_EMAIL_TEMPLATES, INITIAL_EMAIL_SIGNATURES, INITIAL_EMAIL_THREADS,
   INITIAL_EMAILS, INITIAL_REGISTRATION_REQUESTS, INITIAL_ONBOARDING_INVITATIONS,
-  INITIAL_SECURITY_EVENTS
+  INITIAL_SECURITY_EVENTS,
+  INITIAL_CHAT_CHANNELS, INITIAL_CHAT_MESSAGES, INITIAL_CALENDAR_EVENTS,
+  INITIAL_KNOWLEDGE_ARTICLES, INITIAL_AUTOMATION_RULES, INITIAL_SUPPORT_TICKETS
 } from '../data/mockData';
 
 interface ToastState {
@@ -182,6 +185,29 @@ interface DemoStore {
   markNotificationRead: (id: string) => void;
   resetDemoData: () => void;
 
+  // Kapate OS 2.0 Unified Collaboration & Operations
+  chatChannels: ChatChannel[];
+  chatMessages: ChatMessage[];
+  activeChatChannelId: string;
+  setActiveChatChannelId: (id: string) => void;
+  sendChatMessage: (content: string, channelId?: string) => void;
+
+  calendarEvents: CalendarEvent[];
+  addCalendarEvent: (event: Omit<CalendarEvent, 'id'>) => void;
+
+  knowledgeArticles: KnowledgeArticle[];
+  addKnowledgeArticle: (article: Omit<KnowledgeArticle, 'id' | 'viewsCount' | 'updatedAt'>) => void;
+
+  automationRules: AutomationRule[];
+  toggleAutomationRule: (id: string) => void;
+
+  supportTickets: SupportTicket[];
+  addSupportTicket: (ticket: Omit<SupportTicket, 'id' | 'ticketNumber' | 'createdAt' | 'updatedAt'>) => void;
+  updateSupportTicketStatus: (id: string, status: SupportTicket['status']) => void;
+
+  aiPromptQuery: string;
+  setAiPromptQuery: (q: string) => void;
+
   // Identity, Onboarding & Security
   registrationRequests: RegistrationRequest[];
   onboardingInvitations: OnboardingInvitation[];
@@ -252,6 +278,7 @@ interface DemoStore {
   fetchTimesheets: () => Promise<TimesheetEntry[]>;
   fetchAttendance: () => Promise<AttendanceRecord[]>;
   fetchLeaves: () => Promise<LeaveRequest[]>;
+  fetchEmailThreads: () => Promise<EmailThread[]>;
   fetchAllBusinessData: () => Promise<void>;
 }
 
@@ -386,6 +413,7 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
       get().fetchProjects(),
       get().fetchTasks(),
       get().fetchLeads(),
+      get().fetchEmailThreads(),
       get().fetchDeals(),
       get().fetchCompanies(),
       get().fetchContacts(),
@@ -441,7 +469,11 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
       const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
       const headers: Record<string, string> = {};
       if (token) headers['Authorization'] = `Bearer ${token}`;
-      const res = await fetch('/api/v1/crm/leads', { headers });
+      let res = await fetch('/api/v1/crm/leads', { headers });
+      if (!res.ok) {
+        // Fallback to public leads route if unauthorized or demo session
+        res = await fetch('/api/v1/public/leads');
+      }
       if (res.ok) {
         const json = await res.json();
         const list = json.data || json.leads;
@@ -454,6 +486,30 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
       console.warn('[demoStore] fetchLeads notice:', err);
     }
     return get().leads;
+  },
+  fetchEmailThreads: async () => {
+    try {
+      const token = typeof window !== 'undefined' ? (localStorage.getItem('kapate_token') || localStorage.getItem('kapate_access_token')) : null;
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const mailbox = get().activeEmailAccountEmail || 'ALL';
+      const folder = get().activeMailFolder || 'INBOX';
+      const res = await fetch(`/api/v1/mail/threads?mailbox=${encodeURIComponent(mailbox)}&folder=${folder}`, { headers });
+      if (res.ok) {
+        const json = await res.json();
+        const list = json.threads || json.data;
+        if (Array.isArray(list)) {
+          set({ emailThreads: list });
+          if (list.length > 0 && !get().selectedEmailThreadId) {
+            set({ selectedEmailThreadId: list[0].id });
+          }
+          return list;
+        }
+      }
+    } catch (err) {
+      console.warn('[demoStore] fetchEmailThreads notice:', err);
+    }
+    return get().emailThreads;
   },
   fetchDeals: async () => {
     try {
@@ -1854,6 +1910,88 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
         get().showToast('Database synchronization complete.', 'info');
       });
   },
+
+  // =========================================================================
+  // KAPATE OS 2.0 UNIFIED COLLABORATION & OPERATIONS
+  // =========================================================================
+  chatChannels: INITIAL_CHAT_CHANNELS,
+  chatMessages: INITIAL_CHAT_MESSAGES,
+  activeChatChannelId: 'chan-general',
+  setActiveChatChannelId: (id: string) => set({ activeChatChannelId: id }),
+  sendChatMessage: (content: string, channelId?: string) => {
+    const targetChannelId = channelId || get().activeChatChannelId || 'chan-general';
+    const user = get().currentUser;
+    const newMsg: ChatMessage = {
+      id: `msg-${Date.now()}`,
+      channelId: targetChannelId,
+      senderId: user.id,
+      senderName: user.name,
+      senderRole: user.role,
+      content,
+      timestamp: new Date().toISOString()
+    };
+    set((state) => ({
+      chatMessages: [...state.chatMessages, newMsg],
+      chatChannels: state.chatChannels.map(c => 
+        c.id === targetChannelId 
+          ? { ...c, lastMessage: content, lastMessageTimestamp: newMsg.timestamp }
+          : c
+      )
+    }));
+  },
+
+  calendarEvents: INITIAL_CALENDAR_EVENTS,
+  addCalendarEvent: (eventData) => {
+    const newEvt: CalendarEvent = {
+      ...eventData,
+      id: `cal-${Date.now()}`
+    };
+    set((state) => ({ calendarEvents: [...state.calendarEvents, newEvt] }));
+    get().showToast(`Event "${newEvt.title}" added to calendar`, 'success');
+  },
+
+  knowledgeArticles: INITIAL_KNOWLEDGE_ARTICLES,
+  addKnowledgeArticle: (artData) => {
+    const newArt: KnowledgeArticle = {
+      ...artData,
+      id: `kb-${Date.now()}`,
+      viewsCount: 1,
+      updatedAt: new Date().toISOString().split('T')[0]
+    };
+    set((state) => ({ knowledgeArticles: [newArt, ...state.knowledgeArticles] }));
+    get().showToast(`Article "${newArt.title}" published to Knowledge Base`, 'success');
+  },
+
+  automationRules: INITIAL_AUTOMATION_RULES,
+  toggleAutomationRule: (id) => {
+    set((state) => ({
+      automationRules: state.automationRules.map(r => r.id === id ? { ...r, enabled: !r.enabled } : r)
+    }));
+    get().showToast('Automation rule updated', 'info');
+  },
+
+  supportTickets: INITIAL_SUPPORT_TICKETS,
+  addSupportTicket: (ticketData) => {
+    const count = get().supportTickets.length + 1;
+    const newTicket: SupportTicket = {
+      ...ticketData,
+      id: `tkt-${Date.now()}`,
+      ticketNumber: `TKT-2026-${String(count).padStart(3, '0')}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    set((state) => ({ supportTickets: [newTicket, ...state.supportTickets] }));
+    get().showToast(`Support Ticket ${newTicket.ticketNumber} created`, 'success');
+  },
+  updateSupportTicketStatus: (id, status) => {
+    set((state) => ({
+      supportTickets: state.supportTickets.map(t => t.id === id ? { ...t, status, updatedAt: new Date().toISOString() } : t)
+    }));
+    get().showToast(`Ticket status updated to ${status}`, 'info');
+  },
+
+  aiPromptQuery: '',
+  setAiPromptQuery: (q: string) => set({ aiPromptQuery: q }),
 
   // =========================================================================
   // IDENTITY, ONBOARDING & SECURITY ENGINE

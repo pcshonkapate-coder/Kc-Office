@@ -78,12 +78,95 @@ export async function POST(request: Request) {
       nextFollowUp: new Date(Date.now() + 2 * 86400000).toISOString().split('T')[0]
     });
 
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const emailBody = `### Inbound Client Consultation & Project Enquiry\n\n**Client Contact:**\n- **Client Name:** ${leadDocument.name}\n- **Email:** ${leadDocument.email}\n- **Phone:** ${leadDocument.phone || 'Not provided'}\n- **Company / Organization:** ${leadDocument.company || 'Direct Client'}\n- **Service Requested:** ${leadDocument.service}\n- **Estimated Budget:** ${leadDocument.budget}\n- **Reference Tracking ID:** ${leadCode}\n\n**Client Message / Project Brief:**\n> ${leadDocument.message}\n\n---\n*Logged to Kapate OS via Public Portal on ${now.toLocaleString()}*`;
+
+    // 2b. Dispatch to internal corporate Mailbox so the message appears in OS Inbox
+    const emailMessageId = `MSG-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`;
+    const emailThreadId = `THR-${leadCode}`;
+
+    const newEmailMsg = {
+      id: emailMessageId,
+      threadId: emailThreadId,
+      from: { name: leadDocument.name, email: leadDocument.email, type: 'TO' as const },
+      to: [
+        { name: 'Executive Office Mailbox', email: 'admin@kapateconsultancy.in', type: 'TO' as const },
+        { name: 'Shon Kapate', email: 'shon@kapateconsultancy.in', type: 'TO' as const },
+        { name: 'Enterprise Sales Desk', email: 'sales@kapateconsultancy.in', type: 'TO' as const }
+      ],
+      subject: `New Client Enquiry [${leadCode}]: ${leadDocument.service} — ${leadDocument.name}`,
+      body: emailBody,
+      snippet: leadDocument.message.substring(0, 120),
+      timestamp: timeStr,
+      date: createdAt.split('T')[0],
+      isRead: false,
+      isStarred: true,
+      isImportant: true,
+      folder: 'INBOX' as const,
+      priority: 'High' as const,
+      labels: ['Client', 'Urgent'],
+      attachments: []
+    };
+
+    const newEmailThread = {
+      id: emailThreadId,
+      subject: `New Client Enquiry [${leadCode}]: ${leadDocument.service} — ${leadDocument.name}`,
+      snippet: leadDocument.message.substring(0, 120),
+      lastMessageTimestamp: timeStr,
+      lastSenderName: leadDocument.name,
+      isUnread: true,
+      isStarred: true,
+      isImportant: true,
+      folder: 'INBOX' as const,
+      labels: ['Client', 'Urgent'],
+      priority: 'High' as const,
+      messageCount: 1,
+      hasAttachments: false,
+      participants: [
+        { name: leadDocument.name, email: leadDocument.email, type: 'TO' as const },
+        { name: 'Executive Office Mailbox', email: 'admin@kapateconsultancy.in', type: 'TO' as const },
+        { name: 'Shon Kapate', email: 'shon@kapateconsultancy.in', type: 'TO' as const }
+      ],
+      messages: [newEmailMsg]
+    };
+
+    dataStore.addEmailThread(newEmailThread as any);
+    dataStore.addEmailMessage(newEmailMsg as any);
+
+    // 2c. Dispatch Real-Time In-App Notification
+    dataStore.addNotification({
+      id: `notif-${Date.now()}`,
+      userId: 'all',
+      title: `New Client Enquiry (${leadCode})`,
+      message: `${leadDocument.name} submitted an enquiry for ${leadDocument.service} (${leadDocument.company || 'Website Form'})`,
+      type: 'lead',
+      read: false,
+      timestamp: now.toISOString(),
+      actionUrl: '/os?tab=mail'
+    });
+
+    // 2d. Dispatch Team Chat Alert
+    dataStore.addChatMessage({
+      id: `chat-${Date.now()}`,
+      channelId: 'chan-general',
+      senderId: 'sys-bot',
+      senderName: 'Kapate OS Portal Bot',
+      senderRole: 'SUPER_ADMIN',
+      content: `🔔 **New Client Consultation Enquiry Received [${leadCode}]**\n• **Client:** ${leadDocument.name} (${leadDocument.email})\n• **Practice Area:** ${leadDocument.service}\n• **Company:** ${leadDocument.company || 'Direct Client'}\n• **Brief:** "${leadDocument.message}"`,
+      timestamp: now.toISOString()
+    });
+
     let cloudSaved = false;
 
     // 3. Direct persistence to Cloud MongoDB Atlas (best-effort)
     try {
       const leadsCollection = await getCloudCollection("leads");
       await leadsCollection.insertOne(leadDocument);
+
+      const threadsCollection = await getCloudCollection("email_threads");
+      await threadsCollection.insertOne(newEmailThread as any);
+
       cloudSaved = true;
     } catch (mongoErr: any) {
       console.warn("MongoDB Atlas direct insert warning:", mongoErr?.message || mongoErr);
