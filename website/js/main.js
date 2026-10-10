@@ -233,31 +233,89 @@ function initContactForm() {
         }
       }
 
-      // Store in client CRM storage so it immediately shows in the CRM dashboard
+      // Store in client storage so it immediately shows in the Kapate OS CRM & Inbox
       try {
+        const timeNow = new Date();
+        const timeStr = timeNow.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const dateStr = timeNow.toISOString().split('T')[0];
+
         const localLead = {
-          id: 'lead_' + Date.now(),
+          id: leadCode,
           lead_code: leadCode,
           name: payload.name,
           contact_name: payload.name,
-          company_name: payload.company || payload.name + ' Org',
+          company: payload.company || 'Website Inquiry',
+          company_name: payload.company || 'Website Inquiry',
           email: payload.email,
-          phone: payload.phone || undefined,
-          country: 'India',
+          phone: payload.phone || '',
+          service: payload.service,
           service_interest: payload.service,
-          budget: payload.budget || 'To Be Determined',
-          currency: 'INR',
+          budget: payload.budget || 'To be discussed',
+          source: 'Website Form',
+          owner: 'Shon Kapate',
+          status: 'New Lead',
+          score: 90,
+          lead_score: 90,
+          description: payload.message,
           project_description: payload.message,
-          source: 'Consultation form',
-          priority: 'high',
-          lead_score: 85,
-          status: 'NEW LEAD',
-          created_at: new Date().toISOString()
+          created: dateStr,
+          created_at: timeNow.toISOString(),
+          nextFollowUp: new Date(Date.now() + 2 * 86400000).toISOString().split('T')[0]
         };
 
-        const existing = JSON.parse(localStorage.getItem('kapate_crm_leads') || '[]');
-        existing.unshift(localLead);
-        localStorage.setItem('kapate_crm_leads', JSON.stringify(existing.slice(0, 100)));
+        const existingLeads = JSON.parse(localStorage.getItem('kapate_inbound_leads') || localStorage.getItem('kapate_crm_leads') || '[]');
+        existingLeads.unshift(localLead);
+        localStorage.setItem('kapate_inbound_leads', JSON.stringify(existingLeads.slice(0, 100)));
+        localStorage.setItem('kapate_crm_leads', JSON.stringify(existingLeads.slice(0, 100)));
+
+        const localMsg = {
+          id: 'MSG-' + Date.now(),
+          threadId: 'THR-' + leadCode,
+          from: { name: payload.name, email: payload.email, type: 'TO' },
+          to: [
+            { name: 'Executive Office Mailbox', email: 'admin@kapateconsultancy.in', type: 'TO' },
+            { name: 'Shon Kapate', email: 'shon@kapateconsultancy.in', type: 'TO' },
+            { name: 'Enterprise Sales Desk', email: 'sales@kapateconsultancy.in', type: 'TO' }
+          ],
+          subject: 'New Client Enquiry [' + leadCode + ']: ' + payload.service + ' — ' + payload.name,
+          body: '### Inbound Client Consultation & Project Enquiry\n\n**Client Contact:**\n- **Client Name:** ' + payload.name + '\n- **Email:** ' + payload.email + '\n- **Phone:** ' + (payload.phone || 'N/A') + '\n- **Company:** ' + (payload.company || 'N/A') + '\n- **Service Requested:** ' + payload.service + '\n- **Reference ID:** ' + leadCode + '\n\n**Project Brief / Message:**\n> ' + payload.message + '\n\n---\n*Logged to Kapate OS via Public Website Form*',
+          snippet: payload.message.substring(0, 120),
+          timestamp: timeStr,
+          date: dateStr,
+          isRead: false,
+          isStarred: true,
+          isImportant: true,
+          folder: 'INBOX',
+          priority: 'High',
+          labels: ['Client', 'Urgent'],
+          attachments: []
+        };
+
+        const localThread = {
+          id: 'THR-' + leadCode,
+          subject: 'New Client Enquiry [' + leadCode + ']: ' + payload.service + ' — ' + payload.name,
+          snippet: payload.message.substring(0, 120),
+          lastMessageTimestamp: timeStr,
+          lastSenderName: payload.name,
+          isUnread: true,
+          isStarred: true,
+          isImportant: true,
+          folder: 'INBOX',
+          labels: ['Client', 'Urgent'],
+          priority: 'High',
+          messageCount: 1,
+          hasAttachments: false,
+          participants: [
+            { name: payload.name, email: payload.email, type: 'TO' },
+            { name: 'Executive Office Mailbox', email: 'admin@kapateconsultancy.in', type: 'TO' },
+            { name: 'Shon Kapate', email: 'shon@kapateconsultancy.in', type: 'TO' }
+          ],
+          messages: [localMsg]
+        };
+
+        const existingThreads = JSON.parse(localStorage.getItem('kapate_inbound_threads') || '[]');
+        existingThreads.unshift(localThread);
+        localStorage.setItem('kapate_inbound_threads', JSON.stringify(existingThreads.slice(0, 100)));
       } catch {}
 
       // Reset button

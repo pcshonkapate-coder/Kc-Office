@@ -162,7 +162,14 @@ export async function POST(request: Request) {
     // 3. Direct persistence to Cloud MongoDB Atlas (best-effort)
     try {
       const leadsCollection = await getCloudCollection("leads");
-      await leadsCollection.insertOne(leadDocument);
+      await leadsCollection.insertOne({
+        ...leadDocument,
+        id: leadCode,
+        status: 'New Lead',
+        created: createdAt.split('T')[0],
+        owner: 'Shon Kapate',
+        score: 90
+      });
 
       const threadsCollection = await getCloudCollection("email_threads");
       await threadsCollection.insertOne(newEmailThread as any);

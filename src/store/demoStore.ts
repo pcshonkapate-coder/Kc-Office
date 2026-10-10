@@ -471,17 +471,62 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
       if (token) headers['Authorization'] = `Bearer ${token}`;
       let res = await fetch('/api/v1/crm/leads', { headers });
       if (!res.ok) {
-        // Fallback to public leads route if unauthorized or demo session
         res = await fetch('/api/v1/public/leads');
       }
+      let serverLeads: Lead[] = [];
       if (res.ok) {
         const json = await res.json();
         const list = json.data || json.leads;
         if (Array.isArray(list)) {
-          set({ leads: list });
-          return list;
+          serverLeads = list;
         }
       }
+
+      // Merge with browser-persisted inbound leads
+      let inboundLeads: Lead[] = [];
+      if (typeof window !== 'undefined') {
+        try {
+          const raw = localStorage.getItem('kapate_inbound_leads') || localStorage.getItem('kapate_crm_leads');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+              inboundLeads = parsed.map((item: any) => ({
+                id: item.id || item.lead_code || `LEAD-${Date.now()}`,
+                name: item.name || item.contact_name || 'Inbound Prospect',
+                email: item.email || '',
+                phone: item.phone || '',
+                company: item.company || item.company_name || 'Direct Client',
+                service: item.service || item.service_interest || 'Technology Consulting',
+                budget: item.budget || 'To be discussed',
+                source: item.source || 'Website Form',
+                owner: item.owner || 'Shon Kapate',
+                status: item.status || 'New Lead',
+                score: item.score || item.lead_score || 90,
+                description: item.description || item.project_description || '',
+                created: item.created || (item.created_at ? item.created_at.split('T')[0] : new Date().toISOString().split('T')[0]),
+                nextFollowUp: item.nextFollowUp || new Date(Date.now() + 2 * 86400000).toISOString().split('T')[0]
+              }));
+            }
+          }
+        } catch {}
+      }
+
+      const combinedMap = new Map<string, Lead>();
+      for (const l of inboundLeads) {
+        if (l && l.id) combinedMap.set(l.id, l);
+      }
+      for (const l of serverLeads) {
+        if (l && l.id) combinedMap.set(l.id, l);
+      }
+      for (const l of get().leads) {
+        if (l && l.id && !combinedMap.has(l.id)) {
+          combinedMap.set(l.id, l);
+        }
+      }
+
+      const merged = Array.from(combinedMap.values());
+      set({ leads: merged });
+      return merged;
     } catch (err) {
       console.warn('[demoStore] fetchLeads notice:', err);
     }
@@ -494,18 +539,47 @@ export const useDemoStore = create<DemoStore>((set, get) => ({
       if (token) headers['Authorization'] = `Bearer ${token}`;
       const mailbox = get().activeEmailAccountEmail || 'ALL';
       const folder = get().activeMailFolder || 'INBOX';
+      let serverThreads: EmailThread[] = [];
       const res = await fetch(`/api/v1/mail/threads?mailbox=${encodeURIComponent(mailbox)}&folder=${folder}`, { headers });
       if (res.ok) {
         const json = await res.json();
         const list = json.threads || json.data;
         if (Array.isArray(list)) {
-          set({ emailThreads: list });
-          if (list.length > 0 && !get().selectedEmailThreadId) {
-            set({ selectedEmailThreadId: list[0].id });
-          }
-          return list;
+          serverThreads = list;
         }
       }
+
+      // Merge with browser-persisted inbound email threads
+      let inboundThreads: EmailThread[] = [];
+      if (typeof window !== 'undefined') {
+        try {
+          const raw = localStorage.getItem('kapate_inbound_threads');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) inboundThreads = parsed;
+          }
+        } catch {}
+      }
+
+      const threadMap = new Map<string, EmailThread>();
+      for (const t of inboundThreads) {
+        if (t && t.id) threadMap.set(t.id, t);
+      }
+      for (const t of serverThreads) {
+        if (t && t.id) threadMap.set(t.id, t);
+      }
+      for (const t of get().emailThreads) {
+        if (t && t.id && !threadMap.has(t.id)) {
+          threadMap.set(t.id, t);
+        }
+      }
+
+      const mergedThreads = Array.from(threadMap.values());
+      set({ emailThreads: mergedThreads });
+      if (mergedThreads.length > 0 && !get().selectedEmailThreadId) {
+        set({ selectedEmailThreadId: mergedThreads[0].id });
+      }
+      return mergedThreads;
     } catch (err) {
       console.warn('[demoStore] fetchEmailThreads notice:', err);
     }

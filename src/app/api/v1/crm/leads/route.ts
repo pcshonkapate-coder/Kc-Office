@@ -8,8 +8,31 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const status = searchParams.get('status') || undefined;
 
-  const leads = dataStore.getLeads(status);
-  return NextResponse.json({ success: true, data: leads, leads });
+  let cloudLeads: Lead[] = [];
+  try {
+    const { db } = await getDatabase();
+    const leadsColl = db.collection<Lead>('leads');
+    const query = status ? ({ status } as any) : {};
+    cloudLeads = await leadsColl.find(query).sort({ created: -1 }).toArray();
+  } catch (err: any) {
+    console.warn('[CRM Leads GET] Cloud retrieval notice:', err.message);
+  }
+
+  const localLeads = dataStore.getLeads(status);
+
+  // Merge leads with cloud leads taking priority, keyed by id
+  const leadMap = new Map<string, Lead>();
+  for (const l of cloudLeads) {
+    if (l && l.id) leadMap.set(l.id, l);
+  }
+  for (const l of localLeads) {
+    if (l && l.id && !leadMap.has(l.id)) {
+      leadMap.set(l.id, l);
+    }
+  }
+
+  const allLeads = Array.from(leadMap.values());
+  return NextResponse.json({ success: true, data: allLeads, leads: allLeads });
 }
 
 export async function POST(req: NextRequest) {

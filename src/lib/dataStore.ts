@@ -205,6 +205,7 @@ class DataStore {
   }
 
   public loadStore(forceReload: boolean = false): StoreSchema {
+
     try {
       if (fs.existsSync(this.filePath)) {
         const stat = fs.statSync(this.filePath);
