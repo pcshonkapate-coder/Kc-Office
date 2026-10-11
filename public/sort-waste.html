@@ -362,6 +362,55 @@
                 </div>
               </div>
 
+              <!-- Active Learning & HITL Uncertainty Gate -->
+              <div class="active-learning-card" id="activeLearningCard">
+                <div class="al-header">
+                  <div class="al-title-wrap">
+                    <span class="al-badge" id="alBadge">Active Learning Gate</span>
+                    <h4 class="al-title" id="alTitle">Automated Pneumatic Sorter</h4>
+                  </div>
+                  <span class="al-status-indicator passed" id="alStatusIndicator">Direct Sort</span>
+                </div>
+                <p class="al-desc" id="alDesc">Top confidence exceeds 60% and decision margin exceeds 15%. Autonomous pneumatic diversion executed.</p>
+                
+                <div class="al-metrics-grid">
+                  <div class="al-metric-box">
+                    <span class="al-metric-label">Margin (P₁ - P₂)</span>
+                    <strong class="al-metric-value" id="alMarginVal">--</strong>
+                    <span class="al-metric-threshold">Threshold: ≥ 15%</span>
+                  </div>
+                  <div class="al-metric-box">
+                    <span class="al-metric-label">Least Conf. (1 - P₁)</span>
+                    <strong class="al-metric-value" id="alLeastConfVal">--</strong>
+                    <span class="al-metric-threshold">Threshold: &lt; 40%</span>
+                  </div>
+                  <div class="al-metric-box">
+                    <span class="al-metric-label">Entropy H(x)</span>
+                    <strong class="al-metric-value" id="alEntropyVal">--</strong>
+                    <span class="al-metric-threshold">Multi-Class Spread</span>
+                  </div>
+                </div>
+
+                <!-- HITL Action & Replay Queue -->
+                <div class="al-hitl-actions" id="alHitlActions">
+                  <div class="al-hitl-info">
+                    <span class="al-hitl-label">Human-in-the-Loop Oracle:</span>
+                    <span class="al-hitl-status" id="alHitlStatus">Verified training pool: <strong id="alVerifiedCount">0</strong> edge cases</span>
+                  </div>
+                  <div class="al-btn-row">
+                    <button class="btn btn-sm btn-outline al-verify-btn" id="btnVerifyLabel" type="button">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                      Verify Ground Truth
+                    </button>
+                    <button class="btn btn-sm btn-ghost al-retrain-btn" id="btnSimulateRetrain" type="button" title="Stage 2 fine-tuning on verified edge cases">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                      Stage 2 Fine-Tune Loop
+                    </button>
+                  </div>
+                  <div class="al-feedback hidden" id="alFeedbackMessage"></div>
+                </div>
+              </div>
+
               <!-- Handling Steps -->
               <div class="instructions-block">
                 <h4 class="instructions-title">Preparation & Handling Steps</h4>

@@ -2175,3 +2175,157 @@ input:focus-visible {
     animation: none;
   }
 }
+
+/* ==========================================================================
+   ACTIVE LEARNING & HITL UNCERTAINTY STYLES
+   ========================================================================== */
+
+.active-learning-card {
+  padding: 1.1rem;
+  background-color: var(--bg-gray);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  transition: all 0.3s ease;
+}
+
+.active-learning-card.uncertain {
+  border-color: #f59e0b;
+  background-color: #fffbeb;
+}
+
+.active-learning-card.confident {
+  border-color: #10b981;
+  background-color: #f0fdf4;
+}
+
+.al-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.al-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.al-badge {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.al-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.al-status-indicator {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-pill);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.al-status-indicator.passed {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.al-status-indicator.diverted {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.al-desc {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.al-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.al-metric-box {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.55rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  text-align: center;
+}
+
+.al-metric-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.al-metric-value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.al-metric-threshold {
+  font-size: 0.62rem;
+  color: var(--text-tertiary);
+}
+
+.al-hitl-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--border-color);
+}
+
+.al-hitl-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.al-btn-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.al-btn-row .btn {
+  font-size: 0.78rem;
+  padding: 0.35rem 0.75rem;
+  min-height: 32px;
+}
+
+.al-feedback {
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: #065f46;
+  background-color: #d1fae5;
+  padding: 0.4rem 0.65rem;
+  border-radius: var(--radius-sm);
+  transition: all 0.3s ease;
+}

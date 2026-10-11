@@ -468,6 +468,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupModelSelection();
   setupGradcamSection();
   setupLightbox();
+  setupActiveLearning();
 
   fetchAppInfo();
   fetchPlotsGallery();
@@ -986,6 +987,111 @@ function renderResults(data) {
         const fill = row.querySelector('.prob-fill');
         if (fill) fill.style.width = `${Math.max(p.confidence_percent, 1)}%`;
       }, 50);
+    });
+  }
+
+  // Active Learning & HITL Uncertainty Evaluation
+  updateActiveLearning(data);
+}
+
+// Global HITL verified sample counter
+let alVerifiedSamplesCount = 0;
+let lastClassifiedData = null;
+
+function updateActiveLearning(data) {
+  lastClassifiedData = data;
+  const preds = data.predictions || [];
+  if (preds.length < 2) return;
+
+  const p1 = (preds[0].confidence !== undefined) ? preds[0].confidence : (preds[0].confidence_percent / 100);
+  const p2 = (preds[1].confidence !== undefined) ? preds[1].confidence : (preds[1].confidence_percent / 100);
+  const top1Class = preds[0].class;
+  const top2Class = preds[1].class;
+  const margin = Math.max(0, p1 - p2);
+  const leastConf = Math.max(0, 1 - p1);
+
+  // Compute Shannon Entropy H(x) = -sum(p * ln(p))
+  let entropy = 0;
+  preds.forEach(p => {
+    const prob = (p.confidence !== undefined) ? p.confidence : (p.confidence_percent / 100);
+    if (prob > 1e-6) {
+      entropy -= prob * Math.log(prob);
+    }
+  });
+
+  const isSmallMargin = margin < 0.15;
+  const isLowConf = p1 < 0.60;
+  const isUncertain = isSmallMargin || isLowConf;
+
+  const card = document.getElementById('activeLearningCard');
+  const title = document.getElementById('alTitle');
+  const indicator = document.getElementById('alStatusIndicator');
+  const desc = document.getElementById('alDesc');
+  const marginVal = document.getElementById('alMarginVal');
+  const leastConfVal = document.getElementById('alLeastConfVal');
+  const entropyVal = document.getElementById('alEntropyVal');
+  const feedback = document.getElementById('alFeedbackMessage');
+
+  if (feedback) feedback.classList.add('hidden');
+
+  if (marginVal) {
+    marginVal.textContent = `${(margin * 100).toFixed(1)}%`;
+    marginVal.style.color = isSmallMargin ? '#d97706' : '#059669';
+  }
+  if (leastConfVal) {
+    leastConfVal.textContent = `${(leastConf * 100).toFixed(1)}%`;
+    leastConfVal.style.color = isLowConf ? '#dc2626' : '#059669';
+  }
+  if (entropyVal) {
+    entropyVal.textContent = `${entropy.toFixed(2)} nats`;
+  }
+
+  if (card && title && indicator && desc) {
+    if (isUncertain) {
+      card.className = 'active-learning-card uncertain';
+      title.textContent = 'Diverted to Human-in-the-Loop Review';
+      indicator.className = 'al-status-indicator diverted';
+      indicator.textContent = 'Inspection Divert';
+      const reasons = [];
+      if (isSmallMargin) reasons.push(`small margin between ${top1Class} and ${top2Class} (${(margin * 100).toFixed(1)}% < 15%)`);
+      if (isLowConf) reasons.push(`low top confidence (${(p1 * 100).toFixed(1)}% < 60%)`);
+      desc.textContent = `Active learning trigger activated: ${reasons.join(' + ')}. Automated pneumatic ejector held back to prevent contamination; item sent to human verification queue.`;
+    } else {
+      card.className = 'active-learning-card confident';
+      title.textContent = 'Automated Pneumatic Sorter Active';
+      indicator.className = 'al-status-indicator passed';
+      indicator.textContent = 'Direct Sort';
+      desc.textContent = `High certainty sorting: ${(p1 * 100).toFixed(1)}% confidence with safe ${(margin * 100).toFixed(1)}% boundary margin. Direct autonomous diversion into destination bin.`;
+    }
+  }
+}
+
+function setupActiveLearning() {
+  const btnVerify = document.getElementById('btnVerifyLabel');
+  const btnRetrain = document.getElementById('btnSimulateRetrain');
+  const countDisplay = document.getElementById('alVerifiedCount');
+  const feedback = document.getElementById('alFeedbackMessage');
+
+  if (btnVerify) {
+    btnVerify.addEventListener('click', () => {
+      if (!lastClassifiedData) return;
+      alVerifiedSamplesCount++;
+      if (countDisplay) countDisplay.textContent = alVerifiedSamplesCount;
+      if (feedback) {
+        feedback.textContent = `✓ Sample verified as "${lastClassifiedData.top_class}"! Enqueued into Stage 2 edge replay buffer (${alVerifiedSamplesCount} samples ready).`;
+        feedback.className = 'al-feedback';
+        feedback.classList.remove('hidden');
+      }
+    });
+  }
+
+  if (btnRetrain) {
+    btnRetrain.addEventListener('click', () => {
+      if (feedback) {
+        feedback.innerHTML = `🔄 <strong>Stage 2 Retraining Loop Simulated:</strong> Transfer learning pipeline triggered on ${alVerifiedSamplesCount} verified edge cases (AdamW lr=5e-5, early stopping on validation Macro F1). Model weights updated without catastrophic forgetting!`;
+        feedback.className = 'al-feedback';
+        feedback.classList.remove('hidden');
+      }
     });
   }
 }
