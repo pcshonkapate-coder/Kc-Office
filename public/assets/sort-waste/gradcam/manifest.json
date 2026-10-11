@@ -1,0 +1,272 @@
+{
+  "cardboard": {
+    "predicted_class": "cardboard",
+    "explained_class": "cardboard",
+    "confidence": 0.9557909369468689,
+    "confidence_percent": 95.58,
+    "focus_region": "Top-Right corner (16.4% concentration)",
+    "concentration_pct": 16.4,
+    "latency_ms": 4.7,
+    "colormaps": {
+      "jet": {
+        "heatmap_url": "/assets/sort-waste/gradcam/cardboard_heatmap_jet.png",
+        "overlay_url": "/assets/sort-waste/gradcam/cardboard_overlay_jet.png"
+      },
+      "turbo": {
+        "heatmap_url": "/assets/sort-waste/gradcam/cardboard_heatmap_turbo.png",
+        "overlay_url": "/assets/sort-waste/gradcam/cardboard_overlay_turbo.png"
+      },
+      "inferno": {
+        "heatmap_url": "/assets/sort-waste/gradcam/cardboard_heatmap_inferno.png",
+        "overlay_url": "/assets/sort-waste/gradcam/cardboard_overlay_inferno.png"
+      },
+      "viridis": {
+        "heatmap_url": "/assets/sort-waste/gradcam/cardboard_heatmap_viridis.png",
+        "overlay_url": "/assets/sort-waste/gradcam/cardboard_overlay_viridis.png"
+      }
+    }
+  },
+  "glass": {
+    "predicted_class": "glass",
+    "explained_class": "glass",
+    "confidence": 0.8428053855895996,
+    "confidence_percent": 84.28,
+    "focus_region": "Right-Flank zone (20.5% concentration)",
+    "concentration_pct": 20.5,
+    "latency_ms": 4.7,
+    "colormaps": {
+      "jet": {
+        "heatmap_url": "/assets/sort-waste/gradcam/glass_heatmap_jet.png",
+        "overlay_url": "/assets/sort-waste/gradcam/glass_overlay_jet.png"
+      },
+      "turbo": {
+        "heatmap_url": "/assets/sort-waste/gradcam/glass_heatmap_turbo.png",
+        "overlay_url": "/assets/sort-waste/gradcam/glass_overlay_turbo.png"
+      },
+      "inferno": {
+        "heatmap_url": "/assets/sort-waste/gradcam/glass_heatmap_inferno.png",
+        "overlay_url": "/assets/sort-waste/gradcam/glass_overlay_inferno.png"
+      },
+      "viridis": {
+        "heatmap_url": "/assets/sort-waste/gradcam/glass_heatmap_viridis.png",
+        "overlay_url": "/assets/sort-waste/gradcam/glass_overlay_viridis.png"
+      }
+    }
+  },
+  "metal": {
+    "predicted_class": "metal",
+    "explained_class": "metal",
+    "confidence": 0.9361109137535095,
+    "confidence_percent": 93.61,
+    "focus_region": "Center Core (25.1% concentration)",
+    "concentration_pct": 25.1,
+    "latency_ms": 4.7,
+    "colormaps": {
+      "jet": {
+        "heatmap_url": "/assets/sort-waste/gradcam/metal_heatmap_jet.png",
+        "overlay_url": "/assets/sort-waste/gradcam/metal_overlay_jet.png"
+      },
+      "turbo": {
+        "heatmap_url": "/assets/sort-waste/gradcam/metal_heatmap_turbo.png",
+        "overlay_url": "/assets/sort-waste/gradcam/metal_overlay_turbo.png"
+      },
+      "inferno": {
+        "heatmap_url": "/assets/sort-waste/gradcam/metal_heatmap_inferno.png",
+        "overlay_url": "/assets/sort-waste/gradcam/metal_overlay_inferno.png"
+      },
+      "viridis": {
+        "heatmap_url": "/assets/sort-waste/gradcam/metal_heatmap_viridis.png",
+        "overlay_url": "/assets/sort-waste/gradcam/metal_overlay_viridis.png"
+      }
+    }
+  },
+  "paper": {
+    "predicted_class": "paper",
+    "explained_class": "paper",
+    "confidence": 0.8599231839179993,
+    "confidence_percent": 85.99,
+    "focus_region": "Right-Flank zone (21.6% concentration)",
+    "concentration_pct": 21.6,
+    "latency_ms": 4.7,
+    "colormaps": {
+      "jet": {
+        "heatmap_url": "/assets/sort-waste/gradcam/paper_heatmap_jet.png",
+        "overlay_url": "/assets/sort-waste/gradcam/paper_overlay_jet.png"
+      },
+      "turbo": {
+        "heatmap_url": "/assets/sort-waste/gradcam/paper_heatmap_turbo.png",
+        "overlay_url": "/assets/sort-waste/gradcam/paper_overlay_turbo.png"
+      },
+      "inferno": {
+        "heatmap_url": "/assets/sort-waste/gradcam/paper_heatmap_inferno.png",
+        "overlay_url": "/assets/sort-waste/gradcam/paper_overlay_inferno.png"
+      },
+      "viridis": {
+        "heatmap_url": "/assets/sort-waste/gradcam/paper_heatmap_viridis.png",
+        "overlay_url": "/assets/sort-waste/gradcam/paper_overlay_viridis.png"
+      }
+    }
+  },
+  "plastic": {
+    "predicted_class": "plastic",
+    "explained_class": "plastic",
+    "confidence": 0.9274581074714661,
+    "confidence_percent": 92.75,
+    "focus_region": "Bottom-Right base (18.7% concentration)",
+    "concentration_pct": 18.7,
+    "latency_ms": 4.7,
+    "colormaps": {
+      "jet": {
+        "heatmap_url": "/assets/sort-waste/gradcam/plastic_heatmap_jet.png",
+        "overlay_url": "/assets/sort-waste/gradcam/plastic_overlay_jet.png"
+      },
+      "turbo": {
+        "heatmap_url": "/assets/sort-waste/gradcam/plastic_heatmap_turbo.png",
+        "overlay_url": "/assets/sort-waste/gradcam/plastic_overlay_turbo.png"
+      },
+      "inferno": {
+        "heatmap_url": "/assets/sort-waste/gradcam/plastic_heatmap_inferno.png",
+        "overlay_url": "/assets/sort-waste/gradcam/plastic_overlay_inferno.png"
+      },
+      "viridis": {
+        "heatmap_url": "/assets/sort-waste/gradcam/plastic_heatmap_viridis.png",
+        "overlay_url": "/assets/sort-waste/gradcam/plastic_overlay_viridis.png"
+      }
+    }
+  },
+  "textile": {
+    "predicted_class": "textile",
+    "explained_class": "textile",
+    "confidence": 0.7158192992210388,
+    "confidence_percent": 71.58,
+    "focus_region": "Bottom-Right base (16.2% concentration)",
+    "concentration_pct": 16.2,
+    "latency_ms": 4.7,
+    "colormaps": {
+      "jet": {
+        "heatmap_url": "/assets/sort-waste/gradcam/textile_heatmap_jet.png",
+        "overlay_url": "/assets/sort-waste/gradcam/textile_overlay_jet.png"
+      },
+      "turbo": {
+        "heatmap_url": "/assets/sort-waste/gradcam/textile_heatmap_turbo.png",
+        "overlay_url": "/assets/sort-waste/gradcam/textile_overlay_turbo.png"
+      },
+      "inferno": {
+        "heatmap_url": "/assets/sort-waste/gradcam/textile_heatmap_inferno.png",
+        "overlay_url": "/assets/sort-waste/gradcam/textile_overlay_inferno.png"
+      },
+      "viridis": {
+        "heatmap_url": "/assets/sort-waste/gradcam/textile_heatmap_viridis.png",
+        "overlay_url": "/assets/sort-waste/gradcam/textile_overlay_viridis.png"
+      }
+    }
+  },
+  "organic": {
+    "predicted_class": "organic",
+    "explained_class": "organic",
+    "confidence": 0.9817166924476624,
+    "confidence_percent": 98.17,
+    "focus_region": "Bottom-Right base (20.7% concentration)",
+    "concentration_pct": 20.7,
+    "latency_ms": 4.7,
+    "colormaps": {
+      "jet": {
+        "heatmap_url": "/assets/sort-waste/gradcam/organic_heatmap_jet.png",
+        "overlay_url": "/assets/sort-waste/gradcam/organic_overlay_jet.png"
+      },
+      "turbo": {
+        "heatmap_url": "/assets/sort-waste/gradcam/organic_heatmap_turbo.png",
+        "overlay_url": "/assets/sort-waste/gradcam/organic_overlay_turbo.png"
+      },
+      "inferno": {
+        "heatmap_url": "/assets/sort-waste/gradcam/organic_heatmap_inferno.png",
+        "overlay_url": "/assets/sort-waste/gradcam/organic_overlay_inferno.png"
+      },
+      "viridis": {
+        "heatmap_url": "/assets/sort-waste/gradcam/organic_heatmap_viridis.png",
+        "overlay_url": "/assets/sort-waste/gradcam/organic_overlay_viridis.png"
+      }
+    }
+  },
+  "trash": {
+    "predicted_class": "trash",
+    "explained_class": "trash",
+    "confidence": 0.9138572216033936,
+    "confidence_percent": 91.39,
+    "focus_region": "Center Core (21.3% concentration)",
+    "concentration_pct": 21.3,
+    "latency_ms": 4.7,
+    "colormaps": {
+      "jet": {
+        "heatmap_url": "/assets/sort-waste/gradcam/trash_heatmap_jet.png",
+        "overlay_url": "/assets/sort-waste/gradcam/trash_overlay_jet.png"
+      },
+      "turbo": {
+        "heatmap_url": "/assets/sort-waste/gradcam/trash_heatmap_turbo.png",
+        "overlay_url": "/assets/sort-waste/gradcam/trash_overlay_turbo.png"
+      },
+      "inferno": {
+        "heatmap_url": "/assets/sort-waste/gradcam/trash_heatmap_inferno.png",
+        "overlay_url": "/assets/sort-waste/gradcam/trash_overlay_inferno.png"
+      },
+      "viridis": {
+        "heatmap_url": "/assets/sort-waste/gradcam/trash_heatmap_viridis.png",
+        "overlay_url": "/assets/sort-waste/gradcam/trash_overlay_viridis.png"
+      }
+    }
+  },
+  "battery": {
+    "predicted_class": "battery",
+    "explained_class": "battery",
+    "confidence": 0.9249883890151978,
+    "confidence_percent": 92.5,
+    "focus_region": "Right-Flank zone (25.2% concentration)",
+    "concentration_pct": 25.2,
+    "latency_ms": 4.7,
+    "colormaps": {
+      "jet": {
+        "heatmap_url": "/assets/sort-waste/gradcam/battery_heatmap_jet.png",
+        "overlay_url": "/assets/sort-waste/gradcam/battery_overlay_jet.png"
+      },
+      "turbo": {
+        "heatmap_url": "/assets/sort-waste/gradcam/battery_heatmap_turbo.png",
+        "overlay_url": "/assets/sort-waste/gradcam/battery_overlay_turbo.png"
+      },
+      "inferno": {
+        "heatmap_url": "/assets/sort-waste/gradcam/battery_heatmap_inferno.png",
+        "overlay_url": "/assets/sort-waste/gradcam/battery_overlay_inferno.png"
+      },
+      "viridis": {
+        "heatmap_url": "/assets/sort-waste/gradcam/battery_heatmap_viridis.png",
+        "overlay_url": "/assets/sort-waste/gradcam/battery_overlay_viridis.png"
+      }
+    }
+  },
+  "vegetation": {
+    "predicted_class": "vegetation",
+    "explained_class": "vegetation",
+    "confidence": 0.8713598251342773,
+    "confidence_percent": 87.14,
+    "focus_region": "Bottom-Right base (23.9% concentration)",
+    "concentration_pct": 23.9,
+    "latency_ms": 4.7,
+    "colormaps": {
+      "jet": {
+        "heatmap_url": "/assets/sort-waste/gradcam/vegetation_heatmap_jet.png",
+        "overlay_url": "/assets/sort-waste/gradcam/vegetation_overlay_jet.png"
+      },
+      "turbo": {
+        "heatmap_url": "/assets/sort-waste/gradcam/vegetation_heatmap_turbo.png",
+        "overlay_url": "/assets/sort-waste/gradcam/vegetation_overlay_turbo.png"
+      },
+      "inferno": {
+        "heatmap_url": "/assets/sort-waste/gradcam/vegetation_heatmap_inferno.png",
+        "overlay_url": "/assets/sort-waste/gradcam/vegetation_overlay_inferno.png"
+      },
+      "viridis": {
+        "heatmap_url": "/assets/sort-waste/gradcam/vegetation_heatmap_viridis.png",
+        "overlay_url": "/assets/sort-waste/gradcam/vegetation_overlay_viridis.png"
+      }
+    }
+  }
+}
