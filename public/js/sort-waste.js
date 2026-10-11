@@ -259,6 +259,76 @@ const DEFAULT_PLOTS = [
     category: "Error Analysis",
     url: "/assets/sort-waste/plots/9_error_analysis_pairs.png",
     description: "Detailed inspection of real-world computer vision confusion pairs (e.g. foil-lined packaging, composite textiles)."
+  },
+  {
+    id: "xai_spatial_quadrant_analysis",
+    title: "Spatial Saliency Concentration Across 9 Focal Quadrants",
+    category: "Explainable AI",
+    url: "/assets/sort-waste/plots/xai_spatial_quadrant_analysis.png",
+    description: "Heatmap quantification of convolutional gradient energy across 9 spatial image zones per waste class."
+  },
+  {
+    id: "xai_colormap_activation_spectrum",
+    title: "Colormap Dynamic Range & Energy Sensitivity Curves",
+    category: "Explainable AI",
+    url: "/assets/sort-waste/plots/xai_colormap_activation_spectrum.png",
+    description: "Perceptual contrast and luminance profiling across Jet, Turbo, Inferno, and Viridis colormaps for maximum interpretability."
+  },
+  {
+    id: "xai_true_vs_counterfactual_attribution",
+    title: "True vs Counterfactual Saliency Divergence",
+    category: "Explainable AI",
+    url: "/assets/sort-waste/plots/xai_true_vs_counterfactual_attribution.png",
+    description: "Discriminative divergence of target class gradients vs runner-up hypothesis on industrial ambiguity pairs."
+  },
+  {
+    id: "xai_layerwise_receptive_field_progression",
+    title: "Receptive Field Size & Semantic Concept Progression",
+    category: "Explainable AI",
+    url: "/assets/sort-waste/plots/xai_layerwise_receptive_field_progression.png",
+    description: "Hierarchical transition of feature maps from low-level edges (Stage 1) to semantic object saliency at final Conv2d."
+  },
+  {
+    id: "xai_latency_throughput_scaling",
+    title: "Real-Time XAI Latency & FPS Scaling",
+    category: "Explainable AI",
+    url: "/assets/sort-waste/plots/xai_latency_throughput_scaling.png",
+    description: "Hardware benchmark on NVIDIA GTX 1650 comparing forward inference latency vs full Grad-CAM attribution across resolutions."
+  },
+  {
+    id: "tl_dual_stage_regime_dynamics",
+    title: "Two-Stage Dual-Regime Training Dynamics",
+    category: "Transfer Learning",
+    url: "/assets/sort-waste/plots/tl_dual_stage_regime_dynamics.png",
+    description: "4-panel synchronized progression of cross-entropy loss, accuracy, Macro F1, and cosine learning rate across Stages 1 & 2."
+  },
+  {
+    id: "tl_model_complexity_pareto_frontier",
+    title: "Architecture Efficiency & Pareto Frontier",
+    category: "Transfer Learning",
+    url: "/assets/sort-waste/plots/tl_model_complexity_pareto_frontier.png",
+    description: "Parameter count vs test Macro F1 bubble chart proving EfficientNet-B0's Pareto dominance over ResNet-50 and MobileNetV3."
+  },
+  {
+    id: "tl_label_smoothing_entropy_calibration",
+    title: "Softmax Entropy Calibration via Label Smoothing (ε = 0.05)",
+    category: "Transfer Learning",
+    url: "/assets/sort-waste/plots/tl_label_smoothing_entropy_calibration.png",
+    description: "Mitigation of model overconfidence on ambiguous materials, contrasting standard one-hot cross-entropy vs ε=0.05 calibration."
+  },
+  {
+    id: "tl_per_class_f1_gains_waterfall",
+    title: "Per-Class F1 Score Gains from Two-Stage Protocol",
+    category: "Transfer Learning",
+    url: "/assets/sort-waste/plots/tl_per_class_f1_gains_waterfall.png",
+    description: "Waterfall divergence of per-category F1 gains highlighting Battery (+2.81%), Plastic (+1.56%), and Metal (+1.22%)."
+  },
+  {
+    id: "tl_validation_trajectory_early_stopping",
+    title: "Validation Macro F1 Convergence Trajectory & Early Stopping",
+    category: "Transfer Learning",
+    url: "/assets/sort-waste/plots/tl_validation_trajectory_early_stopping.png",
+    description: "Generalization trajectory across 30 epochs with 7-epoch patience window and optimal weight checkpoint retention at Epoch 29."
   }
 ];
 
