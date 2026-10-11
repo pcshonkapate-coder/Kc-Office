@@ -19,6 +19,11 @@ const MIME_TYPES = {
 const server = http.createServer((req, res) => {
   let reqUrl = req.url.split('?')[0];
   if (reqUrl === '/') reqUrl = '/index.html';
+  else if (reqUrl === '/projects') reqUrl = '/projects.html';
+  else if (reqUrl === '/sort-waste' || reqUrl === '/projects/sort-waste') reqUrl = '/sort-waste.html';
+  else if (!path.extname(reqUrl) && fs.existsSync(path.join(__dirname, reqUrl + '.html'))) {
+    reqUrl += '.html';
+  }
 
   const filePath = path.join(__dirname, reqUrl);
   const ext = path.extname(filePath).toLowerCase();

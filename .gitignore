@@ -52,5 +52,9 @@ yarn-error.log*
 .pnpm-debug.log*
 scratch/
 
+# Local model & dataset directories
+/Sort-Waste/
+
+
 
 

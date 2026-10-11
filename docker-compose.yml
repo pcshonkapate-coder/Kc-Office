@@ -1,45 +1,140 @@
 services:
-  # FastAPI Enterprise Backend Engine
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: kapate-os-backend
-    restart: always
+  # -------------------------------------------------------------
+  # 1. POSTGRESQL PRIMARY ENTERPRISE DATABASE
+  # -------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: kapate_os_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-kapate_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secure_enterprise_password_2026}
+      POSTGRES_DB: ${POSTGRES_DB:-kapate_os_v3}
+      PGDATA: /var/lib/postgresql/data/pgdata
     ports:
-      - "8000:8000"
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-kapate_admin} -d ${POSTGRES_DB:-kapate_os_v3}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kapate-network
+
+  # -------------------------------------------------------------
+  # 2. REDIS DISTRIBUTED CACHE, SESSION & PUBSUB
+  # -------------------------------------------------------------
+  redis:
+    image: redis:7.2-alpine
+    container_name: kapate_os_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-secure_redis_secret_2026}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-secure_redis_secret_2026}", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kapate-network
+
+  # -------------------------------------------------------------
+  # 3. FASTAPI ENTERPRISE CORE API (BACKEND)
+  # -------------------------------------------------------------
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: kapate_os_api
+    restart: unless-stopped
     environment:
       - ENVIRONMENT=production
       - DEBUG=false
-      - SECRET_KEY=kapate-os-production-super-secret-key-2026
-      - DATABASE_URL=sqlite:///./kapate_os.db
-      - MONGODB_URL=mongodb://mongodb:27017
-      - MONGODB_DB_NAME=kapate_os
-      - BACKEND_CORS_ORIGINS=["https://os.kapateconsultancy.in","https://kapateconsultancy.in","https://os.kapateconsultancy.com","https://kapate-os.vercel.app","http://localhost:3000"]
-      - SMTP_HOST=${SMTP_HOST}
-      - SMTP_PORT=${SMTP_PORT:-587}
-      - SMTP_USER=${SMTP_USER}
-      - SMTP_PASSWORD=${SMTP_PASSWORD}
-      - SMTP_TLS=true
-      - EMAILS_FROM_EMAIL=${EMAILS_FROM_EMAIL:-security@kapateconsultancy.in}
-      - EMAILS_FROM_NAME=Kapate OS Security
-    volumes:
-      - ./backend/kapate_os.db:/app/kapate_os.db
-    depends_on:
-      - mongodb
-
-  # MongoDB Document Database
-  mongodb:
-    image: mongo:7.0
-    container_name: kapate-os-mongodb
-    restart: always
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-kapate_admin}:${POSTGRES_PASSWORD:-secure_enterprise_password_2026}@postgres:5432/${POSTGRES_DB:-kapate_os_v3}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-secure_redis_secret_2026}@redis:6379/0
+      - SECRET_KEY=${SECRET_KEY:-kapate-enterprise-super-secret-key-production-32chars}
+      - BACKEND_CORS_ORIGINS=["https://os.kapateconsultancy.in","https://kapateconsultancy.in","http://localhost:3000","http://localhost:8000"]
+      - ACCESS_TOKEN_EXPIRE_MINUTES=60
+      - REFRESH_TOKEN_EXPIRE_DAYS=30
     ports:
-      - "27017:27017"
-    environment:
-      - MONGO_INITDB_DATABASE=kapate_os
+      - "8000:8000"
     volumes:
-      - mongo_data:/data/db
+      - storage_data:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kapate-network
 
+  # -------------------------------------------------------------
+  # 4. BACKGROUND ASYNC WORKER (AUTOMATIONS, ALERTS & WEBHOOKS)
+  # -------------------------------------------------------------
+  worker:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: kapate_os_worker
+    restart: unless-stopped
+    command: ["python", "-m", "src.worker"]
+    environment:
+      - ENVIRONMENT=production
+      - DEBUG=false
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-kapate_admin}:${POSTGRES_PASSWORD:-secure_enterprise_password_2026}@postgres:5432/${POSTGRES_DB:-kapate_os_v3}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-secure_redis_secret_2026}@redis:6379/0
+      - SECRET_KEY=${SECRET_KEY:-kapate-enterprise-super-secret-key-production-32chars}
+    volumes:
+      - storage_data:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - kapate-network
+
+  # -------------------------------------------------------------
+  # 5. NEXT.JS ENTERPRISE WEB CONSOLE (FRONTEND)
+  # -------------------------------------------------------------
+  web:
+    build:
+      context: .
+      dockerfile: ./apps/web/Dockerfile
+    container_name: kapate_os_web
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - kapate-network
+
+# -------------------------------------------------------------
+# VOLUMES & ISOLATED NETWORK
+# -------------------------------------------------------------
 volumes:
-  mongo_data:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  storage_data:
+    driver: local
 
+networks:
+  kapate-network:
+    driver: bridge

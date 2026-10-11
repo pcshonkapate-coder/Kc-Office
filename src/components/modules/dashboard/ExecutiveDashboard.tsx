@@ -29,6 +29,14 @@ export const ExecutiveDashboard: React.FC = () => {
   const payments = useDemoStore((state) => state.payments);
   const expenses = useDemoStore((state) => state.expenses);
 
+  const fetchLeads = useDemoStore((state) => state.fetchLeads);
+  const fetchEmailThreads = useDemoStore((state) => state.fetchEmailThreads);
+
+  React.useEffect(() => {
+    fetchLeads();
+    fetchEmailThreads();
+  }, [fetchLeads, fetchEmailThreads]);
+
   // Filter personal data for user-tailored views
   const myTasks = tasks.filter(t => 
     t.assignedTo?.toLowerCase().includes(currentUser.name.toLowerCase().split(' ')[0]) ||
@@ -578,6 +586,95 @@ export const ExecutiveDashboard: React.FC = () => {
           <div className="text-[11px] text-slate-500 mt-1 font-medium">Operating efficiency</div>
         </div>
 
+      </div>
+ 
+      {/* Inbound Client Enquiries & Website Leads Live Section */}
+      <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-blue-50 text-blue-600 border border-blue-100">
+              <Mail className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-bold text-slate-900">Inbound Customer Enquiries & Website Leads</h3>
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 text-blue-700">
+                  {leads.length} Active Leads
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">Live consultation requests received from kapateconsultancy.in website portal</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setActiveTab('mail')}
+              className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <Mail className="w-3.5 h-3.5" />
+              <span>Open Mailbox</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('crm')}
+              className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+            >
+              <span>View All in CRM</span>
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+
+        {leads.length > 0 ? (
+          <div className="divide-y divide-slate-100 border border-slate-100 rounded-2xl overflow-hidden">
+            {leads.slice(0, 5).map((lead) => (
+              <div
+                key={lead.id}
+                onClick={() => setActiveTab('crm')}
+                className="p-4 bg-slate-50/50 hover:bg-blue-50/40 transition-colors cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-3"
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs font-bold text-blue-600">{lead.id}</span>
+                    <span className="text-xs font-extrabold text-slate-900">{lead.name}</span>
+                    <span className="text-xs text-slate-500">• {lead.company}</span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      {lead.status}
+                    </span>
+                  </div>
+                  <div className="text-xs text-slate-600 flex items-center gap-3">
+                    <span className="font-medium text-slate-800">Practice Area: <strong>{lead.service}</strong></span>
+                    {lead.budget && <span className="text-slate-500">• Budget: <strong className="font-mono text-emerald-600">{lead.budget}</strong></span>}
+                    {lead.email && <span className="text-slate-500 hidden sm:inline">• {lead.email}</span>}
+                  </div>
+                  {lead.description && (
+                    <p className="text-[11px] text-slate-500 line-clamp-1 italic mt-0.5">
+                      "{lead.description}"
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2 self-end md:self-center shrink-0">
+                  <span className="text-[11px] text-slate-400 font-mono">{lead.created}</span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveTab('crm');
+                    }}
+                    className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-100 transition-colors shadow-2xs"
+                  >
+                    Details →
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-slate-500 space-y-1">
+            <Mail className="w-6 h-6 text-slate-400 mx-auto" />
+            <p className="text-xs font-bold text-slate-700">No Inbound Enquiries Logged Yet</p>
+            <p className="text-[11px] text-slate-400">Customer requests submitted via the public contact form will appear here in real time.</p>
+          </div>
+        )}
       </div>
 
       {/* Analytics Charts Row */}

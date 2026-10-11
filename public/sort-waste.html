@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Waste Sorter AI — Intelligent Waste Classification | Kapate Consultancy</title>
+  <meta name="description" content="A clean, minimal AI waste sorting platform engineered by Kapate Consultancy. Powered by EfficientNet-B0 and Grad-CAM explainability. Classify waste intelligently. Recycle responsibly.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/sort-waste.css">
+  <style>
+    /* Executive Top Bar Integration for Kapate Consultancy */
+    .kc-topbar {
+      background: #0F172A;
+      color: #94A3B8;
+      font-size: 0.82rem;
+      padding: 8px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      z-index: 1001;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .kc-topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .kc-back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #F8FAFC;
+      font-weight: 600;
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+    .kc-back-link:hover {
+      color: #38BDF8;
+    }
+    .kc-divider {
+      color: #475569;
+    }
+    .kc-tagline {
+      display: none;
+      color: #94A3B8;
+    }
+    @media (min-width: 768px) {
+      .kc-tagline { display: inline-block; }
+    }
+    .kc-topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .kc-topbar-right a {
+      color: #94A3B8;
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.2s ease;
+    }
+    .kc-topbar-right a:hover {
+      color: #F8FAFC;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- =========================================================================
+       KAPATE CONSULTANCY PORTFOLIO TOPBAR
+       ========================================================================= -->
+  <div class="kc-topbar">
+    <div class="kc-topbar-left">
+      <a href="projects.html" class="kc-back-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        <span>Back to Projects</span>
+      </a>
+      <span class="kc-divider">|</span>
+      <span class="kc-tagline">Kapate Consultancy Applied AI Lab &bull; Computer Vision Case Study</span>
+    </div>
+    <div class="kc-topbar-right">
+      <a href="index.html">Kapate Home</a>
+      <a href="/os" target="_blank" rel="noopener noreferrer">Kapate OS</a>
+      <a href="contact.html?service=AI%20Solutions">Inquire AI Project</a>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       1. NAVIGATION BAR (Clean Apple Style)
+       ========================================================================= -->
+  <header class="navbar" id="mainNav">
+    <div class="nav-container">
+      <a href="#hero" class="nav-brand">
+        <svg class="brand-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M7 19H4.815a1.83 1.83 0 0 1-1.57-.881 1.785 1.785 0 0 1-.004-1.784L7.196 9.5"/>
+          <path d="M11 19h8.203a1.83 1.83 0 0 0 1.556-.89 1.784 1.784 0 0 0 0-1.775l-1.226-2.12"/>
+          <path d="m14 16 3 3 3-3"/>
+          <path d="M8.293 13.596 5.8 9.5l4.896-8.5a1.83 1.83 0 0 1 1.57-.881c.627 0 1.205.32 1.57.881l3.52 6.1"/>
+          <path d="m13 3 3 3-3 3"/>
+          <path d="m7 17-3 3 3 3"/>
+        </svg>
+        <span class="brand-text">Smart Waste Sorter AI</span>
+      </a>
+
+      <nav class="nav-links" id="navLinks">
+        <a href="#hero" class="nav-link active">Home</a>
+        <a href="#sorter" class="nav-link">AI Sorter</a>
+        <a href="#gradcam" class="nav-link">Explainable AI</a>
+        <a href="#performance" class="nav-link">Analytics</a>
+        <a href="#guide" class="nav-link">Recycling Guide</a>
+      </nav>
+
+      <div class="nav-actions">
+        <div class="hw-badge" id="hwPill" title="Detected Inference Hardware">
+          <span class="pulse-dot"></span>
+          <span id="hwText">CUDA GPU Active (FP16)</span>
+        </div>
+        <a href="#sorter" class="btn btn-primary btn-nav">Start Sorting</a>
+        <button class="mobile-toggle" id="mobileMenuBtn" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="mobileDrawer">
+          <span class="bar bar-1"></span>
+          <span class="bar bar-2"></span>
+          <span class="bar bar-3"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Apple-Style Mobile Navigation Drawer -->
+    <div class="mobile-drawer" id="mobileDrawer" aria-hidden="true">
+      <div class="mobile-drawer-inner">
+        <nav class="mobile-nav-links" id="mobileNavLinks">
+          <a href="#hero" class="mobile-nav-link active">Home</a>
+          <a href="#sorter" class="mobile-nav-link">AI Sorter</a>
+          <a href="#gradcam" class="mobile-nav-link">Explainable AI</a>
+          <a href="#performance" class="mobile-nav-link">Analytics</a>
+          <a href="#guide" class="mobile-nav-link">Recycling Guide</a>
+          <a href="projects.html" class="mobile-nav-link">&larr; Return to All Projects</a>
+        </nav>
+        <div class="mobile-drawer-footer">
+          <div class="mobile-hw-badge" id="mobileHwPill">
+            <span class="pulse-dot"></span>
+            <span id="mobileHwText">CUDA GPU Active</span>
+          </div>
+          <a href="#sorter" class="btn btn-primary btn-block btn-mobile-cta" id="mobileCtaBtn">Start Sorting</a>
+        </div>
+      </div>
+    </div>
+  </header>
+  <div class="mobile-backdrop" id="mobileBackdrop"></div>
+
+  <!-- =========================================================================
+       MAIN CONTENT
+       ========================================================================= -->
+  <main>
+
+    <!-- =======================================================================
+         2. HERO SECTION
+         ======================================================================= -->
+    <section id="hero" class="hero-section">
+      <div class="container hero-container">
+        <div class="hero-content">
+          <span class="hero-eyebrow">ENVIRONMENTAL INTELLIGENCE &bull; KAPATE CONSULTANCY</span>
+          <h1 class="hero-title">Smart Waste Sorter AI</h1>
+          <p class="hero-subtitle">Classify solid waste intelligently across 10 streams. Empower circular economy automation with deep learning and visual explainability.</p>
+
+          <div class="hero-cta-row">
+            <a href="#sorter" class="btn btn-primary btn-lg" id="heroStartBtn">Start Sorting</a>
+            <a href="#performance" class="btn btn-secondary btn-lg">View Analytics</a>
+          </div>
+
+          <div class="hero-highlights">
+            <div class="highlight-item">
+              <span class="highlight-value">96.25%</span>
+              <span class="highlight-label">Test Accuracy</span>
+            </div>
+            <div class="highlight-divider"></div>
+            <div class="highlight-item">
+              <span class="highlight-value">4.7 ms</span>
+              <span class="highlight-label">GPU Latency</span>
+            </div>
+            <div class="highlight-divider"></div>
+            <div class="highlight-item">
+              <span class="highlight-value">10</span>
+              <span class="highlight-label">Waste Streams</span>
+            </div>
+            <div class="highlight-divider"></div>
+            <div class="highlight-item">
+              <span class="highlight-value">Grad-CAM</span>
+              <span class="highlight-label">Explainable AI</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-visual">
+          <div class="hero-card">
+            <img src="/assets/sort-waste/hero_materials.jpg" alt="Recyclable materials studio still life" class="hero-image" id="heroImage">
+            <div class="hero-card-footer">
+              <div class="hero-card-meta">
+                <span class="meta-dot"></span>
+                <span class="meta-title">EfficientNet-B0 Backbone</span>
+              </div>
+              <span class="hero-card-tag">Real-Time Computer Vision</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- =======================================================================
+         3. AI CLASSIFICATION SECTION
+         ======================================================================= -->
+    <section id="sorter" class="section section-gray">
+      <div class="container">
+        <div class="section-header text-center">
+          <span class="section-tag">AI CLASSIFICATION</span>
+          <h2 class="section-title">Waste Classification Studio</h2>
+          <p class="section-desc">Upload a photograph or capture an item with your webcam for instant neural classification.</p>
+        </div>
+
+        <!-- Controls: Model & Quick Samples -->
+        <div class="sorter-controls-panel">
+          <div class="model-picker-wrap">
+            <label for="modelSelect" class="picker-label">Model Checkpoint:</label>
+            <select id="modelSelect" class="clean-select">
+              <option value="transfer" selected>Two-Stage Transfer Learning (96.25% Acc)</option>
+              <option value="baseline">Baseline EfficientNet-B0 (95.89% Acc)</option>
+            </select>
+          </div>
+
+          <div class="quick-samples-wrap">
+            <span class="quick-samples-label">Quick Samples:</span>
+            <div class="sample-chips">
+              <button class="sample-chip active" data-sample="plastic">Plastic</button>
+              <button class="sample-chip" data-sample="battery">Battery</button>
+              <button class="sample-chip" data-sample="cardboard">Cardboard</button>
+              <button class="sample-chip" data-sample="glass">Glass</button>
+              <button class="sample-chip" data-sample="metal">Metal</button>
+              <button class="sample-chip" data-sample="organic">Organic</button>
+              <button class="sample-chip" data-sample="paper">Paper</button>
+              <button class="sample-chip" data-sample="textile">Textile</button>
+              <button class="sample-chip" data-sample="trash">Trash</button>
+              <button class="sample-chip" data-sample="vegetation">Vegetation</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sorter Main Grid -->
+        <div class="sorter-grid">
+
+          <!-- Left Column: Image Ingestion -->
+          <div class="card sorter-input-card">
+            <div class="card-header-row">
+              <h3 class="card-heading">Input Item</h3>
+              <div class="mode-tabs">
+                <button class="tab-btn active" id="btnModeUpload">Upload File</button>
+                <button class="tab-btn" id="btnModeWebcam">Webcam</button>
+              </div>
+            </div>
+
+            <!-- Upload Dropzone -->
+            <div id="dropzoneArea" class="dropzone hidden">
+              <input type="file" id="fileInput" accept="image/*" class="file-input-hidden">
+              <div class="dropzone-body">
+                <div class="dropzone-icon">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                  </svg>
+                </div>
+                <p class="dropzone-main-text">Drag and drop waste image here, or <span class="text-accent">browse</span></p>
+                <p class="dropzone-sub-text">JPG, PNG, WEBP up to 15MB</p>
+              </div>
+            </div>
+
+            <!-- Webcam Viewport -->
+            <div id="webcamArea" class="webcam-wrap hidden">
+              <div class="webcam-frame">
+                <video id="webcamVideo" autoplay playsinline muted></video>
+                <canvas id="webcamCanvas" class="hidden"></canvas>
+              </div>
+              <div class="webcam-buttons">
+                <button class="btn btn-primary btn-sm" id="btnCapturePhoto">Capture & Sort</button>
+                <button class="btn btn-secondary btn-sm" id="btnSwitchCamera">Switch Camera</button>
+              </div>
+            </div>
+
+            <!-- Selected Image Preview -->
+            <div id="previewWrapper" class="preview-wrap">
+              <div class="preview-frame">
+                <img id="imagePreview" alt="Selected waste item" src="/assets/sort-waste/samples/plastic.jpg">
+                <button class="btn-clear" id="btnClearPreview" title="Remove image">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+              <button class="btn btn-primary btn-block" id="btnClassifyManual">Classify Item</button>
+            </div>
+          </div>
+
+          <!-- Right Column: Results & Telemetry -->
+          <div class="card sorter-results-card" id="resultsSection">
+
+            <!-- Idle State -->
+            <div id="resultsPlaceholder" class="results-idle hidden">
+              <div class="idle-icon-wrap">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              </div>
+              <h4 class="idle-title">Ready for Classification</h4>
+              <p class="idle-desc">Choose a quick sample above, upload an image, or activate your webcam to see neural predictions.</p>
+            </div>
+
+            <!-- Scanning Loading State -->
+            <div id="resultsLoader" class="results-loading hidden">
+              <div class="clean-spinner"></div>
+              <h4 class="loading-title">Classifying Waste Item</h4>
+              <p class="loading-desc">Executing EfficientNet-B0 inference on GPU...</p>
+            </div>
+
+            <!-- Active Result State -->
+            <div id="resultsContent" class="results-content">
+
+              <!-- Primary Result Header -->
+              <div class="primary-result" id="primaryCard">
+                <div class="primary-left">
+                  <div class="primary-icon-box" id="primaryIcon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 2h4v3h-4z"/><path d="M7 5h10l-1 16H8L7 5z"/></svg>
+                  </div>
+                  <div>
+                    <span class="badge" id="primaryBadge">Recyclable</span>
+                    <h3 class="primary-class" id="primaryClass">Plastic</h3>
+                    <p class="primary-subtitle" id="primarySubtitle">Thermoplastic Recyclables</p>
+                  </div>
+                </div>
+                <div class="primary-right">
+                  <span class="confidence-val" id="primaryConfidence">98.4%</span>
+                  <span class="confidence-lbl">Confidence</span>
+                </div>
+              </div>
+
+              <!-- Recommended Destination Bin -->
+              <div class="bin-card" id="binBanner" style="border-left-color: #eab308;">
+                <span class="bin-label">Recommended Bin:</span>
+                <strong class="bin-name" id="binName">Yellow / Commingled Recycling Bin</strong>
+              </div>
+
+              <!-- Inference Metadata -->
+              <div class="meta-strip">
+                <div class="meta-unit">
+                  <span class="meta-k">Latency</span>
+                  <strong class="meta-v" id="latencyDisplay">4.70 ms</strong>
+                </div>
+                <div class="meta-unit">
+                  <span class="meta-k">Hardware</span>
+                  <strong class="meta-v" id="deviceDisplay">CUDA (FP16)</strong>
+                </div>
+                <div class="meta-unit">
+                  <span class="meta-k">Model</span>
+                  <strong class="meta-v" id="modelUsedDisplay">EfficientNet-B0 (Two-Stage Transfer)</strong>
+                </div>
+              </div>
+
+              <!-- Handling Steps -->
+              <div class="instructions-block">
+                <h4 class="instructions-title">Preparation & Handling Steps</h4>
+                <ul class="steps-list" id="stepsList">
+                  <li>Rinse residue thoroughly to avoid contaminating paper and cardboard in mixed bins.</li>
+                  <li>Crush containers and bottles to minimize transportation volume.</li>
+                  <li>Check SPI resin identification code (#1 PET and #2 HDPE are widely recycled).</li>
+                </ul>
+              </div>
+
+              <!-- Environmental Impact -->
+              <div class="impact-block">
+                <div class="impact-header">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1 4-10z"/></svg>
+                  <strong>Environmental Impact</strong>
+                </div>
+                <p class="impact-text" id="impactText">Recycling 1 ton of plastic saves ~5,774 kWh of electricity and 16.3 barrels of crude oil.</p>
+                <div class="bio-row">
+                  <span>Biodegradation:</span>
+                  <strong id="biodegradationVal">450 - 1,000 years</strong>
+                </div>
+              </div>
+
+              <!-- 10-Class Probability Distribution -->
+              <div class="probabilities-block">
+                <h4 class="probabilities-title">Probability Distribution (All 10 Classes)</h4>
+                <div class="probabilities-list" id="probabilityBars">
+                  <!-- Dynamically populated by JS -->
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+
+    <!-- =======================================================================
+         4. EXPLAINABLE AI SECTION (Grad-CAM)
+         ======================================================================= -->
+    <section id="gradcam" class="section">
+      <div class="container">
+        <div class="section-header text-center">
+          <span class="section-tag">EXPLAINABLE AI</span>
+          <h2 class="section-title">Visualizing Model Decisions</h2>
+          <p class="section-desc">Grad-CAM computes gradients at the final convolutional layer of EfficientNet-B0 to reveal which visual features influenced the decision.</p>
+        </div>
+
+        <div class="card xai-studio-card">
+          <div class="xai-controls-bar">
+            <div class="xai-control-group">
+              <label for="xaiTargetClassSelect" class="xai-label">Target Class:</label>
+              <select id="xaiTargetClassSelect" class="clean-select clean-select-sm"></select>
+            </div>
+
+            <div class="xai-control-group">
+              <label for="xaiColormapSelect" class="xai-label">Colormap:</label>
+              <select id="xaiColormapSelect" class="clean-select clean-select-sm">
+                <option value="jet" selected>Jet</option>
+                <option value="turbo">Turbo</option>
+                <option value="inferno">Inferno</option>
+                <option value="viridis">Viridis</option>
+              </select>
+            </div>
+
+            <div class="xai-control-group opacity-control">
+              <label for="xaiAlphaRange" class="xai-label">Opacity: <span id="xaiAlphaText">50%</span></label>
+              <input type="range" id="xaiAlphaRange" min="10" max="95" value="50" step="5" class="clean-slider">
+            </div>
+
+            <button class="btn btn-primary btn-sm" id="btnRunXaiLab">Generate Heatmap</button>
+          </div>
+
+          <!-- Loading State -->
+          <div id="xaiStudioLoader" class="xai-loading hidden">
+            <div class="clean-spinner"></div>
+            <p>Computing convolutional feature gradients...</p>
+          </div>
+
+          <!-- Visual Dual-View Stage -->
+          <div class="xai-stage" id="xaiStudioStage">
+            <div class="xai-pane">
+              <div class="xai-pane-header">Original Image</div>
+              <div class="xai-pane-body">
+                <img id="xaiImgOriginal" alt="Original waste item" src="/assets/sort-waste/samples/plastic.jpg">
+              </div>
+            </div>
+
+            <div class="xai-pane">
+              <div class="xai-pane-header">Grad-CAM Heatmap</div>
+              <div class="xai-pane-body">
+                <img id="xaiImgHeatmap" alt="Grad-CAM heatmap" src="">
+              </div>
+            </div>
+
+            <div class="xai-pane">
+              <div class="xai-pane-header">Salience Overlay</div>
+              <div class="xai-pane-body">
+                <img id="xaiImgOverlay" alt="Salience overlay" src="">
+              </div>
+            </div>
+          </div>
+
+          <!-- Attribution Metrics -->
+          <div class="xai-metrics-row">
+            <div class="xai-stat">
+              <span class="xai-stat-lbl">Target Hypothesis</span>
+              <strong class="xai-stat-val text-accent" id="xaiMetricTarget">PLASTIC</strong>
+            </div>
+            <div class="xai-stat">
+              <span class="xai-stat-lbl">Peak Focus Region</span>
+              <strong class="xai-stat-val" id="xaiMetricFocus">Center Core</strong>
+            </div>
+            <div class="xai-stat">
+              <span class="xai-stat-lbl">Energy Concentration</span>
+              <strong class="xai-stat-val" id="xaiMetricConcentration">78.4%</strong>
+            </div>
+            <div class="xai-stat">
+              <span class="xai-stat-lbl">Attribution Latency</span>
+              <strong class="xai-stat-val" id="xaiMetricLatency">4.70 ms</strong>
+            </div>
+          </div>
+
+          <p class="xai-note" id="xaiAttributionNote">
+            Warm red and yellow regions indicate spatial evidence that drove the model's confidence toward the target class. Cool blue areas had minimal influence.
+          </p>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- =======================================================================
+         5. MODEL PERFORMANCE & BENCHMARKS SECTION
+         ======================================================================= -->
+    <section id="performance" class="section section-gray">
+      <div class="container">
+        <div class="section-header text-center">
+          <span class="section-tag">ANALYTICS & BENCHMARKS</span>
+          <h2 class="section-title">Model Performance Benchmarks</h2>
+          <p class="section-desc">Empirical test-set evaluation across 3,038 unseen images comparing Baseline and Two-Stage Transfer Learning models.</p>
+        </div>
+
+        <!-- 4 KPI Stat Tiles -->
+        <div class="stats-row">
+          <div class="card stat-card">
+            <span class="stat-card-label">Test Accuracy</span>
+            <strong class="stat-card-num text-accent">96.25%</strong>
+            <span class="stat-card-sub">+0.36% over baseline</span>
+          </div>
+          <div class="card stat-card">
+            <span class="stat-card-label">Macro F1-Score</span>
+            <strong class="stat-card-num text-accent">95.53%</strong>
+            <span class="stat-card-sub">+0.61% over baseline</span>
+          </div>
+          <div class="card stat-card">
+            <span class="stat-card-label">Inference Latency</span>
+            <strong class="stat-card-num">4.70 ms</strong>
+            <span class="stat-card-sub">NVIDIA GTX 1650 (FP16)</span>
+          </div>
+          <div class="card stat-card">
+            <span class="stat-card-label">Test Images</span>
+            <strong class="stat-card-num">3,038</strong>
+            <span class="stat-card-sub">Stratified holdout set</span>
+          </div>
+        </div>
+
+        <!-- Model Comparison Table -->
+        <div class="card table-card">
+          <div class="table-card-header">
+            <h3 class="table-card-title">Model Comparison Benchmark</h3>
+            <span class="table-hint">Scroll horizontally to view all metrics</span>
+          </div>
+          <div class="table-wrap">
+            <table class="clean-table">
+              <thead>
+                <tr>
+                  <th>Model Architecture</th>
+                  <th>Test Accuracy</th>
+                  <th>Macro Precision</th>
+                  <th>Macro Recall</th>
+                  <th>Macro F1</th>
+                  <th>Weighted F1</th>
+                  <th>Latency</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Baseline EfficientNet-B0</strong></td>
+                  <td>95.89%</td>
+                  <td>94.70%</td>
+                  <td>95.21%</td>
+                  <td>94.93%</td>
+                  <td>95.90%</td>
+                  <td>4.70 ms</td>
+                </tr>
+                <tr class="table-highlight-row">
+                  <td>
+                    <strong>Two-Stage Transfer Learning</strong>
+                    <span class="badge-primary">Production</span>
+                  </td>
+                  <td><strong>96.25%</strong></td>
+                  <td><strong>95.14%</strong></td>
+                  <td><strong>96.01%</strong></td>
+                  <td><strong>95.53%</strong></td>
+                  <td><strong>96.26%</strong></td>
+                  <td><strong>4.70 ms</strong></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Evaluation Plots Gallery -->
+        <div class="card plots-card">
+          <div class="plots-header-row">
+            <h3 class="plots-card-title">Evaluation Charts & Convergence Dynamics</h3>
+            <div class="plot-filter-chips" id="plotsFilterPills">
+              <button class="filter-chip active" data-filter="all">All</button>
+              <button class="filter-chip" data-filter="Executive Summary">Executive</button>
+              <button class="filter-chip" data-filter="Training Dynamics">Dynamics</button>
+              <button class="filter-chip" data-filter="Benchmark">Benchmark</button>
+              <button class="filter-chip" data-filter="Evaluation">Evaluation</button>
+            </div>
+          </div>
+
+          <div class="plots-grid" id="plotsGalleryGrid">
+            <!-- Dynamically populated by JS from DEFAULT_PLOTS -->
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+
+    <!-- =======================================================================
+         6. RECYCLING GUIDE SECTION
+         ======================================================================= -->
+    <section id="guide" class="section">
+      <div class="container">
+        <div class="section-header text-center">
+          <span class="section-tag">RECYCLING GUIDE</span>
+          <h2 class="section-title">10-Class Waste Protocol</h2>
+          <p class="section-desc">Practical handling instructions, preparation steps, and circular economy facts for each waste category.</p>
+        </div>
+
+        <div class="guide-grid" id="encyclopediaGrid">
+          <!-- Dynamically populated from DISPOSAL_GUIDE -->
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+
+  <!-- =========================================================================
+       LIGHTBOX MODAL FOR CHARTS
+       ========================================================================= -->
+  <div id="imageLightboxModal" class="lightbox-modal hidden">
+    <div class="lightbox-backdrop" id="lightboxBackdrop"></div>
+    <div class="lightbox-content">
+      <button class="lightbox-close" id="lightboxCloseBtn" title="Close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <img id="lightboxImage" src="" alt="Enlarged figure">
+      <p id="lightboxCaption" class="lightbox-caption"></p>
+    </div>
+  </div>
+
+
+  <!-- =========================================================================
+       7. CLEAN EXECUTIVE FOOTER
+       ========================================================================= -->
+  <footer class="footer">
+    <div class="container footer-container">
+      <div class="footer-brand">
+        <strong>Smart Waste Sorter AI</strong>
+        <span>Engineered by Kapate Consultancy &bull; Computer Vision &amp; Deep Learning Lab</span>
+      </div>
+      <p class="footer-copy">&copy; 2026 Kapate Consultancy. All rights reserved. &bull; <a href="projects.html" style="color: #6E6E73; text-decoration: underline;">All Case Studies</a> &bull; <a href="index.html" style="color: #6E6E73; text-decoration: underline;">Main Website</a></p>
+    </div>
+  </footer>
+
+  <script src="/js/sort-waste.js"></script>
+</body>
+</html>

@@ -36,6 +36,7 @@
               <li><a href="it-solutions.html">IT Solutions & Cloud</a></li>
             </ul>
           </li>
+          <li><a href="projects.html" class="nav-link">Projects</a></li>
           <li><a href="industries.html" class="nav-link">Industries</a></li>
           <li><a href="contact.html" class="nav-link">Contact</a></li>
           <li><a href="/os" target="_blank" rel="noopener noreferrer" class="nav-link">Kapate OS</a></li>
@@ -63,6 +64,7 @@
           <li><a href="it-solutions.html">IT Solutions & Cloud</a></li>
         </ul>
       </li>
+      <li><a href="projects.html">Projects</a></li>
       <li><a href="industries.html">Industries</a></li>
       <li><a href="contact.html">Contact Us</a></li>
       <li><a href="/os" target="_blank" rel="noopener noreferrer">Kapate OS</a></li>
@@ -228,6 +230,60 @@
       </div>
     </section>
 
+    <!-- Featured Case Studies & Applied AI -->
+    <section class="section-py" id="featured-projects" style="background: var(--bg-surface); border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle);">
+      <div class="container">
+        <div class="section-header" style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <div class="badge">Applied AI & Systems</div>
+            <h2>Featured Projects & Case Studies</h2>
+            <p>Production-grade architectures and real-time deep learning systems engineered by Kapate Consultancy.</p>
+          </div>
+          <a href="projects.html" class="btn btn-secondary">View All Projects →</a>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; margin-top: 2rem;">
+          <!-- Card 1: Smart Waste Sorter AI -->
+          <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column;">
+            <div style="position: relative; height: 210px; background: #0F172A; overflow: hidden;">
+              <img src="/assets/sort-waste/hero_materials.jpg" alt="Smart Waste Sorter AI" style="width: 100%; height: 100%; object-fit: cover;">
+              <span style="position: absolute; top: 12px; left: 12px; background: rgba(15,23,42,0.85); color: #22C55E; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 9999px; letter-spacing: 0.05em;">96.25% Test Accuracy</span>
+            </div>
+            <div style="padding: 1.5rem; flex: 1; display: flex; flex-direction: column;">
+              <span style="font-size: 0.75rem; font-weight: 700; color: #2D6A4F; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Deep Learning • Computer Vision</span>
+              <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary);">Smart Waste Sorter AI</h3>
+              <p style="font-size: 0.92rem; color: var(--text-secondary); line-height: 1.55; margin-bottom: 1.25rem; flex: 1;">
+                Real-time 10-stream solid waste classification leveraging Two-Stage Transfer Learning on EfficientNet-B0 and Grad-CAM explainable saliency. Sub-5ms inference on GPU.
+              </p>
+              <div style="display: flex; gap: 8px; align-items: center; justify-content: space-between; border-top: 1px solid var(--border-subtle); padding-top: 1rem; margin-top: auto;">
+                <a href="sort-waste.html" class="btn btn-primary" style="font-size: 0.85rem; padding: 8px 16px;">Launch Live AI &rarr;</a>
+                <a href="projects.html" style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">Case Study Details &rarr;</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2: Kapate OS -->
+          <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column;">
+            <div style="position: relative; height: 210px; background: #0F172A; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+              <img src="/assets/images/service-custom-tech.jpg" alt="Kapate OS Operations System" style="width: 100%; height: 100%; object-fit: cover;">
+              <span style="position: absolute; top: 12px; left: 12px; background: rgba(15,23,42,0.85); color: #38BDF8; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 9999px; letter-spacing: 0.05em;">7 RBAC Roles • Enterprise</span>
+            </div>
+            <div style="padding: 1.5rem; flex: 1; display: flex; flex-direction: column;">
+              <span style="font-size: 0.75rem; font-weight: 700; color: #2563EB; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Enterprise Software Architecture</span>
+              <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary);">Kapate OS &mdash; Operations Platform</h3>
+              <p style="font-size: 0.92rem; color: var(--text-secondary); line-height: 1.55; margin-bottom: 1.25rem; flex: 1;">
+                Full-spectrum ERP engine unifying workforce management, timesheets, CRM deal pipeline, milestone governance, and automated invoicing.
+              </p>
+              <div style="display: flex; gap: 8px; align-items: center; justify-content: space-between; border-top: 1px solid var(--border-subtle); padding-top: 1rem; margin-top: auto;">
+                <a href="/os" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="font-size: 0.85rem; padding: 8px 16px;">Launch OS Portal &rarr;</a>
+                <a href="projects.html" style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">Architecture &rarr;</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Development Process -->
     <section class="section-py" id="process-section">
       <div class="container">
@@ -352,6 +408,8 @@
           <ul class="footer-links">
             <li><a href="index.html">Home</a></li>
             <li><a href="about.html">About Us</a></li>
+            <li><a href="projects.html">Projects &amp; Portfolio</a></li>
+            <li><a href="sort-waste.html">Smart Waste Sorter AI</a></li>
             <li><a href="industries.html">Industries</a></li>
             <li><a href="contact.html">Contact</a></li>
           </ul>

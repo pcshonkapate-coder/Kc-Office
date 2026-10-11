@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Projects & Case Studies | Kapate Consultancy</title>
+  <meta name="description" content="Explore Kapate Consultancy's portfolio of artificial intelligence, computer vision, enterprise software, and machine learning systems deployed in production.">
+  
+  <meta property="og:title" content="Projects & Case Studies | Kapate Consultancy">
+  <meta property="og:description" content="Production-grade AI, Computer Vision, and Enterprise Operations Systems engineered by Kapate Consultancy.">
+  <meta property="og:type" content="website">
+  
+  <link rel="stylesheet" href="/css/style.css?v=2.3">
+  <style>
+    /* Projects Portfolio Specific Styles */
+    .project-hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #2563EB;
+      background: #EFF6FF;
+      border: 1px solid #DBEAFE;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      margin-bottom: 1.25rem;
+    }
+
+    .project-filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 2.5rem 0 3rem;
+      justify-content: center;
+    }
+
+    .project-filter-btn {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      padding: 8px 18px;
+      border-radius: 9999px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .project-filter-btn:hover {
+      border-color: #0F172A;
+      color: #0F172A;
+    }
+
+    .project-filter-btn.active {
+      background: #0F172A;
+      border-color: #0F172A;
+      color: #FFFFFF;
+    }
+
+    /* Flagship Showcase Card */
+    .flagship-card {
+      background: #FFFFFF;
+      border: 1px solid #CBD5E1;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 4rem;
+      box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.08);
+      display: grid;
+      grid-template-columns: 1fr;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    @media (min-width: 992px) {
+      .flagship-card {
+        grid-template-columns: 1.1fr 1fr;
+      }
+    }
+
+    .flagship-visual {
+      position: relative;
+      background: #F8FAFC;
+      min-height: 340px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .flagship-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+
+    .flagship-badge-floating {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(8px);
+      color: #F8FAFC;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .flagship-badge-floating .pulse {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #22C55E;
+      display: inline-block;
+    }
+
+    .flagship-body {
+      padding: clamp(2rem, 4vw, 3.5rem);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .flagship-category {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #2D6A4F;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.5rem;
+    }
+
+    .flagship-title {
+      font-size: clamp(1.8rem, 2.5vw, 2.4rem);
+      font-weight: 800;
+      color: #0F172A;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+    }
+
+    .flagship-desc {
+      color: #475569;
+      font-size: 1.05rem;
+      line-height: 1.65;
+      margin-bottom: 1.75rem;
+    }
+
+    .flagship-metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-bottom: 2rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid #E2E8F0;
+    }
+
+    @media (min-width: 576px) {
+      .flagship-metrics-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    .f-metric-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .f-metric-val {
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: #0F172A;
+      font-family: var(--font-mono);
+      line-height: 1.2;
+    }
+
+    .f-metric-val.green {
+      color: #2D6A4F;
+    }
+
+    .f-metric-lbl {
+      font-size: 0.75rem;
+      color: #64748B;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-top: 4px;
+      font-weight: 600;
+    }
+
+    .tech-pill-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 2rem;
+    }
+
+    .tech-pill {
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: #F1F5F9;
+      color: #334155;
+      padding: 4px 10px;
+      border-radius: 4px;
+      border: 1px solid #E2E8F0;
+    }
+
+    .flagship-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    /* Standard Projects Grid */
+    .projects-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 28px;
+      margin-bottom: 5rem;
+    }
+
+    @media (min-width: 768px) {
+      .projects-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (min-width: 1100px) {
+      .projects-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .project-card {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.2s ease;
+    }
+
+    .project-card:hover {
+      border-color: #0F172A;
+      transform: translateY(-3px);
+      box-shadow: 0 12px 28px -8px rgba(15, 23, 42, 0.07);
+    }
+
+    .project-card-header {
+      padding: 1.75rem 1.75rem 1rem;
+    }
+
+    .project-card-cat {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #2563EB;
+      margin-bottom: 6px;
+    }
+
+    .project-card-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #0F172A;
+      margin-bottom: 0.75rem;
+      line-height: 1.3;
+    }
+
+    .project-card-body {
+      padding: 0 1.75rem 1.5rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .project-card-desc {
+      color: #475569;
+      font-size: 0.92rem;
+      line-height: 1.6;
+      margin-bottom: 1.25rem;
+      flex: 1;
+    }
+
+    .project-card-stat {
+      background: #F8FAFC;
+      border: 1px solid #F1F5F9;
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin-bottom: 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .stat-label {
+      font-size: 0.78rem;
+      color: #64748B;
+      font-weight: 600;
+    }
+
+    .stat-value {
+      font-size: 0.95rem;
+      color: #0F172A;
+      font-weight: 800;
+      font-family: var(--font-mono);
+    }
+
+    .project-card-footer {
+      padding: 1.25rem 1.75rem;
+      border-top: 1px solid #F1F5F9;
+      background: #FAFAFC;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-link {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #0F172A;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .card-link:hover {
+      color: #2563EB;
+    }
+
+    /* Methodology Section */
+    .methodology-strip {
+      background: #F8FAFC;
+      border-top: 1px solid #E2E8F0;
+      border-bottom: 1px solid #E2E8F0;
+      padding: 5rem 0;
+      margin-bottom: 5rem;
+    }
+
+    .method-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+      margin-top: 3rem;
+    }
+
+    @media (min-width: 768px) {
+      .method-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .method-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    .method-card {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      padding: 1.75rem;
+      border-radius: 8px;
+    }
+
+    .method-step {
+      font-size: 0.8rem;
+      font-weight: 800;
+      color: #2563EB;
+      font-family: var(--font-mono);
+      margin-bottom: 8px;
+    }
+
+    .method-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #0F172A;
+      margin-bottom: 8px;
+    }
+
+    .method-desc {
+      font-size: 0.88rem;
+      color: #475569;
+      line-height: 1.55;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="site-header" id="site-header">
+    <div class="container nav-container">
+      <a href="index.html" class="brand-logo-link" aria-label="Kapate Consultancy Home">
+        <img src="/assets/images/KapateConsultancy-Logo-Cropped.png" alt="Kapate Consultancy" class="brand-logo-img">
+      </a>
+
+      <!-- Navigation -->
+      <nav class="desktop-nav" aria-label="Main Navigation">
+        <ul class="nav-links">
+          <li><a href="index.html" class="nav-link">Home</a></li>
+          <li><a href="about.html" class="nav-link">About</a></li>
+          <li class="nav-item-dropdown">
+            <a href="services.html" class="nav-link">Services ▾</a>
+            <ul class="dropdown-menu">
+              <li><a href="services.html">All Services Overview</a></li>
+              <li><a href="ai-solutions.html">AI Solutions</a></li>
+              <li><a href="ml-data.html">ML & Data Analytics</a></li>
+              <li><a href="software-development.html">Custom Software</a></li>
+              <li><a href="it-solutions.html">IT Solutions & Cloud</a></li>
+            </ul>
+          </li>
+          <li><a href="projects.html" class="nav-link active">Projects</a></li>
+          <li><a href="industries.html" class="nav-link">Industries</a></li>
+          <li><a href="contact.html" class="nav-link">Contact</a></li>
+          <li><a href="/os" target="_blank" rel="noopener noreferrer" class="nav-link">Kapate OS</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <button class="menu-toggle" aria-label="Open Mobile Menu" aria-expanded="false" id="mobile-menu-toggle">Menu</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile Drawer -->
+  <div class="mobile-nav-overlay" id="mobile-nav-overlay"></div>
+  <aside class="mobile-nav-drawer" id="mobile-nav-drawer" aria-label="Mobile Navigation Drawer">
+    <ul class="mobile-nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="about.html">About Us</a></li>
+      <li>
+        <a href="services.html">Services</a>
+        <ul class="mobile-nav-sublinks">
+          <li><a href="ai-solutions.html">AI Solutions</a></li>
+          <li><a href="ml-data.html">ML & Data Analytics</a></li>
+          <li><a href="software-development.html">Custom Software</a></li>
+          <li><a href="it-solutions.html">IT Solutions & Cloud</a></li>
+        </ul>
+      </li>
+      <li><a href="projects.html" class="active">Projects & Portfolio</a></li>
+      <li><a href="industries.html">Industries</a></li>
+      <li><a href="contact.html">Contact Us</a></li>
+      <li><a href="/os" target="_blank" rel="noopener noreferrer">Kapate OS</a></li>
+    </ul>
+    <div style="margin-top: auto;">
+      <a href="/os" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="width: 100%;">Launch Kapate OS</a>
+    </div>
+  </aside>
+
+  <main>
+    <!-- Projects Hero -->
+    <section class="hero-section" id="projects-hero">
+      <div class="container text-center">
+        <div class="project-hero-badge">Engineering Portfolio & Case Studies</div>
+        <h1 style="max-width: 900px; margin: 0 auto 1.25rem;">Transforming Real-World Operations Through Applied Intelligence.</h1>
+        <p class="hero-subtitle" style="max-width: 780px; margin: 0 auto;">
+          Explore our production deliverables across Computer Vision, Deep Learning, Enterprise Operations Architectures, and Mission-Critical Cloud Engineering.
+        </p>
+
+        <!-- Category Filters -->
+        <div class="project-filter-bar">
+          <button class="project-filter-btn active" data-filter="all">All Projects (6)</button>
+          <button class="project-filter-btn" data-filter="ai">AI & Computer Vision</button>
+          <button class="project-filter-btn" data-filter="enterprise">Enterprise Systems</button>
+          <button class="project-filter-btn" data-filter="data">Machine Learning & Data</button>
+          <button class="project-filter-btn" data-filter="cloud">Cloud & Infrastructure</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- FLAGSHIP PROJECT SHOWCASE -->
+    <section class="section" style="padding-top: 0;">
+      <div class="container">
+
+        <!-- Flagship Item: Smart Waste Sorter AI -->
+        <div class="flagship-card" data-category="ai">
+          <div class="flagship-visual">
+            <img src="/assets/sort-waste/hero_materials.jpg" alt="Smart Waste Sorter AI Deep Learning" class="flagship-img">
+            <div class="flagship-badge-floating">
+              <span class="pulse"></span>
+              <span>Flagship AI Case Study &bull; Production Benchmark</span>
+            </div>
+          </div>
+          <div class="flagship-body">
+            <div class="flagship-category">Computer Vision &bull; Sustainability &bull; Deep Learning</div>
+            <h2 class="flagship-title">Smart Waste Sorter AI</h2>
+            <p class="flagship-desc">
+              An intelligent automated solid waste stream classification platform powered by PyTorch and Two-Stage Transfer Learning on <code>EfficientNet-B0</code>. Features real-time explainable AI via Grad-CAM feature salience heatmaps and webcam input.
+            </p>
+
+            <!-- Key Metrics -->
+            <div class="flagship-metrics-grid">
+              <div class="f-metric-item">
+                <span class="f-metric-val green">96.25%</span>
+                <span class="f-metric-lbl">Test Accuracy</span>
+              </div>
+              <div class="f-metric-item">
+                <span class="f-metric-val">95.53%</span>
+                <span class="f-metric-lbl">Macro F1</span>
+              </div>
+              <div class="f-metric-item">
+                <span class="f-metric-val green">4.70 ms</span>
+                <span class="f-metric-lbl">GPU Latency</span>
+              </div>
+              <div class="f-metric-item">
+                <span class="f-metric-val">10 Classes</span>
+                <span class="f-metric-lbl">Waste Streams</span>
+              </div>
+            </div>
+
+            <!-- Tech Tags -->
+            <div class="tech-pill-list">
+              <span class="tech-pill">PyTorch</span>
+              <span class="tech-pill">EfficientNet-B0</span>
+              <span class="tech-pill">Grad-CAM XAI</span>
+              <span class="tech-pill">FP16 CUDA</span>
+              <span class="tech-pill">Computer Vision</span>
+              <span class="tech-pill">Python Flask / Next.js</span>
+            </div>
+
+            <!-- Action CTAs -->
+            <div class="flagship-actions">
+              <a href="sort-waste.html" class="btn btn-primary" id="btn-open-sort-waste">
+                Launch Live Sorter AI &rarr;
+              </a>
+              <a href="sort-waste.html#performance" class="btn btn-secondary">
+                View Benchmark Plots
+              </a>
+              <a href="sort-waste.html#gradcam" class="btn btn-secondary">
+                Grad-CAM Studio
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section Heading for Other Projects -->
+        <div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: flex-end;">
+          <div>
+            <h2 style="font-size: 1.8rem; margin-bottom: 0.25rem;">Enterprise Engineering Portfolio</h2>
+            <p style="color: #64748B; font-size: 0.95rem;">Production architectures built and deployed by Kapate Consultancy</p>
+          </div>
+        </div>
+
+        <!-- Projects Grid -->
+        <div class="projects-grid" id="projects-container">
+
+          <!-- Project 1: Kapate OS -->
+          <article class="project-card" data-category="enterprise">
+            <div class="project-card-header">
+              <div class="project-card-cat">Enterprise Operating System</div>
+              <h3 class="project-card-title">Kapate OS &mdash; Unified Operations Platform</h3>
+            </div>
+            <div class="project-card-body">
+              <p class="project-card-desc">
+                High-performance enterprise ERP unifying workforce operations, 7-tier RBAC security, sales deal pipeline, milestone tracking, timesheets, and automated financial billing.
+              </p>
+              <div class="project-card-stat">
+                <span class="stat-label">System Architecture</span>
+                <span class="stat-value">Next.js 16 + FastAPI</span>
+              </div>
+              <div class="tech-pill-list" style="margin-bottom: 0;">
+                <span class="tech-pill">Next.js 16</span>
+                <span class="tech-pill">FastAPI</span>
+                <span class="tech-pill">Zustand</span>
+                <span class="tech-pill">SQLite / Postgres</span>
+              </div>
+            </div>
+            <div class="project-card-footer">
+              <span style="font-size: 0.8rem; color: #64748B;">Core Enterprise Asset</span>
+              <a href="/os" target="_blank" rel="noopener noreferrer" class="card-link">Launch OS Demo &rarr;</a>
+            </div>
+          </article>
+
+          <!-- Project 2: AeroSense Defect Detection -->
+          <article class="project-card" data-category="ai">
+            <div class="project-card-header">
+              <div class="project-card-cat" style="color: #059669;">Industrial Computer Vision</div>
+              <h3 class="project-card-title">AeroSense &mdash; Automated Optical Quality Inspection</h3>
+            </div>
+            <div class="project-card-body">
+              <p class="project-card-desc">
+                High-speed conveyor surface defect detection system running at 60 FPS on edge hardware. Identifies microscopic cracks, welding flaws, and cosmetic blemishes with 99.1% recall.
+              </p>
+              <div class="project-card-stat">
+                <span class="stat-label">Inference Throughput</span>
+                <span class="stat-value">16.6 ms (60 FPS)</span>
+              </div>
+              <div class="tech-pill-list" style="margin-bottom: 0;">
+                <span class="tech-pill">YOLOv8</span>
+                <span class="tech-pill">TensorRT</span>
+                <span class="tech-pill">OpenCV</span>
+                <span class="tech-pill">Edge AI</span>
+              </div>
+            </div>
+            <div class="project-card-footer">
+              <span style="font-size: 0.8rem; color: #64748B;">Manufacturing Vertical</span>
+              <a href="contact.html?service=AI%20Solutions" class="card-link">Inquire Solution &rarr;</a>
+            </div>
+          </article>
+
+          <!-- Project 3: FinPulse Fraud Detection -->
+          <article class="project-card" data-category="data">
+            <div class="project-card-header">
+              <div class="project-card-cat" style="color: #7C3AED;">Financial Machine Learning</div>
+              <h3 class="project-card-title">FinPulse &mdash; Real-Time Fraud & Anomaly Intelligence</h3>
+            </div>
+            <div class="project-card-body">
+              <p class="project-card-desc">
+                Graph Neural Network & gradient-boosted risk assessment pipeline scoring financial payment streams in under 12ms. Reduced false positive alerts by 41% across banking pilot.
+              </p>
+              <div class="project-card-stat">
+                <span class="stat-label">Scoring Latency</span>
+                <span class="stat-value">&lt; 12 ms</span>
+              </div>
+              <div class="tech-pill-list" style="margin-bottom: 0;">
+                <span class="tech-pill">Graph ML</span>
+                <span class="tech-pill">XGBoost</span>
+                <span class="tech-pill">Kafka</span>
+                <span class="tech-pill">Redis</span>
+              </div>
+            </div>
+            <div class="project-card-footer">
+              <span style="font-size: 0.8rem; color: #64748B;">FinTech & Banking</span>
+              <a href="contact.html?service=ML%20%26%20Data" class="card-link">Explore Architecture &rarr;</a>
+            </div>
+          </article>
+
+          <!-- Project 4: OmniTrack Logistics Forecasting -->
+          <article class="project-card" data-category="data">
+            <div class="project-card-header">
+              <div class="project-card-cat" style="color: #D97706;">Predictive Analytics</div>
+              <h3 class="project-card-title">OmniTrack &mdash; Supply Chain Multi-Echelon Forecasting</h3>
+            </div>
+            <div class="project-card-body">
+              <p class="project-card-desc">
+                Hierarchical demand forecasting engine predicting warehouse replenishment demand across 80 distribution hubs. Lowered stockout events by 32% while pruning safety stock inventory by 24%.
+              </p>
+              <div class="project-card-stat">
+                <span class="stat-label">Safety Stock Reduction</span>
+                <span class="stat-value">-24.2%</span>
+              </div>
+              <div class="tech-pill-list" style="margin-bottom: 0;">
+                <span class="tech-pill">LightGBM</span>
+                <span class="tech-pill">Prophet</span>
+                <span class="tech-pill">Airflow</span>
+                <span class="tech-pill">PostgreSQL</span>
+              </div>
+            </div>
+            <div class="project-card-footer">
+              <span style="font-size: 0.8rem; color: #64748B;">Retail & Logistics</span>
+              <a href="contact.html?service=ML%20%26%20Data" class="card-link">View Case Study &rarr;</a>
+            </div>
+          </article>
+
+          <!-- Project 5: CloudZero FinOps Platform -->
+          <article class="project-card" data-category="cloud">
+            <div class="project-card-header">
+              <div class="project-card-cat" style="color: #0284C7;">Cloud Architecture & DevOps</div>
+              <h3 class="project-card-title">CloudZero &mdash; Multi-Cloud FinOps & Infrastructure Engine</h3>
+            </div>
+            <div class="project-card-body">
+              <p class="project-card-desc">
+                Automated Kubernetes resource right-sizing and spot fleet orchestration controller for high-load SaaS platforms. Reduced monthly AWS/GCP compute expenditure by 38% without SLA degradation.
+              </p>
+              <div class="project-card-stat">
+                <span class="stat-label">Cost Optimization</span>
+                <span class="stat-value">38.4% Net Savings</span>
+              </div>
+              <div class="tech-pill-list" style="margin-bottom: 0;">
+                <span class="tech-pill">Kubernetes</span>
+                <span class="tech-pill">Terraform</span>
+                <span class="tech-pill">Prometheus</span>
+                <span class="tech-pill">Golang</span>
+              </div>
+            </div>
+            <div class="project-card-footer">
+              <span style="font-size: 0.8rem; color: #64748B;">Cloud Infrastructure</span>
+              <a href="contact.html?service=IT%20Solutions" class="card-link">Request Audit &rarr;</a>
+            </div>
+          </article>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Engineering Principles Strip -->
+    <section class="methodology-strip">
+      <div class="container">
+        <div class="text-center" style="max-width: 720px; margin: 0 auto;">
+          <div class="project-hero-badge" style="color: #0F172A; background: #E2E8F0; border-color: #CBD5E1;">Engineering Standards</div>
+          <h2>Our Production-Grade Delivery Lifecycle</h2>
+          <p style="color: #64748B;">
+            Every solution created at Kapate Consultancy adheres to rigorous mathematical validation, reproducible benchmarks, and enterprise security standards.
+          </p>
+        </div>
+
+        <div class="method-grid">
+          <div class="method-card">
+            <div class="method-step">01. AUDIT &amp; CLEANSE</div>
+            <h4 class="method-title">Rigorous Data Hygiene</h4>
+            <p class="method-desc">
+              Multi-pass deduplication, stratified holdout splits, and distribution audit to eliminate data leakage and baseline contamination.
+            </p>
+          </div>
+          <div class="method-card">
+            <div class="method-step">02. MODELING</div>
+            <h4 class="method-title">Two-Stage Transfer Learning</h4>
+            <p class="method-desc">
+              Linear classification head warmup followed by full backbone fine-tuning with cosine annealing and mixed-precision (FP16).
+            </p>
+          </div>
+          <div class="method-card">
+            <div class="method-step">03. EXPLAINABILITY</div>
+            <h4 class="method-title">Transparent Diagnostic Saliency</h4>
+            <p class="method-desc">
+              Grad-CAM and SHAP feature attribution layers ensure model predictions rely on authentic diagnostic features, not spurious artifacts.
+            </p>
+          </div>
+          <div class="method-card">
+            <div class="method-step">04. DEPLOYMENT</div>
+            <h4 class="method-title">Sub-5ms Low Latency Execution</h4>
+            <p class="method-desc">
+              Compiled TensorRT and ONNX runtime deployment delivering sub-5ms inference on edge devices and horizontally scaled microservices.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Project Consultation CTA Banner -->
+    <section class="section" style="padding-top: 0; padding-bottom: 6rem;">
+      <div class="container">
+        <div style="background: #0F172A; color: #FFFFFF; border-radius: 12px; padding: clamp(2.5rem, 5vw, 4rem); text-align: center; position: relative; overflow: hidden;">
+          <h2 style="color: #FFFFFF; font-size: clamp(1.8rem, 3vw, 2.6rem); margin-bottom: 1rem;">Have an Ambitious Engineering Challenge?</h2>
+          <p style="color: #94A3B8; max-width: 640px; margin: 0 auto 2rem; font-size: 1.05rem;">
+            Whether you need custom computer vision pipelines, enterprise operations platforms, or predictive analytics architectures, our engineering team is ready to evaluate your scope.
+          </p>
+          <div style="display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;">
+            <a href="contact.html" class="btn btn-primary" style="background: #2563EB; border-color: #2563EB;">Book a Technical Consultation</a>
+            <a href="sort-waste.html" class="btn btn-secondary" style="color: #FFFFFF; border-color: #334155; background: transparent;">Try Smart Waste Sorter AI Demo</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <a href="index.html" class="brand-logo-link" style="display:inline-block; margin-bottom: 1rem;">
+          <img src="/assets/images/KapateConsultancy-Logo-Cropped.png" alt="Kapate Consultancy" style="height: 38px; width: auto; filter: brightness(0) invert(1);">
+        </a>
+        <p class="footer-desc">
+          Kapate Consultancy engineers intelligent enterprise software, artificial intelligence solutions, and scalable technology foundations.
+        </p>
+        <p class="footer-contact-item"><strong>Corporate HQ:</strong> Pune, Maharashtra, India</p>
+        <p class="footer-contact-item"><strong>Direct Advisory:</strong> +91 91122 30975</p>
+        <p class="footer-contact-item"><strong>Inquiries:</strong> shon@kapateconsultancy.in</p>
+      </div>
+
+      <div class="footer-col">
+        <h4 class="footer-heading">Capabilities</h4>
+        <ul class="footer-links">
+          <li><a href="ai-solutions.html">AI Solutions</a></li>
+          <li><a href="ml-data.html">ML &amp; Data Analytics</a></li>
+          <li><a href="software-development.html">Custom Software</a></li>
+          <li><a href="it-solutions.html">Cloud &amp; IT Infrastructure</a></li>
+          <li><a href="services.html">Services Scope Calculator</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4 class="footer-heading">Projects &amp; Systems</h4>
+        <ul class="footer-links">
+          <li><a href="projects.html" style="font-weight: 700; color: #FFFFFF;">All Case Studies</a></li>
+          <li><a href="sort-waste.html">Smart Waste Sorter AI</a></li>
+          <li><a href="/os" target="_blank" rel="noopener noreferrer">Kapate OS Portal</a></li>
+          <li><a href="industries.html">Industries Served</a></li>
+          <li><a href="about.html">About Leadership</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4 class="footer-heading">Governance &amp; Contact</h4>
+        <ul class="footer-links">
+          <li><a href="contact.html">Book Consultation</a></li>
+          <li><a href="privacy.html">Privacy Policy</a></li>
+          <li><a href="terms.html">Terms of Engagement</a></li>
+          <li><a href="security.html">Security Architecture</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div class="container footer-bottom-inner">
+        <p>&copy; 2026 Kapate Consultancy. All rights reserved.</p>
+        <p class="footer-legal">Confidential &bull; Enterprise Class Operations</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/js/main.js"></script>
+  <script>
+    // Client-side interactive filtering
+    document.addEventListener('DOMContentLoaded', () => {
+      const filterBtns = document.querySelectorAll('.project-filter-btn');
+      const flagshipCard = document.querySelector('.flagship-card');
+      const projectCards = document.querySelectorAll('.project-card');
+
+      filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          filterBtns.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+
+          const filter = btn.dataset.filter;
+
+          // Filter flagship
+          if (flagshipCard) {
+            const fCat = flagshipCard.dataset.category;
+            if (filter === 'all' || filter === fCat) {
+              flagshipCard.style.display = 'grid';
+            } else {
+              flagshipCard.style.display = 'none';
+            }
+          }
+
+          // Filter standard cards
+          projectCards.forEach(card => {
+            const cCat = card.dataset.category;
+            if (filter === 'all' || filter === cCat) {
+              card.style.display = 'flex';
+            } else {
+              card.style.display = 'none';
+            }
+          });
+        });
+      });
+    });
+  </script>
+</body>
+</html>

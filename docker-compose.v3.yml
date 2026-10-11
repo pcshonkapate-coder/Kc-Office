@@ -1,0 +1,68 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: kapate_os_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: kapate_admin
+      POSTGRES_PASSWORD: secure_password
+      POSTGRES_DB: kapate_os_v3
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kapate_admin -d kapate_os_v3"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: kapate_os_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: kapate_os_api
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://kapate_admin:secure_password@postgres:5432/kapate_os_v3
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=replace_this_with_a_secure_production_secret_key_32_chars
+      - ENVIRONMENT=production
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: ./apps/web/Dockerfile
+    container_name: kapate_os_web
+    restart: unless-stopped
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
+  redis_data:
