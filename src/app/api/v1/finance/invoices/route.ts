@@ -43,8 +43,8 @@ export async function POST(req: NextRequest) {
       total,
       dueDate: body.dueDate || new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
       status: body.status || 'Draft',
-      billingAddress: body.billingAddress || '742 Evergreen Terrace, Tech Park, BLR',
-      gstin: body.gstin || body.gstNumber || '29AAAAA0000A1Z5',
+      billingAddress: body.billingAddress || 'Pune, Maharashtra 411014, India',
+      gstin: body.gstin || body.gstNumber || '27KAPAT1234F1Z9',
       items: body.items && body.items.length > 0 ? body.items : [
         { description: 'Sprint Deliverables & Architecture Consulting', qty: 1, rate: amount, amount: amount }
       ],

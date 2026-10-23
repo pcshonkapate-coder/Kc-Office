@@ -58,30 +58,36 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => 
   const isFinance = currentUser.role === 'FINANCE' || currentUser.role === 'FINANCE_ADMIN' || isSuperAdmin;
   const isManager = currentUser.role === 'PROJECT_MANAGER' || isAdmin;
 
+  const itemClass = (id: string, customColor?: string) => `w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all cursor-pointer ${
+    activeTab === id
+      ? 'bg-blue-50 text-blue-700 font-bold border border-blue-200 shadow-xs'
+      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+  }`;
+
   return (
     <aside
-      className={`bg-slate-950 border-r border-slate-850 flex flex-col h-screen sticky top-0 transition-all duration-300 z-30 select-none ${
+      className={`bg-white border-r border-slate-200 flex flex-col h-screen sticky top-0 transition-all duration-300 z-30 select-none shadow-xs ${
         collapsed ? 'w-20' : 'w-64'
       }`}
     >
       {/* 1. Header Branding */}
-      <div className="h-16 px-4 flex items-center justify-between border-b border-slate-850 shrink-0 bg-slate-950/80 backdrop-blur">
+      <div className="h-16 px-4 flex items-center justify-between border-b border-slate-200 shrink-0 bg-white">
         <div className="flex items-center gap-3 overflow-hidden">
           <img src="/logo.png" alt="Kapate OS" className="h-7 object-contain shrink-0" />
           {!collapsed && (
             <div className="truncate">
-              <div className="font-black text-sm text-white tracking-wider flex items-center gap-1.5">
-                KAPATE <span className="text-cyan-400">OS</span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">2.0</span>
+              <div className="font-black text-sm text-slate-900 tracking-wider flex items-center gap-1.5">
+                KAPATE <span className="text-blue-600">OS</span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 border border-blue-200 font-bold">2.0</span>
               </div>
-              <div className="text-[10px] text-slate-400 font-medium truncate">Enterprise Operating System</div>
+              <div className="text-[10px] text-slate-500 font-medium truncate">Enterprise Operations Platform</div>
             </div>
           )}
         </div>
 
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900 border border-transparent hover:border-slate-800 transition-colors"
+          className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 border border-transparent hover:border-slate-200 transition-colors cursor-pointer"
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           <ChevronLeft className={`w-4 h-4 transition-transform duration-300 ${collapsed ? 'rotate-180' : ''}`} />
@@ -96,7 +102,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => 
             ========================================================================= */}
         {isClient ? (
           <div className="space-y-1">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-cyan-400 px-3 py-2 flex items-center gap-1.5">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-blue-600 px-3 py-2 flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5" /> Client Portal
             </div>
             {[
@@ -108,13 +114,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => 
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-all ${
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-all cursor-pointer ${
                   activeTab === item.id 
-                    ? 'bg-cyan-500/15 text-cyan-300 font-semibold border border-cyan-500/30 shadow-sm' 
-                    : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
+                    ? 'bg-blue-50 text-blue-700 font-bold border border-blue-200 shadow-xs' 
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 }`}
               >
-                <item.icon className="w-4 h-4 text-cyan-400 shrink-0" />
+                <item.icon className="w-4 h-4 text-blue-600 shrink-0" />
                 {!collapsed && <span>{item.label}</span>}
               </button>
             ))}
@@ -129,7 +135,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => 
               {!collapsed && (
                 <button
                   onClick={() => toggleSection('main')}
-                  className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-200"
+                  className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-700 cursor-pointer"
                 >
                   <span>Main</span>
                   {openSections.main ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
@@ -140,31 +146,27 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => 
                   {/* Home Dashboard */}
                   <button
                     onClick={() => setActiveTab(isIntern ? 'intern-dashboard' : 'dashboard')}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all ${
-                      activeTab === 'dashboard' || activeTab === 'intern-dashboard'
-                        ? 'bg-cyan-500/15 text-cyan-300 font-semibold border border-cyan-500/30'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
-                    }`}
+                    className={itemClass(isIntern ? 'intern-dashboard' : 'dashboard')}
                   >
-                    <LayoutDashboard className="w-4 h-4 shrink-0" />
+                    <LayoutDashboard className="w-4 h-4 shrink-0 text-slate-600" />
                     {!collapsed && <span>{isIntern ? 'Intern Dashboard' : 'Overview'}</span>}
                   </button>
 
                   {/* My Work Command Center */}
                   <button
                     onClick={() => setActiveTab('my-work')}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all ${
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all cursor-pointer ${
                       activeTab === 'my-work'
-                        ? 'bg-cyan-500/15 text-cyan-300 font-semibold border border-cyan-500/30'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
+                        ? 'bg-blue-50 text-blue-700 font-bold border border-blue-200 shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <Target className="w-4 h-4 text-cyan-400 shrink-0" />
+                      <Target className="w-4 h-4 text-blue-600 shrink-0" />
                       {!collapsed && <span className="truncate">My Work</span>}
                     </div>
                     {!collapsed && myPendingTasksCount > 0 && (
-                      <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                      <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">
                         {myPendingTasksCount}
                       </span>
                     )}
@@ -173,18 +175,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => 
                   {/* Corporate Mail */}
                   <button
                     onClick={() => setActiveTab('mail')}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all ${
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all cursor-pointer ${
                       activeTab === 'mail' || activeTab === 'inbox'
-                        ? 'bg-cyan-500/15 text-cyan-300 font-semibold border border-cyan-500/30'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
+                        ? 'bg-blue-50 text-blue-700 font-bold border border-blue-200 shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <Mail className="w-4 h-4 text-blue-400 shrink-0" />
+                      <Mail className="w-4 h-4 text-blue-600 shrink-0" />
                       {!collapsed && <span className="truncate">Inbox & Mail</span>}
                     </div>
                     {!collapsed && unreadMailCount > 0 && (
-                      <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-blue-500 text-white">
+                      <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-blue-600 text-white">
                         {unreadMailCount}
                       </span>
                     )}
@@ -193,13 +195,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => 
                   {/* Schedule & Milestones Calendar */}
                   <button
                     onClick={() => setActiveTab('calendar')}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all ${
-                      activeTab === 'calendar'
-                        ? 'bg-cyan-500/15 text-cyan-300 font-semibold border border-cyan-500/30'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
-                    }`}
+                    className={itemClass('calendar')}
                   >
-                    <Calendar className="w-4 h-4 text-indigo-400 shrink-0" />
+                    <Calendar className="w-4 h-4 text-indigo-600 shrink-0" />
                     {!collapsed && <span>Calendar</span>}
                   </button>
                 </div>
@@ -212,7 +210,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => 
                 {!collapsed && (
                   <button
                     onClick={() => toggleSection('business')}
-                    className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-200"
+                    className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-700 cursor-pointer"
                   >
                     <span>Business & CRM</span>
                     {openSections.business ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
@@ -231,13 +229,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => 
                       <button
                         key={item.id}
                         onClick={() => setActiveTab(item.id)}
-                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all ${
-                          activeTab === item.id
-                            ? 'bg-cyan-500/15 text-cyan-300 font-semibold border border-cyan-500/30'
-                            : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
-                        }`}
+                        className={itemClass(item.id)}
                       >
-                        <item.icon className="w-4 h-4 shrink-0" />
+                        <item.icon className="w-4 h-4 shrink-0 text-slate-600" />
                         {!collapsed && <span>{item.label}</span>}
                       </button>
                     ))}
@@ -251,7 +245,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => 
               {!collapsed && (
                 <button
                   onClick={() => toggleSection('delivery')}
-                  className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-200"
+                  className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-700 cursor-pointer"
                 >
                   <span>Delivery & Projects</span>
                   {openSections.delivery ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
@@ -261,36 +255,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => 
                 <div className="space-y-0.5">
                   <button
                     onClick={() => setActiveTab('projects')}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all ${
-                      activeTab === 'projects'
-                        ? 'bg-cyan-500/15 text-cyan-300 font-semibold border border-cyan-500/30'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
-                    }`}
+                    className={itemClass('projects')}
                   >
-                    <FolderKanban className="w-4 h-4 shrink-0" />
+                    <FolderKanban className="w-4 h-4 shrink-0 text-slate-600" />
                     {!collapsed && <span>Projects & Sprints</span>}
                   </button>
                   <button
                     onClick={() => setActiveTab('tasks')}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all ${
-                      activeTab === 'tasks'
-                        ? 'bg-cyan-500/15 text-cyan-300 font-semibold border border-cyan-500/30'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
-                    }`}
+                    className={itemClass('tasks')}
                   >
-                    <CheckSquare className="w-4 h-4 shrink-0" />
+                    <CheckSquare className="w-4 h-4 shrink-0 text-slate-600" />
                     {!collapsed && <span>Task Kanban</span>}
                   </button>
                   {!isIntern && (
                     <button
                       onClick={() => setActiveTab('resources')}
-                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all ${
-                        activeTab === 'resources'
-                          ? 'bg-cyan-500/15 text-cyan-300 font-semibold border border-cyan-500/30'
-                          : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
-                      }`}
+                      className={itemClass('resources')}
                     >
-                      <PieChart className="w-4 h-4 shrink-0" />
+                      <PieChart className="w-4 h-4 shrink-0 text-slate-600" />
                       {!collapsed && <span>Resource Allocation</span>}
                     </button>
                   )}
@@ -303,7 +285,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => 
               {!collapsed && (
                 <button
                   onClick={() => toggleSection('people')}
-                  className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-200"
+                  className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-700 cursor-pointer"
                 >
                   <span>People & Workforce</span>
                   {openSections.people ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
@@ -314,59 +296,39 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => 
                   {!isIntern && (
                     <button
                       onClick={() => setActiveTab('employees')}
-                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all ${
-                        activeTab === 'employees'
-                          ? 'bg-cyan-500/15 text-cyan-300 font-semibold border border-cyan-500/30'
-                          : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
-                      }`}
+                      className={itemClass('employees')}
                     >
-                      <Users2 className="w-4 h-4 shrink-0" />
+                      <Users2 className="w-4 h-4 shrink-0 text-slate-600" />
                       {!collapsed && <span>Employees</span>}
                     </button>
                   )}
                   <button
                     onClick={() => setActiveTab('interns')}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all ${
-                      activeTab === 'interns'
-                        ? 'bg-cyan-500/15 text-cyan-300 font-semibold border border-cyan-500/30'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
-                    }`}
+                    className={itemClass('interns')}
                   >
-                    <Award className="w-4 h-4 text-amber-400 shrink-0" />
+                    <Award className="w-4 h-4 text-amber-600 shrink-0" />
                     {!collapsed && <span>Intern Hub</span>}
                   </button>
                   <button
                     onClick={() => setActiveTab('timesheets')}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all ${
-                      activeTab === 'timesheets'
-                        ? 'bg-cyan-500/15 text-cyan-300 font-semibold border border-cyan-500/30'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
-                    }`}
+                    className={itemClass('timesheets')}
                   >
-                    <Clock className="w-4 h-4 text-cyan-400 shrink-0" />
+                    <Clock className="w-4 h-4 text-blue-600 shrink-0" />
                     {!collapsed && <span>Timesheets & Time</span>}
                   </button>
                   <button
                     onClick={() => setActiveTab('attendance')}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all ${
-                      activeTab === 'attendance'
-                        ? 'bg-cyan-500/15 text-cyan-300 font-semibold border border-cyan-500/30'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
-                    }`}
+                    className={itemClass('attendance')}
                   >
-                    <Calendar className="w-4 h-4 shrink-0" />
+                    <Calendar className="w-4 h-4 shrink-0 text-slate-600" />
                     {!collapsed && <span>Attendance & Leaves</span>}
                   </button>
                   {isManager && (
                     <button
                       onClick={() => setActiveTab('performance')}
-                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all ${
-                        activeTab === 'performance'
-                          ? 'bg-cyan-500/15 text-cyan-300 font-semibold border border-cyan-500/30'
-                          : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
-                      }`}
+                      className={itemClass('performance')}
                     >
-                      <TrendingUp className="w-4 h-4 shrink-0" />
+                      <TrendingUp className="w-4 h-4 shrink-0 text-slate-600" />
                       {!collapsed && <span>Performance Reviews</span>}
                     </button>
                   )}
@@ -380,7 +342,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => 
                 {!collapsed && (
                   <button
                     onClick={() => toggleSection('finance')}
-                    className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-200"
+                    className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-700 cursor-pointer"
                   >
                     <span>Finance & Billing</span>
                     {openSections.finance ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
@@ -390,24 +352,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => 
                   <div className="space-y-0.5">
                     <button
                       onClick={() => setActiveTab('finance')}
-                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all ${
-                        activeTab === 'finance'
-                          ? 'bg-cyan-500/15 text-cyan-300 font-semibold border border-cyan-500/30'
-                          : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
-                      }`}
+                      className={itemClass('finance')}
                     >
-                      <Receipt className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <Receipt className="w-4 h-4 text-emerald-600 shrink-0" />
                       {!collapsed && <span>Invoices & Expenses</span>}
                     </button>
                     <button
                       onClick={() => setActiveTab('profitability')}
-                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all ${
-                        activeTab === 'profitability'
-                          ? 'bg-cyan-500/15 text-cyan-300 font-semibold border border-cyan-500/30'
-                          : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
-                      }`}
+                      className={itemClass('profitability')}
                     >
-                      <DollarSign className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <DollarSign className="w-4 h-4 text-emerald-600 shrink-0" />
                       {!collapsed && <span>Project Profitability</span>}
                     </button>
                   </div>
@@ -420,7 +374,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => 
               {!collapsed && (
                 <button
                   onClick={() => toggleSection('communication')}
-                  className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-200"
+                  className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-700 cursor-pointer"
                 >
                   <span>Communication</span>
                   {openSections.communication ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
@@ -430,18 +384,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => 
                 <div className="space-y-0.5">
                   <button
                     onClick={() => setActiveTab('chat')}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all ${
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all cursor-pointer ${
                       activeTab === 'chat'
-                        ? 'bg-cyan-500/15 text-cyan-300 font-semibold border border-cyan-500/30'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
+                        ? 'bg-blue-50 text-blue-700 font-bold border border-blue-200 shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <MessageSquare className="w-4 h-4 text-cyan-400 shrink-0" />
+                      <MessageSquare className="w-4 h-4 text-blue-600 shrink-0" />
                       {!collapsed && <span className="truncate">Internal Chat</span>}
                     </div>
                     {!collapsed && unreadChatCount > 0 && (
-                      <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-cyan-500 text-slate-950">
+                      <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-blue-600 text-white">
                         {unreadChatCount}
                       </span>
                     )}
@@ -455,7 +409,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => 
               {!collapsed && (
                 <button
                   onClick={() => toggleSection('knowledge')}
-                  className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-200"
+                  className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-700 cursor-pointer"
                 >
                   <span>Knowledge & SOPs</span>
                   {openSections.knowledge ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
@@ -465,24 +419,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => 
                 <div className="space-y-0.5">
                   <button
                     onClick={() => setActiveTab('documents')}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all ${
-                      activeTab === 'documents'
-                        ? 'bg-cyan-500/15 text-cyan-300 font-semibold border border-cyan-500/30'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
-                    }`}
+                    className={itemClass('documents')}
                   >
-                    <FileText className="w-4 h-4 shrink-0" />
+                    <FileText className="w-4 h-4 shrink-0 text-slate-600" />
                     {!collapsed && <span>Documents Vault</span>}
                   </button>
                   <button
                     onClick={() => setActiveTab('knowledge')}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all ${
-                      activeTab === 'knowledge'
-                        ? 'bg-cyan-500/15 text-cyan-300 font-semibold border border-cyan-500/30'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
-                    }`}
+                    className={itemClass('knowledge')}
                   >
-                    <BookOpen className="w-4 h-4 text-indigo-400 shrink-0" />
+                    <BookOpen className="w-4 h-4 text-indigo-600 shrink-0" />
                     {!collapsed && <span>Wiki & Standard SOPs</span>}
                   </button>
                 </div>
@@ -494,7 +440,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => 
               {!collapsed && (
                 <button
                   onClick={() => toggleSection('intelligence')}
-                  className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-200"
+                  className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-700 cursor-pointer"
                 >
                   <span>Intelligence & AI</span>
                   {openSections.intelligence ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
@@ -504,36 +450,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => 
                 <div className="space-y-0.5">
                   <button
                     onClick={() => setActiveTab('ai-assistant')}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all ${
-                      activeTab === 'ai-assistant'
-                        ? 'bg-cyan-500/15 text-cyan-300 font-semibold border border-cyan-500/30'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
-                    }`}
+                    className={itemClass('ai-assistant')}
                   >
-                    <Bot className="w-4 h-4 text-cyan-400 shrink-0" />
+                    <Bot className="w-4 h-4 text-blue-600 shrink-0" />
                     {!collapsed && <span>AI Copilot & Ops</span>}
                   </button>
                   <button
                     onClick={() => setActiveTab('automations')}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all ${
-                      activeTab === 'automations'
-                        ? 'bg-cyan-500/15 text-cyan-300 font-semibold border border-cyan-500/30'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
-                    }`}
+                    className={itemClass('automations')}
                   >
-                    <Zap className="w-4 h-4 text-amber-400 shrink-0" />
+                    <Zap className="w-4 h-4 text-amber-600 shrink-0" />
                     {!collapsed && <span>Cross-Automations</span>}
                   </button>
                   {!isIntern && (
                     <button
                       onClick={() => setActiveTab('analytics')}
-                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all ${
-                        activeTab === 'analytics'
-                          ? 'bg-cyan-500/15 text-cyan-300 font-semibold border border-cyan-500/30'
-                          : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
-                      }`}
+                      className={itemClass('analytics')}
                     >
-                      <TrendingUp className="w-4 h-4 shrink-0" />
+                      <TrendingUp className="w-4 h-4 shrink-0 text-slate-600" />
                       {!collapsed && <span>Analytics & BI</span>}
                     </button>
                   )}
@@ -543,11 +477,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => 
 
             {/* DOMAIN: ADMIN & GOVERNANCE */}
             {isAdmin && (
-              <div className="pt-2 border-t border-slate-850">
+              <div className="pt-2 border-t border-slate-200">
                 {!collapsed && (
                   <button
                     onClick={() => toggleSection('admin')}
-                    className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-indigo-400 hover:text-indigo-300"
+                    className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-700 cursor-pointer"
                   >
                     <span>System Governance</span>
                     {openSections.admin ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
@@ -558,18 +492,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => 
                     {isSuperAdmin && (
                       <button
                         onClick={() => setActiveTab('super-admin')}
-                        className={`w-full flex items-center justify-between px-3 py-2 rounded-xl font-semibold transition-all ${
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-xl font-semibold transition-all cursor-pointer ${
                           activeTab === 'super-admin'
-                            ? 'bg-gradient-to-r from-indigo-900 to-slate-900 text-white shadow-md border border-indigo-500/40'
-                            : 'text-indigo-300 bg-indigo-950/40 hover:bg-indigo-900/40 border border-indigo-900/60'
+                            ? 'bg-slate-900 text-white shadow-sm'
+                            : 'text-indigo-700 bg-indigo-50/70 hover:bg-indigo-100/70 border border-indigo-200'
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <ShieldCheck className="w-4 h-4 text-indigo-400 shrink-0" />
+                          <ShieldCheck className="w-4 h-4 text-indigo-600 shrink-0" />
                           {!collapsed && <span>Super Admin Tier 0</span>}
                         </div>
                         {!collapsed && (
-                          <span className="px-1.5 py-0.2 rounded text-[9px] font-black uppercase bg-indigo-500 text-white">
+                          <span className="px-1.5 py-0.2 rounded text-[9px] font-black uppercase bg-indigo-600 text-white">
                             ROOT
                           </span>
                         )}
@@ -578,18 +512,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => 
 
                     <button
                       onClick={() => setActiveTab('security')}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all ${
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all cursor-pointer ${
                         activeTab === 'security'
-                          ? 'bg-emerald-500/15 text-emerald-300 font-semibold border border-emerald-500/30'
-                          : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
+                          ? 'bg-emerald-50 text-emerald-800 font-bold border border-emerald-200 shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <Shield className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <Shield className="w-4 h-4 text-emerald-600 shrink-0" />
                         {!collapsed && <span>Security & IAM</span>}
                       </div>
                       {!collapsed && pendingRequestsCount > 0 && (
-                        <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-500 text-slate-950 animate-pulse">
+                        <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-500 text-white animate-pulse">
                           {pendingRequestsCount}
                         </span>
                       )}
@@ -597,13 +531,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => 
 
                     <button
                       onClick={() => setActiveTab('settings')}
-                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all ${
-                        activeTab === 'settings'
-                          ? 'bg-cyan-500/15 text-cyan-300 font-semibold border border-cyan-500/30'
-                          : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
-                      }`}
+                      className={itemClass('settings')}
                     >
-                      <Settings className="w-4 h-4 shrink-0" />
+                      <Settings className="w-4 h-4 shrink-0 text-slate-600" />
                       {!collapsed && <span>System Settings</span>}
                     </button>
                   </div>
@@ -615,15 +545,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => 
       </div>
 
       {/* 3. Footer Link */}
-      <div className="p-3 border-t border-slate-850 bg-slate-950/80">
+      <div className="p-3 border-t border-slate-200 bg-white">
         <a
           href={process.env.NEXT_PUBLIC_MAIN_SITE_URL || process.env.NEXT_PUBLIC_WEBSITE_URL || '/'}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-3 p-2 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-300 hover:text-white transition-colors"
+          className="flex items-center gap-3 p-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 hover:text-slate-900 transition-colors"
         >
-          <Globe className="w-4 h-4 shrink-0 text-cyan-400" />
-          {!collapsed && <span className="font-semibold text-[11px] truncate">Kapate Public Portal</span>}
+          <Globe className="w-4 h-4 shrink-0 text-blue-600" />
+          {!collapsed && <span className="font-semibold text-[11px] truncate">Kapate Public Website</span>}
         </a>
       </div>
     </aside>

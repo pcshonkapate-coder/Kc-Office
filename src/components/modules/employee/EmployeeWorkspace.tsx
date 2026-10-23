@@ -2,11 +2,10 @@
 
 import React, { useState, useMemo } from 'react';
 import { useDemoStore } from '../../../store/demoStore';
-import { Task, Project } from '../../../types';
+import { Task } from '../../../types';
 import {
-  CheckSquare, Clock, Users, FileText, Send, ChevronRight, X,
-  Briefcase, CheckCircle2, Play, AlertCircle, Sparkles, FolderKanban,
-  Paperclip, Shield, ArrowRight, UserCheck
+  CheckSquare, Clock, Users, FileText, Send, X,
+  FolderKanban, CheckCircle2, Shield
 } from 'lucide-react';
 
 export const EmployeeWorkspace: React.FC = () => {
@@ -69,26 +68,25 @@ export const EmployeeWorkspace: React.FC = () => {
   }, [employees, currentUser]);
 
   return (
-    <div className="space-y-6 text-slate-100 animate-fade-in font-sans">
+    <div className="space-y-6 text-slate-900 animate-fade-in font-sans">
       
       {/* HEADER BANNER */}
-      <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-blue-600/10 blur-[90px] pointer-events-none" />
+      <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm relative overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-950/80 border border-blue-800/80 text-blue-400 text-xs font-bold uppercase tracking-wider mb-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold uppercase tracking-wider mb-2">
               <CheckSquare className="w-3.5 h-3.5" /> Engineer Execution Portal
             </div>
-            <h1 className="text-2xl lg:text-3xl font-black text-white tracking-tight">
+            <h1 className="text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">
               Welcome back, {currentUser.name.split(' ')[0]}
             </h1>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-slate-500 mt-1">
               Personal sprint deliverables, SOW contract scope, project timesheets, and department peer directory.
             </p>
           </div>
 
           {/* Tab Navigation */}
-          <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-slate-950 border border-slate-800">
+          <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-slate-100 border border-slate-200">
             {[
               { id: 'sprint', label: 'My Sprint Board', icon: FolderKanban, count: myTasks.length },
               { id: 'timesheet', label: 'Log Project Hours', icon: Clock },
@@ -99,14 +97,14 @@ export const EmployeeWorkspace: React.FC = () => {
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                   activeTab === tab.id
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                    ? 'bg-white text-slate-900 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 <tab.icon className="w-4 h-4" />
                 <span>{tab.label}</span>
                 {tab.count !== undefined && (
-                  <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-black/40 text-white">
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-slate-200 text-slate-700">
                     {tab.count}
                   </span>
                 )}
@@ -122,27 +120,27 @@ export const EmployeeWorkspace: React.FC = () => {
       {activeTab === 'sprint' && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
           {[
-            { id: 'TODO', label: 'To Do', items: todoTasks, border: 'border-slate-700' },
-            { id: 'IN PROGRESS', label: 'In Progress', items: inProgressTasks, border: 'border-blue-800' },
-            { id: 'REVIEW', label: 'Review Required', items: reviewTasks, border: 'border-amber-800' },
-            { id: 'COMPLETED', label: 'Completed', items: completedTasks, border: 'border-emerald-800' },
+            { id: 'TODO', label: 'To Do', items: todoTasks, border: 'border-slate-200' },
+            { id: 'IN PROGRESS', label: 'In Progress', items: inProgressTasks, border: 'border-blue-200' },
+            { id: 'REVIEW', label: 'Review Required', items: reviewTasks, border: 'border-amber-200' },
+            { id: 'COMPLETED', label: 'Completed', items: completedTasks, border: 'border-emerald-200' },
           ].map((col) => (
             <div
               key={col.id}
-              className={`rounded-2xl bg-slate-900/50 border ${col.border} p-4 flex flex-col min-h-[460px]`}
+              className={`rounded-2xl bg-slate-50 border ${col.border} p-4 flex flex-col min-h-[460px]`}
             >
-              <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
-                <span className="font-extrabold text-xs uppercase tracking-wider text-slate-200">
+              <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-200">
+                <span className="font-extrabold text-xs uppercase tracking-wider text-slate-700">
                   {col.label}
                 </span>
-                <span className="px-2 py-0.5 rounded-full text-[11px] font-mono font-bold bg-slate-800 text-slate-300">
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-mono font-bold bg-white border border-slate-200 text-slate-700">
                   {col.items.length}
                 </span>
               </div>
 
               <div className="flex-1 space-y-3 overflow-y-auto custom-scrollbar pr-1">
                 {col.items.length === 0 ? (
-                  <div className="h-32 flex items-center justify-center text-slate-500 text-xs text-center border border-dashed border-slate-800 rounded-xl p-4">
+                  <div className="h-32 flex items-center justify-center text-slate-400 text-xs text-center border border-dashed border-slate-200 rounded-xl p-4">
                     No deliverables in {col.label}
                   </div>
                 ) : (
@@ -150,30 +148,30 @@ export const EmployeeWorkspace: React.FC = () => {
                     <div
                       key={task.id}
                       onClick={() => setSelectedTaskForPanel(task)}
-                      className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-blue-600/60 transition-all cursor-pointer shadow-sm group space-y-2.5"
+                      className="p-3.5 rounded-xl bg-white border border-slate-200 hover:border-blue-300 transition-all cursor-pointer shadow-xs group space-y-2.5"
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-[10px] font-mono font-bold text-blue-400 bg-blue-950/60 px-2 py-0.5 rounded-md border border-blue-900/50 truncate">
+                        <span className="text-[10px] font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200 truncate">
                           {task.projectName || 'Active SOW'}
                         </span>
                         <span
                           className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded ${
                             task.priority === 'Urgent' || (task.priority as string) === 'P0-Critical'
-                              ? 'bg-rose-950 text-rose-300 border border-rose-800'
-                              : 'bg-slate-900 text-slate-300 border border-slate-700'
+                              ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                              : 'bg-slate-100 text-slate-700 border border-slate-200'
                           }`}
                         >
                           {task.priority || 'Medium'}
                         </span>
                       </div>
 
-                      <h4 className="text-xs font-bold text-white group-hover:text-blue-300 transition-colors line-clamp-2">
+                      <h4 className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-2">
                         {task.title}
                       </h4>
 
-                      <div className="flex items-center justify-between text-[11px] text-slate-400 pt-2 border-t border-slate-900">
+                      <div className="flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-100">
                         <span className="font-mono text-[10px]">Due: {task.dueDate || 'Sprint End'}</span>
-                        <span className="text-blue-400 text-[10px] flex items-center gap-0.5">
+                        <span className="text-blue-600 text-[10px] flex items-center gap-0.5 font-semibold">
                           Inspect SOW &rarr;
                         </span>
                       </div>
@@ -190,25 +188,25 @@ export const EmployeeWorkspace: React.FC = () => {
       {/* 2. CONTEXTUAL PROJECT TIMESHEET LOGGING */}
       {/* ========================================================================= */}
       {activeTab === 'timesheet' && (
-        <div className="max-w-2xl mx-auto p-6 rounded-3xl bg-slate-900/60 border border-slate-800 shadow-xl space-y-5">
+        <div className="max-w-2xl mx-auto p-6 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-5">
           <div>
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <Clock className="w-5 h-5 text-blue-400" /> Contextual Project Time Logging
+            <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <Clock className="w-5 h-5 text-blue-600" /> Contextual Project Time Logging
             </h2>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-slate-500 mt-1">
               Hours are validated directly against active contract project codes, ensuring accurate billing attribution.
             </p>
           </div>
 
           <form onSubmit={handleLogHours} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1">
+              <label className="block text-xs font-bold text-slate-700 mb-1">
                 Select Active Client Deliverable (Project ID)
               </label>
               <select
                 value={logProjectId}
                 onChange={(e) => setLogProjectId(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-blue-500 font-semibold"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-900 focus:outline-none focus:border-blue-500 font-semibold cursor-pointer"
               >
                 {projects.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -220,7 +218,7 @@ export const EmployeeWorkspace: React.FC = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="sm:col-span-2">
-                <label className="block text-xs font-bold text-slate-300 mb-1">
+                <label className="block text-xs font-bold text-slate-700 mb-1">
                   Deliverable / Task Title
                 </label>
                 <input
@@ -229,12 +227,12 @@ export const EmployeeWorkspace: React.FC = () => {
                   value={logTaskTitle}
                   onChange={(e) => setLogTaskTitle(e.target.value)}
                   placeholder="e.g. Optimized PostgreSQL index query plans"
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">
+                <label className="block text-xs font-bold text-slate-700 mb-1">
                   Hours Spent
                 </label>
                 <input
@@ -245,13 +243,13 @@ export const EmployeeWorkspace: React.FC = () => {
                   required
                   value={logHours}
                   onChange={(e) => setLogHours(Number(e.target.value))}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-blue-500 font-mono font-bold text-center"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-900 focus:outline-none focus:border-blue-500 font-mono font-bold text-center"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1">
+              <label className="block text-xs font-bold text-slate-700 mb-1">
                 SOW Progress & Execution Notes
               </label>
               <textarea
@@ -259,13 +257,13 @@ export const EmployeeWorkspace: React.FC = () => {
                 value={logDescription}
                 onChange={(e) => setLogDescription(e.target.value)}
                 placeholder="Detail the technical milestones accomplished, benchmarks conducted, or blockers resolved..."
-                className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20 transition-all cursor-pointer"
+              className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
             >
               <Send className="w-4 h-4" /> Submit to Project Manager for Approval
             </button>
@@ -277,12 +275,12 @@ export const EmployeeWorkspace: React.FC = () => {
       {/* 3. DEPARTMENT COLLABORATION HUB */}
       {/* ========================================================================= */}
       {activeTab === 'collab' && (
-        <div className="p-6 rounded-3xl bg-slate-900/60 border border-slate-800 space-y-4">
+        <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4">
           <div>
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <Users className="w-5 h-5 text-blue-400" /> Department Collaboration & Peer Directory
+            <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <Users className="w-5 h-5 text-blue-600" /> Department Collaboration & Peer Directory
             </h2>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-slate-500 mt-1">
               Active engineering peers, specialization skills, and online availability for technical consultation.
             </p>
           </div>
@@ -291,23 +289,23 @@ export const EmployeeWorkspace: React.FC = () => {
             {peers.map((peer) => (
               <div
                 key={peer.id}
-                className="p-4 rounded-2xl bg-slate-950 border border-slate-800 hover:border-slate-700 transition-all space-y-3"
+                className="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-slate-300 transition-all space-y-3"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-blue-950 text-blue-300 border border-blue-900 flex items-center justify-center font-bold text-sm">
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 flex items-center justify-center font-bold text-sm">
                     {peer.name.substring(0, 2).toUpperCase()}
                   </div>
                   <div className="truncate">
-                    <h4 className="text-xs font-bold text-white truncate">{peer.name}</h4>
-                    <p className="text-[11px] text-slate-400 truncate">{peer.role}</p>
+                    <h4 className="text-xs font-bold text-slate-900 truncate">{peer.name}</h4>
+                    <p className="text-[11px] text-slate-500 truncate">{peer.role}</p>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono pt-2 border-t border-slate-900">
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Available
+                <div className="flex items-center justify-between text-[11px] text-slate-500 font-mono pt-2 border-t border-slate-200">
+                  <span className="flex items-center gap-1.5 text-emerald-600 font-medium">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" /> Available
                   </span>
-                  <span className="text-slate-500">{peer.department}</span>
+                  <span className="text-slate-400">{peer.department}</span>
                 </div>
 
                 {peer.skills && peer.skills.length > 0 && (
@@ -315,7 +313,7 @@ export const EmployeeWorkspace: React.FC = () => {
                     {peer.skills.slice(0, 3).map((s, i) => (
                       <span
                         key={i}
-                        className="px-2 py-0.5 rounded text-[9px] bg-slate-900 text-slate-300 border border-slate-800"
+                        className="px-2 py-0.5 rounded text-[9px] bg-white text-slate-600 border border-slate-200"
                       >
                         {s}
                       </span>
@@ -332,22 +330,22 @@ export const EmployeeWorkspace: React.FC = () => {
       {/* SOW CONTEXT SLIDE-PANEL */}
       {/* ========================================================================= */}
       {selectedTaskForPanel && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-end animate-fade-in">
-          <div className="w-full max-w-lg bg-slate-950 border-l border-slate-800 h-full p-6 flex flex-col justify-between shadow-2xl space-y-6 overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-sm flex justify-end animate-fade-in">
+          <div className="w-full max-w-lg bg-white border-l border-slate-200 h-full p-6 flex flex-col justify-between shadow-2xl space-y-6 overflow-y-auto">
             <div className="space-y-6">
-              <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-200">
                 <div className="flex items-center gap-2">
-                  <div className="p-2 rounded-xl bg-blue-950/80 border border-blue-800 text-blue-400">
+                  <div className="p-2 rounded-xl bg-blue-50 border border-blue-200 text-blue-600">
                     <FileText className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-white">SOW Scope of Work</h3>
-                    <p className="text-[11px] text-slate-400 font-mono">Task ID: {selectedTaskForPanel.id}</p>
+                    <h3 className="text-sm font-bold text-slate-900">SOW Scope of Work</h3>
+                    <p className="text-[11px] text-slate-500 font-mono">Task ID: {selectedTaskForPanel.id}</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setSelectedTaskForPanel(null)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900 transition-colors"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -355,34 +353,34 @@ export const EmployeeWorkspace: React.FC = () => {
 
               {/* Task Details */}
               <div className="space-y-3">
-                <span className="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-blue-950 border border-blue-800 text-blue-300">
+                <span className="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-blue-50 border border-blue-200 text-blue-700">
                   {selectedTaskForPanel.projectName || 'Client Engagement'}
                 </span>
-                <h2 className="text-lg font-bold text-white leading-snug">
+                <h2 className="text-lg font-bold text-slate-900 leading-snug">
                   {selectedTaskForPanel.title}
                 </h2>
-                <p className="text-xs text-slate-300 leading-relaxed bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+                <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-200">
                   {selectedTaskForPanel.description ||
                     'Deliverable executing under contract Scope of Work (SOW) specification. Verify deliverables against unit test suites and SLA latency targets before submitting for review.'}
                 </p>
               </div>
 
               {/* Scope & Contract Context */}
-              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
-                <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-emerald-400" /> SOW Verification Checklist
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-emerald-600" /> SOW Verification Checklist
                 </h4>
-                <ul className="text-xs text-slate-400 space-y-2">
+                <ul className="text-xs text-slate-600 space-y-2">
                   <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                     Adheres to Kapate Consultancy Zero-Trust Security Protocol
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                     All APIs documented with OpenAPI / Pydantic v2 schemas
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                     Automated test coverage passes with zero regressions
                   </li>
                 </ul>
@@ -390,7 +388,7 @@ export const EmployeeWorkspace: React.FC = () => {
 
               {/* Stage Progression Action */}
               <div className="space-y-2">
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
                   Update Deliverable Status
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -402,10 +400,10 @@ export const EmployeeWorkspace: React.FC = () => {
                         setSelectedTaskForPanel({ ...selectedTaskForPanel, status: st as any });
                         showToast(`Status updated to ${st}`, 'success');
                       }}
-                      className={`p-2.5 rounded-xl text-xs font-bold transition-all border ${
+                      className={`p-2.5 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
                         selectedTaskForPanel.status === st
-                          ? 'bg-blue-600 text-white border-blue-500'
-                          : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-800'
+                          ? 'bg-blue-600 text-white border-blue-600'
+                          : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'
                       }`}
                     >
                       {st}
@@ -417,7 +415,7 @@ export const EmployeeWorkspace: React.FC = () => {
 
             <button
               onClick={() => setSelectedTaskForPanel(null)}
-              className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-bold transition-colors"
+              className="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
             >
               Close Context Panel
             </button>

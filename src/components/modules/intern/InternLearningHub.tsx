@@ -3,9 +3,7 @@
 import React, { useState } from 'react';
 import { useDemoStore } from '../../../store/demoStore';
 import {
-  Award, BookOpen, Code2, MessageSquare, CheckCircle2, Clock,
-  Sparkles, Download, ExternalLink, ShieldCheck, Star, FileText, Send,
-  ChevronRight, AlertCircle, Play
+  Award, BookOpen, Code2, MessageSquare, Download, Sparkles, Send, X
 } from 'lucide-react';
 
 interface LearningModule {
@@ -59,33 +57,35 @@ export const InternLearningHub: React.FC = () => {
       category: 'Algorithms',
       difficulty: 'Intermediate',
       description:
-        'Benchmark hybrid 3-way QuickSort against Python TimSort on heavily skewed, nearly-sorted, and duplicate-heavy array datasets. Analyze cache locality and branch mispredictions.',
+        'Benchmark hybrid sorting strategies (Timsort vs QuickSort with dual-pivot partition) on real-world skewed enterprise datasets to minimize branch prediction misses.',
       requirements: [
-        'Implement 3-way partitioning QuickSort (Dutch National Flag problem)',
-        'Measure nanosecond CPU cycle execution on arrays up to 1,000,000 integers',
-        'Document Big-O space complexity and worst-case recursion bounds'
+        'Benchmarked in Python / C extension against random, sorted, and reversed input arrays',
+        'Memory allocation profile across N = 10,000 to 1,000,000 integers',
+        'Detailed Big-O worst-case cache locality comparative memo'
       ],
       status: 'SUBMITTED',
-      submittedCode: `# 3-Way QuickSort Benchmark\ndef partition3(arr, l, r):\n    pivot = arr[l]\n    lt = l\n    gt = r\n    i = l + 1\n    while i <= gt:\n        if arr[i] < pivot:\n            arr[lt], arr[i] = arr[i], arr[lt]\n            lt += 1; i += 1\n        elif arr[i] > pivot:\n            arr[gt], arr[i] = arr[i], arr[gt]\n            gt -= 1\n        else:\n            i += 1\n    return lt, gt`,
+      submittedCode: `# Dual-Pivot QuickSort Benchmark Module\nimport time\n\ndef dual_pivot_quicksort(arr, low, high):\n    # Optimized dual pivot implementation\n    pass`,
+      submissionNotes:
+        'Timsort performs up to 3.2x faster on arrays with pre-existing ordered runs due to galloping mode heuristics.',
       mentorFeedback: {
-        mentorName: 'Priya Sharma (Delivery Lead)',
-        date: '2026-09-20',
+        mentorName: 'Shon Kapate (Principal Consultant)',
+        date: '2026-09-22',
         comment:
-          'Implementation handles duplicate keys in linear O(N) time as required. Please add asymptotic memory profiling graph.',
-        score: 91
+          'Good benchmark harness. Add cachegrind instructions profiling to verify L1 miss reductions before final sign-off.',
+        score: 88
       }
     },
     {
-      id: 'MOD-PERC-03',
-      title: 'Linear Perceptron Evaluation & Gradient Descent',
+      id: 'MOD-DL-03',
+      title: 'Multi-Layer Neural Network Forward & Backprop from Scratch',
       category: 'Deep Learning',
       difficulty: 'Advanced',
       description:
-        'Derive and construct a multi-layer perceptron with cross-entropy loss, backpropagation chain rule derivatives, and Adam optimization strictly from first principles using pure NumPy.',
+        'Build a multi-layer perceptron (MLP) purely with NumPy: implement forward pass matrix ops, cross-entropy loss, and vectorized analytical backpropagation gradients without PyTorch/TF.',
       requirements: [
-        'Implement forward and backward propagation passes with vectorization',
-        'Verify gradient descent convergence on non-linear XOR boundary',
-        'Include mathematical LaTeX derivation write-up of loss gradient'
+        'Vectorized forward propagation with ReLU and Softmax activation activations',
+        'Full analytical gradient computation (dW, db) across all hidden layers',
+        'Mini-batch gradient descent with Adam optimizer verification on MNIST'
       ],
       status: 'PENDING'
     }
@@ -96,16 +96,17 @@ export const InternLearningHub: React.FC = () => {
   const [submissionNotes, setSubmissionNotes] = useState('');
   const [showCertificateModal, setShowCertificateModal] = useState(false);
 
-  // Competency Vector Metrics
+  // Competency mastery scores
   const competencies = [
-    { label: 'Python & Vectorization', score: 94, fullMark: 100 },
-    { label: 'Data Pipelines & ETL', score: 88, fullMark: 100 },
-    { label: 'Algorithmic Efficiency', score: 92, fullMark: 100 },
-    { label: 'Delivery & Documentation', score: 90, fullMark: 100 },
+    { label: 'Python 3.11 & Vectorized NumPy', score: 94 },
+    { label: 'Isolation Forests & Anomaly Modeling', score: 91 },
+    { label: 'Algorithmic Complexity & Big-O', score: 86 },
+    { label: 'Analytical Neural Backpropagation', score: 78 },
+    { label: 'Clean Code, Linting & Type Safety', score: 92 },
   ];
 
   const approvedCount = modules.filter((m) => m.status === 'APPROVED').length;
-  const isEligibleForCert = approvedCount >= 1; // Eligible when required assignments pass mentor audit
+  const isEligibleForCert = approvedCount >= 1;
 
   const handleSubmitCode = (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,10 +119,10 @@ export const InternLearningHub: React.FC = () => {
               ...m,
               status: 'SUBMITTED',
               submittedCode: submissionCode,
-              submissionNotes,
+              submissionNotes: submissionNotes,
               mentorFeedback: {
-                mentorName: 'Automated Test Harness',
-                date: 'Just now',
+                mentorName: 'Shon Kapate (Principal Consultant)',
+                date: new Date().toISOString().split('T')[0],
                 comment: 'Automated test suite passed. Queued for Senior Staff Engineer code review.',
                 score: 85
               }
@@ -137,20 +138,19 @@ export const InternLearningHub: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 text-slate-100 animate-fade-in font-sans">
+    <div className="space-y-6 text-slate-900 animate-fade-in font-sans">
       
       {/* HEADER BANNER */}
-      <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-purple-600/10 blur-[90px] pointer-events-none" />
+      <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm relative overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-950/80 border border-purple-800/80 text-purple-400 text-xs font-bold uppercase tracking-wider mb-2">
-              <Award className="w-3.5 h-3.5" /> Intern Academy & Research Portal
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold uppercase tracking-wider mb-2">
+              <Award className="w-3.5 h-3.5 text-amber-500" /> Intern Academy & Research Portal
             </div>
-            <h1 className="text-2xl lg:text-3xl font-black text-white tracking-tight">
+            <h1 className="text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">
               Kapate OS Mentorship Hub
             </h1>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-slate-500 mt-1">
               Isolated enterprise learning pipelines, mentor code reviews, competency metrics, and verified graduation certification.
             </p>
           </div>
@@ -158,10 +158,10 @@ export const InternLearningHub: React.FC = () => {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setShowCertificateModal(true)}
-              className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-md cursor-pointer ${
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-sm cursor-pointer ${
                 isEligibleForCert
-                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white shadow-purple-900/20'
-                  : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                  : 'bg-slate-100 text-slate-400 cursor-not-allowed'
               }`}
             >
               <Award className="w-4 h-4" />
@@ -178,11 +178,11 @@ export const InternLearningHub: React.FC = () => {
         {/* ========================================================================= */}
         <div className="lg:col-span-8 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-white flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-purple-400" /> Assigned Technical Curriculum
+            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-blue-600" /> Assigned Technical Curriculum
             </h2>
-            <span className="text-xs font-mono text-slate-400">
-              Completed: <strong className="text-white">{approvedCount}</strong> / {modules.length} modules
+            <span className="text-xs font-mono text-slate-500">
+              Completed: <strong className="text-slate-900">{approvedCount}</strong> / {modules.length} modules
             </span>
           </div>
 
@@ -190,42 +190,42 @@ export const InternLearningHub: React.FC = () => {
             {modules.map((mod) => (
               <div
                 key={mod.id}
-                className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 transition-all space-y-4"
+                className="p-5 rounded-2xl bg-white border border-slate-200 hover:border-slate-300 shadow-sm transition-all space-y-4"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-purple-950 text-purple-300 border border-purple-800">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-50 text-blue-700 border border-blue-200">
                       {mod.category}
                     </span>
                     <span className="text-xs font-mono text-slate-500">[{mod.id}]</span>
-                    <h3 className="text-sm font-bold text-white">{mod.title}</h3>
+                    <h3 className="text-sm font-bold text-slate-900">{mod.title}</h3>
                   </div>
 
                   <span
                     className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                       mod.status === 'APPROVED'
-                        ? 'bg-emerald-950 text-emerald-300 border border-emerald-800'
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                         : mod.status === 'SUBMITTED'
-                        ? 'bg-blue-950 text-blue-300 border border-blue-800'
-                        : 'bg-slate-950 text-slate-400 border border-slate-800'
+                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                        : 'bg-slate-100 text-slate-600 border border-slate-200'
                     }`}
                   >
                     {mod.status}
                   </span>
                 </div>
 
-                <p className="text-xs text-slate-300 leading-relaxed">
+                <p className="text-xs text-slate-600 leading-relaxed">
                   {mod.description}
                 </p>
 
                 {/* Requirements */}
-                <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
                     Engineering Deliverables:
                   </span>
                   {mod.requirements.map((req, i) => (
-                    <div key={i} className="flex items-center gap-2 text-xs text-slate-400">
-                      <div className="w-1.5 h-1.5 rounded-full bg-purple-400 shrink-0" />
+                    <div key={i} className="flex items-center gap-2 text-xs text-slate-600">
+                      <div className="w-1.5 h-1.5 rounded-full bg-blue-600 shrink-0" />
                       <span>{req}</span>
                     </div>
                   ))}
@@ -233,30 +233,30 @@ export const InternLearningHub: React.FC = () => {
 
                 {/* Mentor Feedback Loop */}
                 {mod.mentorFeedback && (
-                  <div className="p-3.5 rounded-xl bg-purple-950/30 border border-purple-800/60 space-y-2">
+                  <div className="p-3.5 rounded-xl bg-blue-50/60 border border-blue-200 space-y-2">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-purple-300 flex items-center gap-1.5">
-                        <MessageSquare className="w-3.5 h-3.5" /> Mentor Code Review — {mod.mentorFeedback.mentorName}
+                      <span className="font-bold text-blue-900 flex items-center gap-1.5">
+                        <MessageSquare className="w-3.5 h-3.5 text-blue-600" /> Mentor Code Review — {mod.mentorFeedback.mentorName}
                       </span>
-                      <span className="font-mono font-bold text-purple-200 bg-purple-900/50 px-2 py-0.5 rounded">
+                      <span className="font-mono font-bold text-blue-700 bg-white border border-blue-200 px-2 py-0.5 rounded">
                         Score: {mod.mentorFeedback.score} / 100
                       </span>
                     </div>
-                    <p className="text-xs text-slate-300 italic">
+                    <p className="text-xs text-slate-700 italic">
                       &ldquo;{mod.mentorFeedback.comment}&rdquo;
                     </p>
                   </div>
                 )}
 
                 {/* Submission Action */}
-                <div className="flex items-center justify-end pt-2 border-t border-slate-800/80">
+                <div className="flex items-center justify-end pt-2 border-t border-slate-100">
                   <button
                     onClick={() => {
                       setSelectedModule(mod);
                       setSubmissionCode(mod.submittedCode || '');
                       setSubmissionNotes(mod.submissionNotes || '');
                     }}
-                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
                   >
                     <Code2 className="w-3.5 h-3.5" />
                     <span>{mod.status === 'PENDING' ? 'Submit Assignment Code' : 'Update Submission'}</span>
@@ -271,12 +271,12 @@ export const InternLearningHub: React.FC = () => {
         {/* 2. COMPETENCY TRACKING (SKILLS MASTERY) */}
         {/* ========================================================================= */}
         <div className="lg:col-span-4 space-y-4">
-          <div className="p-6 rounded-3xl bg-slate-900/60 border border-slate-800 space-y-5">
+          <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-5">
             <div>
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-amber-400" /> Cohort Competency Mastery
+              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-amber-500" /> Cohort Competency Mastery
               </h2>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-xs text-slate-500 mt-1">
                 Evaluation index across core technical competency domains updated via mentor sign-offs.
               </p>
             </div>
@@ -285,12 +285,12 @@ export const InternLearningHub: React.FC = () => {
               {competencies.map((comp, idx) => (
                 <div key={idx} className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-slate-200">{comp.label}</span>
-                    <span className="font-mono font-bold text-blue-400">{comp.score}%</span>
+                    <span className="font-semibold text-slate-700">{comp.label}</span>
+                    <span className="font-mono font-bold text-blue-600">{comp.score}%</span>
                   </div>
-                  <div className="w-full h-2 rounded-full bg-slate-950 overflow-hidden border border-slate-800">
+                  <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden border border-slate-200">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-blue-600 to-purple-600 transition-all duration-700"
+                      className="h-full rounded-full bg-blue-600 transition-all duration-700"
                       style={{ width: `${comp.score}%` }}
                     />
                   </div>
@@ -298,9 +298,9 @@ export const InternLearningHub: React.FC = () => {
               ))}
             </div>
 
-            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2 text-xs">
-              <span className="font-bold text-slate-300 block">Graduation Criteria:</span>
-              <p className="text-slate-400 leading-relaxed text-[11px]">
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
+              <span className="font-bold text-slate-700 block">Graduation Criteria:</span>
+              <p className="text-slate-500 leading-relaxed text-[11px]">
                 Interns must attain &gt;85% overall average score and complete all pipeline assignments to qualify for full-time junior consultant roles at Kapate Consultancy.
               </p>
             </div>
@@ -311,26 +311,26 @@ export const InternLearningHub: React.FC = () => {
 
       {/* CODE SUBMISSION MODAL */}
       {selectedModule && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl bg-slate-950 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-2xl bg-white border border-slate-200 rounded-3xl p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <div>
-                <h3 className="text-sm font-bold text-white">
+                <h3 className="text-sm font-bold text-slate-900">
                   Submit Deliverable: {selectedModule.title}
                 </h3>
-                <p className="text-xs text-slate-400 font-mono">Module Code: {selectedModule.id}</p>
+                <p className="text-xs text-slate-500 font-mono">Module Code: {selectedModule.id}</p>
               </div>
               <button
                 onClick={() => setSelectedModule(null)}
-                className="text-slate-400 hover:text-white"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
               >
-                ✕
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleSubmitCode} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">
+                <label className="block text-xs font-bold text-slate-700 mb-1">
                   Source Code Implementation (Python / TypeScript / C++)
                 </label>
                 <textarea
@@ -339,12 +339,12 @@ export const InternLearningHub: React.FC = () => {
                   value={submissionCode}
                   onChange={(e) => setSubmissionCode(e.target.value)}
                   placeholder="# Paste complete modular solution here..."
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs font-mono text-emerald-300 placeholder-slate-600 focus:outline-none focus:border-blue-500"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-mono text-emerald-800 placeholder-slate-400 focus:outline-none focus:border-blue-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">
+                <label className="block text-xs font-bold text-slate-700 mb-1">
                   Architectural Write-Up & Benchmark Results
                 </label>
                 <textarea
@@ -352,7 +352,7 @@ export const InternLearningHub: React.FC = () => {
                   value={submissionNotes}
                   onChange={(e) => setSubmissionNotes(e.target.value)}
                   placeholder="Explain runtime metrics, asymptotic complexity, or mathematical derivations..."
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500"
                 />
               </div>
 
@@ -360,13 +360,13 @@ export const InternLearningHub: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setSelectedModule(null)}
-                  className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-semibold cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-sm"
                 >
                   <Send className="w-3.5 h-3.5" /> Submit to Mentor
                 </button>
@@ -378,53 +378,50 @@ export const InternLearningHub: React.FC = () => {
 
       {/* CERTIFICATE MODAL */}
       {showCertificateModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="w-full max-w-3xl bg-slate-950 border-2 border-amber-600/60 rounded-3xl p-8 shadow-2xl space-y-6 relative overflow-hidden">
-            {/* Ambient gold glow */}
-            <div className="absolute top-0 right-0 w-96 h-96 bg-amber-600/10 blur-[120px] pointer-events-none" />
-
-            <div className="text-center space-y-3 pb-6 border-b border-slate-800 relative z-10">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-3xl bg-white border-2 border-amber-300 rounded-3xl p-8 shadow-2xl space-y-6 relative overflow-hidden">
+            <div className="text-center space-y-3 pb-6 border-b border-slate-200 relative z-10">
               <div className="flex items-center justify-center gap-3">
                 <img src="/logo.png" alt="Kapate Consultancy" className="h-10 object-contain" />
               </div>
-              <h2 className="text-xs font-black uppercase tracking-widest text-amber-400">
+              <h2 className="text-xs font-black uppercase tracking-widest text-amber-600">
                 Kapate Consultancy • Enterprise AI & Engineering Academy
               </h2>
-              <h1 className="text-2xl lg:text-3xl font-serif font-black text-white">
+              <h1 className="text-2xl lg:text-3xl font-serif font-black text-slate-900">
                 Certificate of Technical Mastery
               </h1>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500">
                 This verified credential confirms that
               </p>
-              <div className="text-xl font-bold text-white underline decoration-amber-500/60 underline-offset-8">
+              <div className="text-xl font-bold text-slate-900 underline decoration-amber-500/60 underline-offset-8">
                 {currentUser.name}
               </div>
-              <p className="text-xs text-slate-300 max-w-lg mx-auto leading-relaxed pt-2">
+              <p className="text-xs text-slate-600 max-w-lg mx-auto leading-relaxed pt-2">
                 has demonstrated exceptional competence in the rigorous engineering cohort, completing assigned pipelines across <strong>Anti-Money Laundering Detection</strong>, <strong>Algorithmic Complexity Optimization</strong>, and <strong>Multi-Layer Neural Architectures</strong>.
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 text-xs font-mono text-slate-400 relative z-10">
-              <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800">
-                <span className="text-[10px] text-slate-500 block uppercase">Verification Hash</span>
-                <span className="text-slate-300 text-[11px] truncate block">KC-CERT-2026-9F81E04B72</span>
+            <div className="grid grid-cols-2 gap-4 text-xs font-mono text-slate-500 relative z-10">
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <span className="text-[10px] text-slate-400 block uppercase">Verification Hash</span>
+                <span className="text-slate-800 text-[11px] truncate block font-bold">KC-CERT-2026-9F81E04B72</span>
               </div>
-              <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800">
-                <span className="text-[10px] text-slate-500 block uppercase">Issue Date</span>
-                <span className="text-slate-300 text-[11px] block">{new Date().toLocaleDateString()}</span>
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <span className="text-[10px] text-slate-400 block uppercase">Issue Date</span>
+                <span className="text-slate-800 text-[11px] block font-bold">{new Date().toLocaleDateString()}</span>
               </div>
             </div>
 
             <div className="flex items-center justify-between pt-4 relative z-10">
               <div className="text-left">
-                <div className="font-serif font-bold text-white text-sm">Shon Kapate</div>
-                <div className="text-[10px] text-slate-400 font-mono">Founder & CEO, Kapate Consultancy</div>
+                <div className="font-serif font-bold text-slate-900 text-sm">Shon Kapate</div>
+                <div className="text-[10px] text-slate-500 font-mono">Founder & CEO, Kapate Consultancy</div>
               </div>
 
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowCertificateModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-900 text-slate-300 text-xs font-bold hover:bg-slate-800"
+                  className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200 cursor-pointer"
                 >
                   Close
                 </button>
@@ -433,7 +430,7 @@ export const InternLearningHub: React.FC = () => {
                     showToast('Certificate PDF ready for download!', 'success');
                     window.print();
                   }}
-                  className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-amber-600/20"
+                  className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer"
                 >
                   <Download className="w-3.5 h-3.5" /> Download / Print PDF
                 </button>
@@ -445,3 +442,5 @@ export const InternLearningHub: React.FC = () => {
     </div>
   );
 };
+
+export default InternLearningHub;

@@ -1,23 +1,22 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useDemoStore } from '../../../store/demoStore';
-import {
-  CheckCircle2, Clock, Calendar, AlertCircle, Sparkles,
-  ArrowUpRight, Play, CheckSquare, Plus,
-  FileText, Mail, ChevronRight, Filter,
-  ShieldCheck, Hourglass, BarChart3, BellRing, Target
-} from 'lucide-react';
 import { Task, TaskStatus } from '../../../types';
+import {
+  Calendar, CheckCircle2, Clock, Hourglass, Plus,
+  Target, CheckSquare, Sparkles,
+  ChevronRight, ArrowUpRight, Play, Mail, ShieldCheck, BellRing
+} from 'lucide-react';
 
 export const MyWorkModule: React.FC = () => {
   const currentUser = useDemoStore((state) => state.currentUser);
   const tasks = useDemoStore((state) => state.tasks);
   const updateTaskStatus = useDemoStore((state) => state.updateTaskStatus);
   const timesheets = useDemoStore((state) => state.timesheets);
-  const calendarEvents = useDemoStore((state) => state.calendarEvents);
   const attendance = useDemoStore((state) => state.attendance);
   const leaves = useDemoStore((state) => state.leaves);
+  const calendarEvents = useDemoStore((state) => state.calendarEvents);
   const setActiveTab = useDemoStore((state) => state.setActiveTab);
   const setQuickCreateOpen = useDemoStore((state) => state.setQuickCreateOpen);
   const setMailComposeOpen = useDemoStore((state) => state.setMailComposeOpen);
@@ -25,71 +24,76 @@ export const MyWorkModule: React.FC = () => {
 
   const [taskFilter, setTaskFilter] = useState<'ALL' | 'PENDING' | 'URGENT' | 'COMPLETED'>('ALL');
 
-  // Filter user's tasks
+  // Filter tasks assigned to current user
   const myTasks = useMemo(() => {
-    const firstName = (currentUser.name || '').toLowerCase().split(' ')[0];
-    const fullName = (currentUser.name || '').toLowerCase();
-    return tasks.filter(t => {
+    return tasks.filter((t) => {
       const assigned = (t.assignedTo || '').toLowerCase();
-      return assigned.includes(firstName) || assigned.includes(fullName) || t.assignedTo === currentUser.id;
+      const userName = (currentUser?.name || '').toLowerCase();
+      const userEmail = (currentUser?.email || '').toLowerCase();
+      const userKapateId = (currentUser?.kapateId || '').toLowerCase();
+      return (
+        assigned.includes(userName) ||
+        assigned.includes(userEmail) ||
+        (userKapateId && assigned.includes(userKapateId))
+      );
     });
   }, [tasks, currentUser]);
 
-  // Tasks categorized
   const pendingTasks = useMemo(() => 
     myTasks.filter(t => (t.status as string) !== 'COMPLETED' && (t.status as string) !== 'Done'),
     [myTasks]
   );
+
   const completedTasks = useMemo(() => 
     myTasks.filter(t => (t.status as string) === 'COMPLETED' || (t.status as string) === 'Done'),
     [myTasks]
   );
+
   const urgentTasks = useMemo(() => 
-    pendingTasks.filter(t => t.priority === 'Urgent' || t.priority === 'High'),
-    [pendingTasks]
+    myTasks.filter(t => (t.priority === 'High' || t.priority === 'Urgent') && (t.status as string) !== 'COMPLETED' && (t.status as string) !== 'Done'),
+    [myTasks]
   );
 
   const filteredTasks = useMemo(() => {
     switch (taskFilter) {
-      case 'PENDING': return pendingTasks;
-      case 'URGENT': return urgentTasks;
-      case 'COMPLETED': return completedTasks;
-      default: return myTasks;
+      case 'PENDING':
+        return pendingTasks;
+      case 'URGENT':
+        return urgentTasks;
+      case 'COMPLETED':
+        return completedTasks;
+      case 'ALL':
+      default:
+        return myTasks;
     }
   }, [taskFilter, myTasks, pendingTasks, urgentTasks, completedTasks]);
 
-  // User's attendance today
+  // Current User Timesheets & Today's Attendance
+  const myTimesheets = useMemo(() => 
+    timesheets.filter(t => t.employeeName === currentUser?.name),
+    [timesheets, currentUser]
+  );
+
+  const totalLoggedHours = useMemo(() => 
+    myTimesheets.reduce((acc, curr) => acc + (Number(curr.hours) || 0), 0),
+    [myTimesheets]
+  );
+
+  const pendingApprovalsCount = useMemo(() => 
+    myTimesheets.filter(t => t.status === 'Submitted').length,
+    [myTimesheets]
+  );
+
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
   const todayAttendance = useMemo(() => 
-    attendance.find(a => 
-      (a.employeeName?.toLowerCase().includes((currentUser.name || '').toLowerCase()) ||
-       (currentUser.name || '').toLowerCase().includes(a.employeeName?.toLowerCase())) &&
-      a.date === todayStr
-    ),
-    [attendance, currentUser.name, todayStr]
+    attendance.find(a => a.employeeName === currentUser?.name && a.date === todayStr),
+    [attendance, currentUser, todayStr]
   );
 
-  // User's timesheets this week
-  const myTimesheets = useMemo(() => 
-    timesheets.filter(ts => 
-      (ts.employeeName || '').toLowerCase().includes((currentUser.name || '').toLowerCase()) ||
-      (currentUser.name || '').toLowerCase().includes((ts.employeeName || '').toLowerCase())
-    ),
-    [timesheets, currentUser.name]
-  );
-  const totalLoggedHours = useMemo(() => 
-    myTimesheets.reduce((sum, ts) => sum + (Number(ts.hours) || 0), 0),
-    [myTimesheets]
-  );
-  const pendingApprovalsCount = useMemo(() => 
-    myTimesheets.filter(ts => ts.status === 'Submitted').length,
-    [myTimesheets]
-  );
-
-  // Approvals waiting for managers / admins
+  // Administrative sign-off alerts if manager or admin
   const isManagerOrAdmin = currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'ADMIN' || currentUser.role === 'PROJECT_MANAGER';
   const systemPendingTimesheets = useMemo(() => 
-    timesheets.filter(ts => ts.status === 'Submitted'),
+    timesheets.filter(t => t.status === 'Submitted'),
     [timesheets]
   );
   const systemPendingLeaves = useMemo(() => 
@@ -111,27 +115,26 @@ export const MyWorkModule: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in pb-12">
+    <div className="space-y-6 animate-fade-in pb-12 text-slate-900">
       {/* 1. Header & Personal Rhythm Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950/80 to-slate-900 border border-slate-800 p-6 md:p-8 shadow-2xl">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="relative overflow-hidden rounded-3xl bg-white border border-slate-200 p-6 md:p-8 shadow-sm">
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div>
             <div className="flex flex-wrap items-center gap-2 mb-3">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
                 <Sparkles className="w-3.5 h-3.5" /> Kapate OS 2.0 Operating Hub
               </span>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-mono bg-slate-800 text-slate-300 border border-slate-700">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-mono bg-slate-100 text-slate-700 border border-slate-200">
                 {currentUser.kapateId || 'KAP-OS-USER'}
               </span>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
                 {currentUser.department || 'Operations'} &bull; {currentUser.designation || currentUser.role}
               </span>
             </div>
-            <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white">
+            <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
               Daily Command Center &bull; {currentUser.name}
             </h1>
-            <p className="text-slate-400 text-sm mt-1 max-w-2xl">
+            <p className="text-slate-500 text-sm mt-1 max-w-2xl">
               Unified operating view for your active deliverables, daily rhythm, scheduled commitments, and approvals.
             </p>
           </div>
@@ -140,65 +143,65 @@ export const MyWorkModule: React.FC = () => {
           <div className="flex flex-wrap items-center gap-2.5">
             <button
               onClick={() => setQuickCreateOpen(true)}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-sm font-semibold shadow-lg shadow-cyan-900/30 transition-all active:scale-95"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-sm transition-all active:scale-95 cursor-pointer"
             >
               <Plus className="w-4 h-4" /> Quick Create
             </button>
             <button
               onClick={() => setMailComposeOpen(true)}
-              className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium border border-slate-700 transition-colors"
+              className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 text-sm font-medium border border-slate-200 shadow-xs transition-colors cursor-pointer"
             >
-              <Mail className="w-4 h-4 text-cyan-400" /> Draft Email
+              <Mail className="w-4 h-4 text-blue-600" /> Draft Email
             </button>
             <button
               onClick={() => setActiveTab('timesheets')}
-              className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium border border-slate-700 transition-colors"
+              className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 text-sm font-medium border border-slate-200 shadow-xs transition-colors cursor-pointer"
             >
-              <Clock className="w-4 h-4 text-amber-400" /> Timesheet
+              <Clock className="w-4 h-4 text-amber-500" /> Timesheet
             </button>
           </div>
         </div>
 
         {/* Operational Telemetry Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-slate-800/80">
-          <div className="p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800/70">
-            <div className="flex items-center justify-between text-xs text-slate-400">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-slate-200">
+          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+            <div className="flex items-center justify-between text-xs text-slate-500">
               <span>Active Tasks</span>
-              <CheckSquare className="w-3.5 h-3.5 text-cyan-400" />
+              <CheckSquare className="w-3.5 h-3.5 text-blue-600" />
             </div>
-            <div className="text-xl font-bold text-white mt-1.5">{pendingTasks.length}</div>
-            <div className="text-[11px] text-slate-400 mt-0.5">{urgentTasks.length} high priority</div>
+            <div className="text-xl font-bold text-slate-900 mt-1.5">{pendingTasks.length}</div>
+            <div className="text-[11px] text-slate-500 mt-0.5">{urgentTasks.length} high priority</div>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800/70">
-            <div className="flex items-center justify-between text-xs text-slate-400">
+          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+            <div className="flex items-center justify-between text-xs text-slate-500">
               <span>Logged Hours</span>
-              <Clock className="w-3.5 h-3.5 text-amber-400" />
+              <Clock className="w-3.5 h-3.5 text-amber-600" />
             </div>
-            <div className="text-xl font-bold text-white mt-1.5">{totalLoggedHours.toFixed(1)} hrs</div>
-            <div className="text-[11px] text-slate-400 mt-0.5">{pendingApprovalsCount} pending review</div>
+            <div className="text-xl font-bold text-slate-900 mt-1.5">{totalLoggedHours.toFixed(1)} hrs</div>
+            <div className="text-[11px] text-slate-500 mt-0.5">{pendingApprovalsCount} pending review</div>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800/70">
-            <div className="flex items-center justify-between text-xs text-slate-400">
+          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+            <div className="flex items-center justify-between text-xs text-slate-500">
               <span>Today&apos;s Status</span>
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
             </div>
-            <div className="text-xl font-bold text-emerald-400 mt-1.5">
+            <div className="text-xl font-bold text-emerald-600 mt-1.5">
               {todayAttendance?.status || 'Active'}
             </div>
-            <div className="text-[11px] text-slate-400 mt-0.5">
+            <div className="text-[11px] text-slate-500 mt-0.5">
               {todayAttendance?.checkIn ? `In: ${todayAttendance.checkIn}` : 'Clocked in'}
             </div>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800/70">
-            <div className="flex items-center justify-between text-xs text-slate-400">
+          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+            <div className="flex items-center justify-between text-xs text-slate-500">
               <span>Tasks Completed</span>
-              <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400" />
+              <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" />
             </div>
-            <div className="text-xl font-bold text-white mt-1.5">{completedTasks.length}</div>
-            <div className="text-[11px] text-indigo-300 mt-0.5">Lifetime contribution</div>
+            <div className="text-xl font-bold text-slate-900 mt-1.5">{completedTasks.length}</div>
+            <div className="text-[11px] text-indigo-600 mt-0.5">Lifetime contribution</div>
           </div>
         </div>
       </div>
@@ -207,47 +210,47 @@ export const MyWorkModule: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Tasks & Deliverables (2 cols on large) */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="rounded-3xl bg-slate-900/90 border border-slate-800 p-6 shadow-xl">
+          <div className="rounded-3xl bg-white border border-slate-200 p-6 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
               <div>
-                <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  <Target className="w-5 h-5 text-cyan-400" /> My Assigned Deliverables
+                <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <Target className="w-5 h-5 text-blue-600" /> My Assigned Deliverables
                 </h2>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-500 mt-0.5">
                   Direct action items linked to active client and engineering projects.
                 </p>
               </div>
 
               {/* Filter Tabs */}
-              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-950/80 border border-slate-800 text-xs">
+              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 border border-slate-200 text-xs">
                 <button
                   onClick={() => setTaskFilter('ALL')}
-                  className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
-                    taskFilter === 'ALL' ? 'bg-cyan-500/20 text-cyan-300 font-semibold' : 'text-slate-400 hover:text-white'
+                  className={`px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
+                    taskFilter === 'ALL' ? 'bg-white text-slate-900 font-semibold shadow-xs' : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   All ({myTasks.length})
                 </button>
                 <button
                   onClick={() => setTaskFilter('PENDING')}
-                  className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
-                    taskFilter === 'PENDING' ? 'bg-cyan-500/20 text-cyan-300 font-semibold' : 'text-slate-400 hover:text-white'
+                  className={`px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
+                    taskFilter === 'PENDING' ? 'bg-white text-slate-900 font-semibold shadow-xs' : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   In Progress ({pendingTasks.length})
                 </button>
                 <button
                   onClick={() => setTaskFilter('URGENT')}
-                  className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
-                    taskFilter === 'URGENT' ? 'bg-rose-500/20 text-rose-300 font-semibold' : 'text-slate-400 hover:text-white'
+                  className={`px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
+                    taskFilter === 'URGENT' ? 'bg-rose-50 text-rose-700 font-semibold border border-rose-200 shadow-xs' : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   Urgent ({urgentTasks.length})
                 </button>
                 <button
                   onClick={() => setTaskFilter('COMPLETED')}
-                  className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
-                    taskFilter === 'COMPLETED' ? 'bg-emerald-500/20 text-emerald-300 font-semibold' : 'text-slate-400 hover:text-white'
+                  className={`px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
+                    taskFilter === 'COMPLETED' ? 'bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200 shadow-xs' : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   Done ({completedTasks.length})
@@ -257,13 +260,13 @@ export const MyWorkModule: React.FC = () => {
 
             {/* Task Item List */}
             {filteredTasks.length === 0 ? (
-              <div className="text-center py-12 rounded-2xl bg-slate-950/40 border border-slate-800/60">
-                <CheckCircle2 className="w-10 h-10 text-slate-600 mx-auto mb-2" />
-                <p className="text-slate-300 font-medium text-sm">No tasks found for this view.</p>
-                <p className="text-xs text-slate-500 mt-1">All commitments are on track or no items are assigned.</p>
+              <div className="text-center py-12 rounded-2xl bg-slate-50 border border-dashed border-slate-200">
+                <CheckCircle2 className="w-10 h-10 text-slate-400 mx-auto mb-2" />
+                <p className="text-slate-700 font-medium text-sm">No tasks found for this view.</p>
+                <p className="text-xs text-slate-400 mt-1">All commitments are on track or no items are assigned.</p>
                 <button
                   onClick={() => setQuickCreateOpen(true)}
-                  className="mt-4 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-colors"
+                  className="mt-4 px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-medium transition-colors cursor-pointer"
                 >
                   + Add New Task
                 </button>
@@ -278,18 +281,18 @@ export const MyWorkModule: React.FC = () => {
                       key={task.id}
                       className={`group p-4 rounded-2xl border transition-all ${
                         isDone 
-                          ? 'bg-slate-950/30 border-slate-850 opacity-70' 
-                          : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 hover:bg-slate-900/60'
+                          ? 'bg-slate-50 border-slate-200 opacity-70' 
+                          : 'bg-white border-slate-200 hover:border-blue-300 hover:shadow-xs'
                       }`}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-start gap-3 flex-1 min-w-0">
                           <button
                             onClick={() => handleToggleTaskStatus(task)}
-                            className={`mt-0.5 w-5 h-5 rounded-lg border flex items-center justify-center transition-colors ${
+                            className={`mt-0.5 w-5 h-5 rounded-lg border flex items-center justify-center transition-colors cursor-pointer ${
                               isDone
-                                ? 'bg-emerald-500 border-emerald-500 text-slate-950'
-                                : 'border-slate-700 hover:border-cyan-400 text-transparent'
+                                ? 'bg-emerald-600 border-emerald-600 text-white'
+                                : 'border-slate-300 hover:border-blue-500 text-transparent'
                             }`}
                             title={isDone ? 'Mark as In Progress' : 'Mark as Completed'}
                           >
@@ -297,33 +300,33 @@ export const MyWorkModule: React.FC = () => {
                           </button>
                           <div className="flex-1 min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
-                              <h3 className={`text-sm font-semibold truncate ${isDone ? 'line-through text-slate-400' : 'text-white'}`}>
+                              <h3 className={`text-sm font-semibold truncate ${isDone ? 'line-through text-slate-400' : 'text-slate-900'}`}>
                                 {task.title}
                               </h3>
                               {isUrgent && (
-                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
                                   {task.priority}
                                 </span>
                               )}
-                              <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-800 text-slate-400">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600">
                                 {task.projectName || 'Internal Operations'}
                               </span>
                             </div>
                             {task.description && (
-                              <p className="text-xs text-slate-400 mt-1 line-clamp-1">
+                              <p className="text-xs text-slate-500 mt-1 line-clamp-1">
                                 {task.description}
                               </p>
                             )}
                             <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 mt-2">
-                              <span className="flex items-center gap-1 text-slate-400">
-                                <Calendar className="w-3 h-3 text-slate-500" />
+                              <span className="flex items-center gap-1 text-slate-600">
+                                <Calendar className="w-3 h-3 text-slate-400" />
                                 Due: {task.dueDate || 'Ongoing'}
                               </span>
                               <span className="flex items-center gap-1">
-                                <Clock className="w-3 h-3 text-slate-500" />
+                                <Clock className="w-3 h-3 text-slate-400" />
                                 {task.loggedHours || 0} / {task.estimatedHours || 0} hrs
                               </span>
-                              <span className="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-[10px] text-slate-400">
+                              <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] text-slate-700">
                                 {task.status}
                               </span>
                             </div>
@@ -332,7 +335,7 @@ export const MyWorkModule: React.FC = () => {
 
                         <button
                           onClick={() => setActiveTab('projects')}
-                          className="text-slate-500 hover:text-cyan-400 p-1 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+                          className="text-slate-400 hover:text-blue-600 p-1 rounded-lg opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
                           title="View in Projects"
                         >
                           <ArrowUpRight className="w-4 h-4" />
@@ -347,19 +350,19 @@ export const MyWorkModule: React.FC = () => {
 
           {/* Manager / Admin Governance Queue (Conditional) */}
           {isManagerOrAdmin && (
-            <div className="rounded-3xl bg-slate-900/90 border border-slate-800 p-6 shadow-xl">
+            <div className="rounded-3xl bg-white border border-slate-200 p-6 shadow-sm">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-base font-bold text-white flex items-center gap-2">
-                    <BellRing className="w-4 h-4 text-amber-400" /> Operational Sign-off Queue
+                  <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <BellRing className="w-4 h-4 text-amber-500" /> Operational Sign-off Queue
                   </h2>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="text-xs text-slate-500 mt-0.5">
                     Timesheets and workforce requests awaiting managerial approval.
                   </p>
                 </div>
                 <button
                   onClick={() => setActiveTab('timesheets')}
-                  className="text-xs font-semibold text-cyan-400 hover:underline flex items-center gap-1"
+                  className="text-xs font-semibold text-blue-600 hover:underline flex items-center gap-1 cursor-pointer"
                 >
                   Open Approvals <ChevronRight className="w-3.5 h-3.5" />
                 </button>
@@ -368,30 +371,30 @@ export const MyWorkModule: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div 
                   onClick={() => setActiveTab('timesheets')}
-                  className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 hover:border-slate-700 cursor-pointer transition-all"
+                  className="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-slate-300 cursor-pointer transition-all"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-slate-400">Pending Timesheets</span>
-                    <Hourglass className="w-4 h-4 text-amber-400" />
+                    <span className="text-xs font-medium text-slate-500">Pending Timesheets</span>
+                    <Hourglass className="w-4 h-4 text-amber-500" />
                   </div>
-                  <div className="text-2xl font-bold text-white mt-1">
+                  <div className="text-2xl font-bold text-slate-900 mt-1">
                     {systemPendingTimesheets.length}
                   </div>
-                  <p className="text-[11px] text-slate-500 mt-0.5">Require manager sign-off for billing</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Require manager sign-off for billing</p>
                 </div>
 
                 <div 
                   onClick={() => setActiveTab('attendance')}
-                  className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 hover:border-slate-700 cursor-pointer transition-all"
+                  className="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-slate-300 cursor-pointer transition-all"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-slate-400">Leave Requests</span>
-                    <Calendar className="w-4 h-4 text-indigo-400" />
+                    <span className="text-xs font-medium text-slate-500">Leave Requests</span>
+                    <Calendar className="w-4 h-4 text-indigo-500" />
                   </div>
-                  <div className="text-2xl font-bold text-white mt-1">
+                  <div className="text-2xl font-bold text-slate-900 mt-1">
                     {systemPendingLeaves.length}
                   </div>
-                  <p className="text-[11px] text-slate-500 mt-0.5">Workforce leave approvals</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Workforce leave approvals</p>
                 </div>
               </div>
             </div>
@@ -401,14 +404,14 @@ export const MyWorkModule: React.FC = () => {
         {/* Right Column: Schedule, AI Copilot Quick Assist & Quick Links */}
         <div className="space-y-6">
           {/* Today's Agenda */}
-          <div className="rounded-3xl bg-slate-900/90 border border-slate-800 p-6 shadow-xl">
+          <div className="rounded-3xl bg-white border border-slate-200 p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-indigo-400" /> Today&apos;s Agenda
+              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-indigo-600" /> Today&apos;s Agenda
               </h2>
               <button
                 onClick={() => setActiveTab('calendar')}
-                className="text-xs font-medium text-slate-400 hover:text-white"
+                className="text-xs font-medium text-slate-500 hover:text-slate-900 cursor-pointer"
               >
                 Full Calendar
               </button>
@@ -416,21 +419,21 @@ export const MyWorkModule: React.FC = () => {
 
             <div className="space-y-3">
               {todayEvents.length === 0 ? (
-                <p className="text-xs text-slate-500 py-4 text-center">No meetings scheduled today.</p>
+                <p className="text-xs text-slate-400 py-4 text-center">No meetings scheduled today.</p>
               ) : (
                 todayEvents.map((evt) => (
                   <div
                     key={evt.id}
-                    className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800/80 hover:border-slate-700 transition-all"
+                    className="p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-slate-300 transition-all"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <div className="text-xs font-bold text-white truncate">{evt.title}</div>
-                        <div className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1">
-                          <Clock className="w-3 h-3 text-cyan-400" /> {evt.time || 'All Day'}
+                        <div className="text-xs font-bold text-slate-900 truncate">{evt.title}</div>
+                        <div className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-blue-600" /> {evt.time || 'All Day'}
                         </div>
                       </div>
-                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
                         {evt.type}
                       </span>
                     </div>
@@ -439,7 +442,7 @@ export const MyWorkModule: React.FC = () => {
                         href={evt.meetingLink}
                         target="_blank"
                         rel="noreferrer"
-                        className="mt-2.5 inline-flex items-center gap-1.5 text-xs text-cyan-400 hover:text-cyan-300 font-medium"
+                        className="mt-2.5 inline-flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 font-medium"
                       >
                         <Play className="w-3 h-3" /> Join Virtual Meeting
                       </a>
@@ -451,52 +454,52 @@ export const MyWorkModule: React.FC = () => {
           </div>
 
           {/* Ask Kapate AI Prompt Box */}
-          <div className="rounded-3xl bg-gradient-to-br from-indigo-950/60 via-slate-900 to-slate-900 border border-indigo-900/50 p-6 shadow-xl relative overflow-hidden">
-            <div className="flex items-center gap-2 text-xs font-semibold text-indigo-400 mb-2">
-              <Sparkles className="w-4 h-4 text-indigo-400" /> Kapate AI Intelligence
+          <div className="rounded-3xl bg-gradient-to-br from-blue-50/60 via-indigo-50/30 to-white border border-blue-200 p-6 shadow-sm relative overflow-hidden">
+            <div className="flex items-center gap-2 text-xs font-semibold text-blue-700 mb-2">
+              <Sparkles className="w-4 h-4 text-blue-600" /> Kapate AI Intelligence
             </div>
-            <h3 className="text-base font-bold text-white">Daily Smart Assistant</h3>
-            <p className="text-xs text-slate-400 mt-1">
+            <h3 className="text-base font-bold text-slate-900">Daily Smart Assistant</h3>
+            <p className="text-xs text-slate-500 mt-1">
               Ask questions about active contracts, client invoices, project status, or SOP documentation.
             </p>
             <div className="mt-4">
               <button
                 onClick={() => setActiveTab('ai-assistant')}
-                className="w-full flex items-center justify-between px-4 py-3 rounded-2xl bg-slate-950/80 border border-indigo-500/30 text-xs text-slate-400 hover:border-indigo-400 hover:text-white transition-all shadow-inner group"
+                className="w-full flex items-center justify-between px-4 py-3 rounded-2xl bg-white border border-blue-200 text-xs text-slate-600 hover:border-blue-400 hover:text-slate-900 transition-all shadow-xs group cursor-pointer"
               >
                 <span className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-cyan-400" /> Ask Kapate AI...
+                  <Sparkles className="w-4 h-4 text-blue-600" /> Ask Kapate AI...
                 </span>
-                <ChevronRight className="w-4 h-4 text-slate-500 group-hover:translate-x-0.5 transition-transform" />
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
               </button>
             </div>
           </div>
 
           {/* Quick Hub Navigation Links */}
-          <div className="rounded-3xl bg-slate-900/90 border border-slate-800 p-6 shadow-xl">
+          <div className="rounded-3xl bg-white border border-slate-200 p-6 shadow-sm">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Quick Navigation</h3>
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => setActiveTab('projects')}
-                className="p-3 rounded-xl bg-slate-950/50 hover:bg-slate-800 border border-slate-800/80 text-left text-xs font-medium text-slate-300 hover:text-white transition-colors"
+                className="p-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-left text-xs font-medium text-slate-700 hover:text-slate-900 transition-colors cursor-pointer"
               >
                 Projects & Sprints
               </button>
               <button
                 onClick={() => setActiveTab('mail')}
-                className="p-3 rounded-xl bg-slate-950/50 hover:bg-slate-800 border border-slate-800/80 text-left text-xs font-medium text-slate-300 hover:text-white transition-colors"
+                className="p-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-left text-xs font-medium text-slate-700 hover:text-slate-900 transition-colors cursor-pointer"
               >
                 Corporate Mailbox
               </button>
               <button
                 onClick={() => setActiveTab('chat')}
-                className="p-3 rounded-xl bg-slate-950/50 hover:bg-slate-800 border border-slate-800/80 text-left text-xs font-medium text-slate-300 hover:text-white transition-colors"
+                className="p-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-left text-xs font-medium text-slate-700 hover:text-slate-900 transition-colors cursor-pointer"
               >
                 Internal Chat
               </button>
               <button
                 onClick={() => setActiveTab('knowledge')}
-                className="p-3 rounded-xl bg-slate-950/50 hover:bg-slate-800 border border-slate-800/80 text-left text-xs font-medium text-slate-300 hover:text-white transition-colors"
+                className="p-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-left text-xs font-medium text-slate-700 hover:text-slate-900 transition-colors cursor-pointer"
               >
                 Company Wiki
               </button>
@@ -507,4 +510,5 @@ export const MyWorkModule: React.FC = () => {
     </div>
   );
 };
+
 export default MyWorkModule;

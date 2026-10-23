@@ -75,8 +75,8 @@ export const QuickCreateModal: React.FC = () => {
           email: empEmail || `${(empName || 'employee').toLowerCase().replace(/\s+/g, '.')}@kapateconsultancy.in`,
           role: empRole,
           department: empDepartment,
-          phone: '+91 98765 43210',
-          manager: 'Priya Sharma',
+          phone: '+91 84211 74957',
+          manager: 'Shon Kapate',
           skills: skillsArray.length > 0 ? skillsArray : ['AI', 'Python', 'Full Stack'],
         });
         setOpen(false);
@@ -124,11 +124,11 @@ export const QuickCreateModal: React.FC = () => {
       await addProject({
         name: projectName || 'New AI Solution Project',
         client: projectClient || 'Enterprise Client',
-        manager: 'Rahul Deshmukh',
+        manager: 'Shon Kapate',
         budget: Number(projectBudget) || 1000000,
         deadline: '2026-12-31',
         description: 'Project initialized via quick create',
-        team: ['Amit Patil', 'Rahul Deshmukh', 'Sneha Joshi'],
+        team: ['Shon Kapate'],
       });
       setProjectName('');
       setProjectClient('');

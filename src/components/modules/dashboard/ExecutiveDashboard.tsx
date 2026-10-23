@@ -52,27 +52,27 @@ export const ExecutiveDashboard: React.FC = () => {
     return (
       <div className="space-y-6 animate-fade-in">
         {/* Header with verified Kapate Identity Badge */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-3xl bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white shadow-xl">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-3xl bg-white border border-slate-200 shadow-sm">
           <div>
-            <div className="flex items-center gap-2 text-xs font-semibold text-blue-300 mb-2 uppercase tracking-wider">
-              <Award className="w-4 h-4 text-amber-400" /> Intern Learning & Delivery Hub
+            <div className="flex items-center gap-2 text-xs font-semibold text-blue-600 mb-2 uppercase tracking-wider">
+              <Award className="w-4 h-4 text-amber-500" /> Intern Learning & Delivery Hub
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
               Welcome back, {currentUser.name}
             </h1>
-            <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl">
+            <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-xl">
               Track your daily research sprints, submit timesheets, and collaborate with your assigned mentor.
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-            <div className="px-4 py-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-xs">
-              <div className="text-slate-400 text-[10px] uppercase font-mono tracking-wider">Kapate Identity ID</div>
-              <div className="font-mono font-bold text-amber-300 text-sm">{currentUser.kapateId || 'KAP-INT-000001'}</div>
+            <div className="px-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs">
+              <div className="text-slate-500 text-[10px] uppercase font-mono tracking-wider">Kapate Identity ID</div>
+              <div className="font-mono font-bold text-amber-600 text-sm">{currentUser.kapateId || 'KAP-INT-000001'}</div>
             </div>
-            <div className="px-4 py-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-xs">
-              <div className="text-slate-400 text-[10px] uppercase font-mono tracking-wider">Corporate Email</div>
-              <div className="font-mono font-semibold text-blue-200 text-xs">{currentUser.internalEmail || currentUser.email}</div>
+            <div className="px-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs">
+              <div className="text-slate-500 text-[10px] uppercase font-mono tracking-wider">Corporate Email</div>
+              <div className="font-mono font-semibold text-blue-600 text-xs">{currentUser.internalEmail || currentUser.email}</div>
             </div>
           </div>
         </div>
@@ -256,27 +256,27 @@ export const ExecutiveDashboard: React.FC = () => {
     return (
       <div className="space-y-6 animate-fade-in">
         {/* Header with verified Kapate Identity Badge */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-3xl bg-slate-900 text-white shadow-xl">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-3xl bg-white border border-slate-200 shadow-sm">
           <div>
-            <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400 mb-2 uppercase tracking-wider">
-              <ShieldCheck className="w-4 h-4" /> Engineering & Delivery Workbench
+            <div className="flex items-center gap-2 text-xs font-semibold text-emerald-600 mb-2 uppercase tracking-wider">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" /> Engineering & Delivery Workbench
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
               Welcome back, {currentUser.name}
             </h1>
-            <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl">
+            <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-xl">
               {currentUser.designation || 'Engineering Specialist'} • {currentUser.department || 'Engineering'} Department
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-            <div className="px-4 py-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-xs">
-              <div className="text-slate-400 text-[10px] uppercase font-mono tracking-wider">Kapate Employee ID</div>
-              <div className="font-mono font-bold text-emerald-300 text-sm">{currentUser.kapateId || 'KAP-EMP-000001'}</div>
+            <div className="px-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs">
+              <div className="text-slate-500 text-[10px] uppercase font-mono tracking-wider">Kapate Employee ID</div>
+              <div className="font-mono font-bold text-emerald-700 text-sm">{currentUser.kapateId || 'KAP-EMP-000001'}</div>
             </div>
-            <div className="px-4 py-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-xs">
-              <div className="text-slate-400 text-[10px] uppercase font-mono tracking-wider">Internal Corporate Mail</div>
-              <div className="font-mono font-semibold text-blue-200 text-xs">{currentUser.internalEmail || currentUser.email}</div>
+            <div className="px-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs">
+              <div className="text-slate-500 text-[10px] uppercase font-mono tracking-wider">Internal Corporate Mail</div>
+              <div className="font-mono font-semibold text-blue-600 text-xs">{currentUser.internalEmail || currentUser.email}</div>
             </div>
           </div>
         </div>
