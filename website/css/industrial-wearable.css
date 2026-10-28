@@ -1564,3 +1564,269 @@ body {
   font-size: 0.85rem;
   color: var(--text-muted);
 }
+
+
+
+/* ==========================================================================
+   LIVE CAMERA & SOURCE SELECTOR EXTENSIONS
+   ========================================================================== */
+.hud-source-row {
+  background: #0B101D;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 10px 20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.source-chips-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.source-label {
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #64748B;
+  letter-spacing: 0.05em;
+  margin-right: 4px;
+}
+
+.source-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #CBD5E1;
+  padding: 5px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.source-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #FFFFFF;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.source-btn.active {
+  background: #10B981;
+  border-color: #10B981;
+  color: #0F172A;
+  font-weight: 700;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+}
+
+.source-btn.camera-live {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: #EF4444;
+  color: #FCA5A5;
+}
+
+.source-btn.camera-live.active {
+  background: #EF4444;
+  border-color: #EF4444;
+  color: #FFFFFF;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.6);
+}
+
+.source-btn.camera-live .live-blink {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  animation: rec-blink 0.8s infinite;
+}
+
+#hudLiveVideo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: none;
+}
+
+#hudLiveCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.camera-alert-banner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid #F59E0B;
+  border-radius: var(--radius-md);
+  padding: 24px;
+  max-width: 440px;
+  width: 90%;
+  text-align: center;
+  z-index: 20;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  display: none;
+}
+
+.camera-alert-title {
+  color: #F59E0B;
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.camera-alert-desc {
+  color: #CBD5E1;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+/* Step Progress & Controls in Sidebar */
+.step-navigator-box {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.step-nav-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.74rem;
+  font-family: var(--font-mono);
+  color: #94A3B8;
+}
+
+.step-type-pill {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 3px;
+  background: rgba(37, 99, 235, 0.2);
+  color: #93C5FD;
+  border: 1px solid rgba(37, 99, 235, 0.4);
+}
+
+.step-instruction-current {
+  font-size: 0.84rem;
+  color: #F8FAFC;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.step-nav-buttons-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.step-action-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #E2E8F0;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+  text-align: center;
+}
+
+.step-action-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.18);
+  color: #FFFFFF;
+}
+
+.step-action-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.step-action-btn.done-btn {
+  background: #10B981;
+  color: #0F172A;
+  border-color: #10B981;
+  font-weight: 700;
+}
+
+.step-action-btn.done-btn:hover {
+  background: #059669;
+  color: #FFFFFF;
+}
+
+.step-progress-track {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.step-progress-fill {
+  height: 100%;
+  background: #10B981;
+  width: 20%;
+  transition: width 0.3s ease;
+}
+
+.interactive-target-pin {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border: 2px solid #38BDF8;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: pin-pulse 1.5s infinite;
+  box-shadow: 0 0 10px #38BDF8;
+  z-index: 10;
+  display: none;
+}
+
+.interactive-target-pin::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  background: #38BDF8;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+@keyframes pin-pulse {
+  0% { transform: translate(-50%, -50%) scale(0.9); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1.6); opacity: 0; }
+}

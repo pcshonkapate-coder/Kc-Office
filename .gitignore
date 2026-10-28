@@ -55,6 +55,7 @@ scratch/
 
 # Local model & dataset directories
 /Sort-Waste/
+!/Sort-Waste/*.ipynb
 /Final-Year-Project/
 
 

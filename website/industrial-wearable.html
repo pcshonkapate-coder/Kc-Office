@@ -138,6 +138,43 @@
       </div>
 
       <div class="hud-cockpit">
+        <!-- Video Source Selection Toolbar -->
+        <div class="hud-source-row">
+          <div class="source-chips-group">
+            <span class="source-label">VIDEO SOURCE:</span>
+            <button class="source-btn camera-live" id="btnSourceWebcam" title="Connect to Live Webcam / Mobile Camera">
+              <span class="live-blink"></span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              <span id="webcamBtnText">Live Camera</span>
+            </button>
+            <button class="source-btn" id="btnFlipCamera" style="display:none;" title="Switch Between Front / Rear Cameras">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+              <span id="flipCameraText">Rear Camera</span>
+            </button>
+            <button class="source-btn active" id="btnSourceFasteners" data-source="sample_fasteners">
+              <span>Sample: M8 Fasteners</span>
+            </button>
+            <button class="source-btn" id="btnSourceCoupling" data-source="sample_coupling">
+              <span>Sample: Coupling Hub</span>
+            </button>
+            <button class="source-btn" id="btnSourceThermal" data-source="sample_thermal">
+              <span>Sample: Stator Thermal</span>
+            </button>
+            <label class="source-btn" style="cursor: pointer;" title="Upload custom machinery image or video">
+              <input type="file" id="customFileInput" accept="image/*,video/*" style="display:none;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span>Upload File</span>
+            </label>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button class="source-btn" id="btnCaptureSnapshot" title="Capture current frame snapshot">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+              <span>Take Snapshot</span>
+            </button>
+          </div>
+        </div>
+
         <!-- Control Header -->
         <div class="hud-control-bar">
           <div class="scenario-buttons">
@@ -178,19 +215,23 @@
         <!-- Viewport Grid -->
         <div class="hud-viewport-container">
           <div class="hud-canvas-area" id="hudCanvasArea">
+            <!-- Video & Canvas Elements for Real Live Camera -->
+            <video id="hudLiveVideo" autoplay playsinline muted></video>
             <img src="/assets/industrial-wearable/sample_fasteners_m8.jpg" alt="Industrial Camera View" class="hud-camera-feed" id="hudCameraFeed">
+            <canvas id="hudLiveCanvas"></canvas>
+            <div class="interactive-target-pin" id="interactiveTargetPin"></div>
             
             <!-- Thermal Canvas Layer -->
             <div class="thermal-overlay-canvas" id="thermalOverlay"></div>
 
             <!-- AR Reticle Top Elements -->
             <div class="hud-glasses-reticle">
-              <div class="hud-badge-glasses">
-                <span class="hud-rec-dot"></span>
-                <span>AR HUD SIM &bull; VUZIX SHIELD 1080P &bull; 48.5 FPS</span>
+              <div class="hud-badge-glasses" id="hudCameraBadge">
+                <span class="hud-rec-dot" id="hudRecDot"></span>
+                <span id="hudBadgeText">AR HUD SIM &bull; VUZIX SHIELD 1080P &bull; 48.5 FPS</span>
               </div>
               <div class="hud-badge-glasses" style="color:#38BDF8; border-color:rgba(56,189,248,0.5);">
-                <span>LATENCY: 24.2ms &bull; WEBSOCKET: CONNECTED</span>
+                <span id="hudFpsText">INFERENCE: 24.2ms &bull; WEBSOCKET: CONNECTED</span>
               </div>
             </div>
 
@@ -208,6 +249,21 @@
               </defs>
               <line x1="22" y1="58" x2="44" y2="44" stroke="#38BDF8" stroke-width="1.8" stroke-dasharray="3,2" marker-end="url(#arrowhead)" />
             </svg>
+
+            <!-- Camera Permission Alert Modal/Banner -->
+            <div class="camera-alert-banner" id="cameraAlertBanner">
+              <div class="camera-alert-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <span>Live Camera Access Required</span>
+              </div>
+              <p class="camera-alert-desc" id="cameraAlertMessage">
+                Please allow camera access in your browser or click the lock icon in the URL bar to enable live video analysis.
+              </p>
+              <div style="display:flex; gap:8px; justify-content:center;">
+                <button class="source-btn active" id="btnRetryCamera">Retry Camera</button>
+                <button class="source-btn" id="btnDismissCamera">Use Industrial Samples</button>
+              </div>
+            </div>
           </div>
 
           <!-- HUD Telemetry Sidebar -->
@@ -215,7 +271,27 @@
             <div class="telemetry-header">
               <div class="telemetry-title">
                 <span>Machine Telemetry</span>
-                <span style="color:#10B981;">SYNCED</span>
+                <span style="color:#10B981;" id="telSyncStatus">SYNCED</span>
+              </div>
+            </div>
+
+            <!-- Interactive Step-by-Step SOP Navigator -->
+            <div class="step-navigator-box">
+              <div class="step-nav-header">
+                <span>PROCEDURE STEP</span>
+                <span id="stepCounterText">01 / 05</span>
+              </div>
+              <span class="step-type-pill" id="stepTypePill">SURFACE &amp; THREAD PREP</span>
+              <p class="step-instruction-current" id="stepInstructionCurrent">
+                Clean shaft surface and verify 90° radial alignment before inserting fastener.
+              </p>
+              <div class="step-progress-track">
+                <div class="step-progress-fill" id="stepProgressFill" style="width: 20%;"></div>
+              </div>
+              <div class="step-nav-buttons-row">
+                <button class="step-action-btn" id="btnPrevStep" disabled>&larr; Prev</button>
+                <button class="step-action-btn done-btn" id="btnMarkDone">&check; Mark Done</button>
+                <button class="step-action-btn" id="btnNextStep">Next &rarr;</button>
               </div>
             </div>
 
@@ -316,13 +392,25 @@
             </button>
           </div>
 
-          <div class="audio-action-row">
-            <button class="ptt-btn" id="pttButton">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-              <span>Play Voice Assistant Audio</span>
-            </button>
+          <div class="audio-action-row" style="flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button class="ptt-btn" id="btnLiveMic" style="background:#EF4444;" title="Speak into microphone">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                <span id="liveMicText">Live Mic Search</span>
+              </button>
 
-            <div class="audio-waveform-bars">
+              <button class="ptt-btn" id="pttButton" style="background:var(--primary);" title="Play voice synthesis audio">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+                <span>Read SOP Aloud</span>
+              </button>
+
+              <button class="ptt-btn" id="btnAnalyzeFrame" style="background:#0F172A; border:1px solid #334155;" title="Analyze current camera frame with multimodal AI">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="m10 15 5-3-5-3v6z"/></svg>
+                <span>Inspect Camera Frame</span>
+              </button>
+            </div>
+
+            <div class="audio-waveform-bars" id="audioWaveformContainer">
               <div class="audio-bar"></div>
               <div class="audio-bar"></div>
               <div class="audio-bar"></div>
@@ -620,3 +708,4 @@
   <script src="/js/industrial-wearable.js?v=1.0"></script>
 </body>
 </html>
+
