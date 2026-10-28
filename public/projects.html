@@ -469,7 +469,7 @@
 
         <!-- Category Filters -->
         <div class="project-filter-bar">
-          <button class="project-filter-btn active" data-filter="all">All Projects (6)</button>
+          <button class="project-filter-btn active" data-filter="all">All Projects (7)</button>
           <button class="project-filter-btn" data-filter="ai">AI & Computer Vision</button>
           <button class="project-filter-btn" data-filter="enterprise">Enterprise Systems</button>
           <button class="project-filter-btn" data-filter="data">Machine Learning & Data</button>
@@ -482,7 +482,68 @@
     <section class="section" style="padding-top: 0;">
       <div class="container">
 
-        <!-- Flagship Item: Smart Waste Sorter AI -->
+        <!-- Flagship Item 1: Industrial AI Smart Wearable Assistant (Final Year Project) -->
+        <div class="flagship-card" data-category="ai" style="margin-bottom: 3rem; border-color: #93C5FD; box-shadow: 0 10px 30px -10px rgba(37, 99, 235, 0.15);">
+          <div class="flagship-visual" style="background: #0B0F19;">
+            <img src="/assets/industrial-wearable/slide_1.png" alt="Industrial AI Smart Wearable Assistant" class="flagship-img" style="object-fit: cover;">
+            <div class="flagship-badge-floating" style="border: 1px solid rgba(56, 189, 248, 0.4); background: rgba(15, 23, 42, 0.95);">
+              <span class="pulse" style="background: #38BDF8;"></span>
+              <span>Final Year Project &bull; Multimodal Edge AI</span>
+            </div>
+          </div>
+          <div class="flagship-body">
+            <div class="flagship-category" style="color: #2563EB;">Edge AI &bull; Computer Vision &bull; AR Guidance &bull; Hybrid RAG</div>
+            <h2 class="flagship-title">Industrial AI Smart Wearable Assistant</h2>
+            <p class="flagship-desc">
+              A comprehensive multimodal smart wearable assistant for the industrial workforce. Unifies edge YOLOv8m component detection, thermal anomaly analysis, faster-whisper hands-free speech intelligence, pgvector hybrid RAG across 9 OEM standards, and an augmented reality heads-up display (HUD).
+            </p>
+
+            <!-- Key Metrics -->
+            <div class="flagship-metrics-grid">
+              <div class="f-metric-item">
+                <span class="f-metric-val" style="color: #2563EB;">94.2%</span>
+                <span class="f-metric-lbl">mAP@50 Vision</span>
+              </div>
+              <div class="f-metric-item">
+                <span class="f-metric-val green">&lt; 35 ms</span>
+                <span class="f-metric-lbl">pgvector RAG</span>
+              </div>
+              <div class="f-metric-item">
+                <span class="f-metric-val">48.5 FPS</span>
+                <span class="f-metric-lbl">Edge Inference</span>
+              </div>
+              <div class="f-metric-item">
+                <span class="f-metric-val green">15 Slides</span>
+                <span class="f-metric-lbl">Technical Deck</span>
+              </div>
+            </div>
+
+            <!-- Tech Tags -->
+            <div class="tech-pill-list">
+              <span class="tech-pill">YOLOv8m</span>
+              <span class="tech-pill">faster-whisper</span>
+              <span class="tech-pill">Thermal ML</span>
+              <span class="tech-pill">pgvector Hybrid RAG</span>
+              <span class="tech-pill">AR HUD Simulator</span>
+              <span class="tech-pill">FastAPI &bull; Next.js 14</span>
+            </div>
+
+            <!-- Action CTAs -->
+            <div class="flagship-actions">
+              <a href="industrial-wearable.html" class="btn btn-primary" style="background: #2563EB; border-color: #2563EB;" id="btn-open-wearable">
+                Launch Wearable HUD &rarr;
+              </a>
+              <a href="industrial-wearable.html#presentation" class="btn btn-secondary">
+                15-Slide Presentation Deck
+              </a>
+              <a href="industrial-wearable.html#benchmarks" class="btn btn-secondary">
+                View Benchmarks
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Flagship Item 2: Smart Waste Sorter AI -->
         <div class="flagship-card" data-category="ai">
           <div class="flagship-visual">
             <img src="/assets/sort-waste/hero_materials.jpg" alt="Smart Waste Sorter AI Deep Learning" class="flagship-img">
@@ -786,6 +847,7 @@
         <h4 class="footer-heading">Projects &amp; Systems</h4>
         <ul class="footer-links">
           <li><a href="projects.html" style="font-weight: 700; color: #FFFFFF;">All Case Studies</a></li>
+          <li><a href="industrial-wearable.html">Industrial AI Wearable</a></li>
           <li><a href="sort-waste.html">Smart Waste Sorter AI</a></li>
           <li><a href="/os" target="_blank" rel="noopener noreferrer">Kapate OS Portal</a></li>
           <li><a href="industries.html">Industries Served</a></li>
@@ -817,7 +879,7 @@
     // Client-side interactive filtering
     document.addEventListener('DOMContentLoaded', () => {
       const filterBtns = document.querySelectorAll('.project-filter-btn');
-      const flagshipCard = document.querySelector('.flagship-card');
+      const flagshipCards = document.querySelectorAll('.flagship-card');
       const projectCards = document.querySelectorAll('.project-card');
 
       filterBtns.forEach(btn => {
@@ -827,15 +889,15 @@
 
           const filter = btn.dataset.filter;
 
-          // Filter flagship
-          if (flagshipCard) {
-            const fCat = flagshipCard.dataset.category;
+          // Filter flagship cards
+          flagshipCards.forEach(fCard => {
+            const fCat = fCard.dataset.category;
             if (filter === 'all' || filter === fCat) {
-              flagshipCard.style.display = 'grid';
+              fCard.style.display = 'grid';
             } else {
-              flagshipCard.style.display = 'none';
+              fCard.style.display = 'none';
             }
-          }
+          });
 
           // Filter standard cards
           projectCards.forEach(card => {
